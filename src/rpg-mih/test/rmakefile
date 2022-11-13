@@ -1,0 +1,47 @@
+# This file is part of i5/OS Programmer's Toolkit.
+# 
+# Copyright (C) 2009  Junlei Li (李君磊).
+# 
+# i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+
+#
+# make remotely
+#
+# tasks:
+#  - tar source file: makefile src test
+#  - upload tar file to remote host
+#  - unpack tar file on remote host
+#  - call RUNSH, pass the following parameters: CCSID, qshell command
+#
+
+HOST=i810
+RMAKER=RUNSH
+BINLIB=lsbin
+HOST_DIR=/home/ljl/chqs/rpg-mih
+TARF=ha.tar
+
+all: tar_src upload_src compile
+	@echo "END OF COMPILATION: rmakefile"
+
+tar_src:
+	tar -cf $(TARF) *rpgle makefile
+
+upload_src:
+	lftp -e "cd $(HOST_DIR); put $(TARF); by" $(HOST)
+
+compile:
+	rexec $(HOST) "call pgm($(RMAKER)) parm('00037' 'cd $(HOST_DIR); tar -xf $(TARF); export CURDIR=$(HOST_DIR) OUTPUTDIR=$(BINLIB); gmake')"
+
+clean:
+	rexec $(HOST) "call pgm($(RMAKER)) parm('00037' 'cd $(HOST_DIR); export OS400=yes; gmake clean')"

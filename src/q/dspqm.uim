@@ -1,0 +1,659 @@
+.* This file is part of i5/OS Programmer's Toolkit.
+.* 
+.* Copyright (C) 2010, 2011  Junlei Li (李君磊).
+.* 
+.* i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* (at your option) any later version.
+.* 
+.* i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.* 
+.* You should have received a copy of the GNU General Public License
+.* along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+
+.*
+.* @file dsppm.pnlgrp
+.*
+.* for command DSPQMSG
+.*
+
+:pnlgrp.
+
+:copyr.(C)Copyright 2009, 2011 Junlei Li &colon.p
+
+.* import help info
+:import name='*'
+        pnlgrp='i5toolkit/dspqathlp'
+        .
+
+.* class
+:class name=o32
+       basetype='igc 32'
+       .
+:eclass.
+:class name=a1
+       basetype='char 1'
+       .
+:eclass.
+:class name=a4
+       basetype='char 4'
+       .
+:eclass.
+:class name=a5
+       basetype='char 5'
+       .
+:eclass.
+:class name=a6
+       basetype='char 6'
+       .
+:eclass.
+:class name=a8
+       basetype='char 8'
+       .
+:eclass.
+:class name=a10
+       basetype='char 10'
+       .
+:eclass.
+:class name=a20
+       basetype='char 20'
+       .
+:eclass.
+:class name=clspgm
+       basetype='char 20'
+       .
+:eclass.
+:class name=a26
+       basetype='char 26'
+       .
+:eclass.
+:class name=a30
+       basetype='char 30'
+       .
+:eclass.
+:class name=a32
+       basetype='char 32'
+       .
+:eclass.
+:class name=a50
+       basetype='char 50'
+       .
+:eclass.
+:class name=a52
+       basetype='char 52'
+       .
+:eclass.
+
+:class  name=clsopt
+        basetype='action'
+        width=2.
+:eclass.
+:class  name=znd6
+        basetype='zoned 6 0'
+        .
+:eclass.
+:class  name=znd8
+        basetype='zoned 8 0'
+        .
+:eclass.
+
+.*
+.* integer types
+.*
+:class  name=bin2
+        basetype='bin 15'
+        .
+:eclass.
+:class  name=bin4
+        basetype='bin 31'
+        .
+:eclass.
+
+.* variables
+.* rcommon
+:var name=vqname
+     class=a10
+     .
+:var name=vqlib
+     class=a10
+     .
+:var name=vqobjtype
+     class=a10
+     .
+:var name=vobjasp
+     class=bin2
+     .
+:var name=vextattr
+     class=a10
+     .
+:var name=vowner
+     class=a10
+     .
+:var name=vdomain
+     class=a10
+     .
+:var name=vexstattr
+     class=a10
+     .
+:var name=vqkeylen
+     class=bin4
+     .
+:var name=vqtxtlen
+     class=bin4
+     .
+:var name=vqmsgs
+     class=bin4
+     .
+
+.* vars in message list
+:var name=vmsgopt
+     class=clsopt
+     .
+:var name=vmsgnum
+     class=znd8
+     .
+:var name=vmsgenqt
+     class=a26
+     .
+:var name=vmsgkey
+     class=a32
+     .
+
+.* vars in detail list
+:var name=vdtloff
+     class=a6
+     .
+:var name=vdtldata
+     class=a52
+     .
+.* for hex display
+:var name=vdtloffh
+     class=a6
+     .
+:var name=vdtldatah
+     class=a52
+     .
+.* for view selection
+:var name=vdtlview
+     class=bin2
+     .
+
+.* for varrcd rpgm
+:var name=vpgmqmdtl
+     class=clspgm
+     .
+:var name=vpgmexit
+     class=clspgm
+     .
+
+.* for rqmdtl
+:var name=vqmsgnum
+     class=znd8
+     .
+
+.* control variables in panel qmdtl
+:var name=vctlkeytxt
+     class=a1
+     .
+
+.* varrcds
+.* rcommon
+:varrcd name=rcommon
+        vars='vqname vqlib vqobjtype vobjasp vextattr vowner vdomain'
+        vars='vqkeylen vqtxtlen vqmsgs'
+        .
+
+.* for list lstmsg
+:varrcd name=rlsgmsg
+        vars='vmsgopt vmsgnum vmsgenqt vmsgkey'
+        .
+
+.* exit program names
+:varrcd name=rpgm
+        vars='vpgmqmdtl vpgmexit'
+        .
+
+.* 
+:varrcd name=rqmdtl
+        vars='vqmsgnum'
+        .
+
+.* rcd for list lstdetail
+:varrcd name=rlstdetail
+        vars='vdtloff vdtldata vdtloffh vdtldatah'
+        .
+
+.* 用于在 panel qmdtl 中进行控制
+:varrcd name=rqmdtlctl
+        vars='vctlkeytxt vdtlview'
+        .
+
+.* LISTDEFs
+
+.* message list
+:listdef name=lstmsg
+         vars='vmsgopt vmsgnum vmsgenqt vmsgkey'
+         .
+
+.* detail list
+:listdef name=lstdetail
+         vars='vdtloff vdtldata vdtloffh vdtldatah'
+         .
+
+.* conditions
+.* show character data
+:cond name=cndview0
+      expr='vdtlview = 0'
+      .
+.* show hexadecimal data
+:cond name=cndview1
+      expr='vdtlview = 1'
+      .
+.* show message key data
+:cond name=cndkeydata
+      expr='vctlkeytxt = "T"'
+      .
+.* show message text data
+:cond name=cndtxtdata
+      expr='vctlkeytxt = "K"'
+      .
+
+.* key lists
+:keyl   name=klistmain
+        .
+:keyi   key=f1
+        help='help/key/f1'
+        action=help
+        varupd=no
+        .
+:keyi   key=f3
+        help='help/key/f3'
+        action='exit noset'
+        varupd=yes
+        .F3=Exit
+:keyi   key=f5
+        help='help/key/f5'
+        action='return 105'
+        varupd=yes
+        .F5=Refresh
+:keyi   key=f12
+        help='help/key/f12'
+        action='cancel set'
+        varupd=yes
+        .F12=Cancel
+:keyi   key=enter
+        help='help/key/enter'
+        action=enter
+        .
+:keyi   key=pageup
+        help='help/key/pageup'
+        action=pageup
+        .
+:keyi   key=pagedown
+        help='help/pagedown'
+        action=pagedown
+        .
+:ekeyl.
+
+.* key list for panel qmdtl
+:keyl   name=klistqmdtl
+        .
+:keyi   key=f1
+        help='help/key/f1'
+        action=help
+        varupd=no
+        .
+:keyi   key=f10
+        help='help/key/f10'
+        cond=cndkeydata
+        action='return 110'
+        varupd=yes
+        .F10=Display key data
+:keyi   key=f10
+        help='help/key/f10'
+        cond=cndtxtdata
+        action='return 110'
+        varupd=yes
+        .F10=Display text data
+:keyi   key=f11
+        help='help/key/f11'
+        cond=cndview0
+        action='chgview'
+        varupd=yes
+        .F11=Display hexadecimal format
+:keyi   key=f11
+        help='help/key/f11'
+        cond=cndview1
+        action='chgview'
+        varupd=yes
+        .F11=Display character format
+:keyi   key=f12
+        help='help/key/f12'
+        action='cancel set'
+        varupd=yes
+        .F12=Cancel
+:keyi   key=enter
+        help='help/key/enter'
+        action=enter
+        .
+:keyi   key=pageup
+        help='help/key/pageup'
+        action=pageup
+        .
+:keyi   key=pagedown
+        help='help/key/pagedown'
+        action=pagedown
+        .
+:ekeyl.
+
+.* panel dspqm
+:panel  name=dspqm
+        help='help/abtqm'
+        keyl=klistmain
+        enter='return 100'
+        .Display Queue Messages
+
+.* common data items
+:data    depth=8
+         scroll=no
+         layout=2
+         botsep=space
+         compact
+         .
+:datacol width=22.
+:datacol width='*'.
+
+:datagrp grpsep=qindent
+         compact
+         .
+:datai var=vqname
+       help='common/object'
+       usage=out
+       .Queue
+:datai   var=vqlib
+         help='common/object'
+         usage=out
+         .Library
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai   var=vobjasp
+         help='common/objasp'
+         usage=out
+         .Object ASP number
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai   var=vqobjtype
+         help='common/objtype'
+         usage=out
+         .Type
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vextattr
+       help='common/extattr'
+       usage=out
+       .Attribute
+:datai var=vowner
+       help='common/owner'
+       usage=out
+       .Owner
+:datai var=vdomain
+       help='common/objdmn'
+       usage=out
+       .Object Domain
+:edatagrp.
+
+.* key length
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vqkeylen
+       help='common/qkeylen'
+       usage=out
+       .Key length
+:edatagrp.
+
+.* text length
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vqtxtlen
+       help='common/qtxtlen'
+       usage=out
+       .Text length
+:edatagrp.
+
+.* number of messages currently on Q
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vqmsgs
+       help='common/qmsgs'
+       usage=out
+       .Messages
+:edatagrp.
+
+:edata.
+
+.* list
+:list listdef=lstmsg
+      depth='*'
+      scroll=yes
+      maxhead=2
+      select=none
+      actor=uim
+      .
+
+:topinst.
+Type options, press Enter.
+
+:listact  option=5
+          actfor=liste
+          help='help/qmopts'
+          enter='call vpgmqmdtl'
+          .5=Display message detail
+
+:listcol var=vmsgopt
+         usage=inout
+         help='help/qmopts'
+         maxwidth=3
+         .Opt
+:listcol var=vmsgnum
+         usage=out
+         help='help/qmnum'
+         maxwidth=9
+         .Number
+:listcol var=vmsgenqt
+         usage=out
+         help='help/qmtime'
+         maxwidth=26
+         .Time enqueued
+:listcol var=vmsgkey
+         usage=out
+         help='help/qmkey'
+         maxwidth=32
+         .Message Key
+
+:listview layout=1
+          cols='vmsgopt vmsgnum vmsgenqt vmsgkey'
+          .
+
+:elist.
+
+:epanel.
+
+:panel name=qmdtl
+       help='help/abtqm'
+       keyl=klistqmdtl
+       enter='return 100'
+       usrexit='call vpgmexit'
+       .Queue Message
+
+.* common data items 再加个序号
+.* common data items
+:data    depth=8
+         scroll=no
+         layout=2
+         botsep=space
+         compact
+         .
+:datacol width=22.
+:datacol width='*'.
+
+:datagrp grpsep=qindent
+         compact
+         .
+:datai var=vqname
+       help='common/object'
+       usage=out
+       .Queue
+:datai   var=vqlib
+         help='common/object'
+         usage=out
+         .Library
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai   var=vobjasp
+         help='common/objasp'
+         usage=out
+         .Object ASP number
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai   var=vqobjtype
+         help='common/objtype'
+         usage=out
+         .Type
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vextattr
+       help='common/extattr'
+       usage=out
+       .Attribute
+:datai var=vowner
+       help='common/owner'
+       usage=out
+       .Owner
+:datai var=vdomain
+       help='common/objdmn'
+       usage=out
+       .Object Domain
+:edatagrp.
+
+.* key length
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vqkeylen
+       help='common/qkeylen'
+       usage=out
+       .Key length
+:edatagrp.
+
+.* text length
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vqtxtlen
+       help='common/qtxtlen'
+       usage=out
+       .Text length
+:edatagrp.
+
+.* number of messages currently on Q
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vqmsgs
+       help='common/qmsgs'
+       usage=out
+       .Messages
+:edatagrp.
+
+.* message number
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vqmsgnum
+       help='common/qmnum'
+       usage=out
+       .Number
+:edatagrp.
+
+:edata.
+
+:list listdef=lstdetail
+      depth='*'
+      scroll=yes
+      maxhead=2
+      select=none
+      actor=none
+      view=vdtlview
+      .
+
+:listcol var=vdtloff
+         usage=out
+         help='help/qmclmn'
+         maxwidth=7
+         .Column
+:listgrp col=grpdata
+         help='help/qmdata'
+         .Character data
+:listcol var=vdtldata
+         usage=out
+         maxwidth=52
+         .' *...+....1....+....2....+....3....+....4....+....5'
+:elistgrp.
+
+.* for hex display
+:listcol var=vdtloffh
+         usage=out
+         help='help/qmclmn'
+         maxwidth=7
+         .Column
+:listgrp col=grpdatahex
+         help='help/qmdata'
+         .Hexadecimal data
+:listcol var=vdtldatah
+         usage=out
+         maxwidth=52
+         .' * . . . + . . . . 1 . . . . + . . . . 2 . . . . +'
+:elistgrp.
+
+:listview layout=1
+.*          cols='vdtloff vdtldata'
+          cols='vdtloff grpdata'
+          .
+
+:listview layout=1
+.*          cols='vdtloffh vdtldatah'
+          cols='vdtloffh grpdatahex'
+          .
+
+:elist.
+
+:epanel.
+
+:epnlgrp.
+
+.* eof - dsppm.pnlgrp

@@ -1,0 +1,284 @@
+/**
+ * This file is part of i5/OS Programmer's Toolkit.
+ *
+ * Copyright (C) 2010, 2011  Junlei Li.
+ *
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file chgusrspc.emi
+ *
+ * CPP of CL command chgusrspc.
+ *
+ * @todo Still not sure, whether the DTALEN parameter should be
+ *       reserved? The first 2 bytes of DTA already shows the length of
+ *       the DTA paramter.
+ */
+
+dcl spcptr usrspc-ptr parm         ;
+dcl spcptr spc-offset-ptr parm     ;
+dcl spcptr dta-type-ptr parm       ;
+dcl spcptr dta-ptr parm            ;
+dcl spcptr dta-len-ptr parm        ;
+dcl spcptr ptr-type-ptr parm       ;
+dcl spcptr sys-obj-ptr parm        ;
+dcl spcptr sys-obj-type-ptr parm   ;
+dcl spcptr sys-obj-spc-offset-ptr parm ;
+
+dcl ol pl-main (
+        usrspc-ptr,
+        spc-offset-ptr,
+        dta-type-ptr,
+        dta-ptr,
+        dta-len-ptr,
+        ptr-type-ptr,
+        sys-obj-ptr,
+        sys-obj-type-ptr,
+        sys-obj-spc-offset-ptr
+) parm ext                      ;
+entry i-main(pl-main) ext       ;
+
+dcl dd usrspc char(20) bas(usrspc-ptr) ;
+        dcl dd usrspc-name char(10) def(usrspc) ;
+        dcl dd usrspc-lib  char(10) def(usrspc) pos(11) ;
+
+dcl dd spc-offset bin(4) bas(spc-offset-ptr) ;
+
+dcl dd dta-type char(10) bas(dta-type-ptr) ;
+dcl dd dta char(3) bas(dta-ptr)            ;
+        dcl dd dta-parm-len bin(2) unsgnd def(dta) ;
+dcl spcptr dta-parm-val-ptr auto                   ;
+
+dcl dd dta-len bin(2) bas(dta-len-ptr) ;
+
+dcl dd ptr-type char(10) bas(ptr-type-ptr) ;
+
+dcl dd sys-obj char(20) bas(sys-obj-ptr) ;
+        dcl dd sys-obj-name char(10) def(sys-obj) ;
+        dcl dd sys-obj-lib  char(10) def(sys-obj) pos(11) ;
+
+dcl dd sys-obj-type char(10) bas(sys-obj-type-ptr) ;
+
+dcl dd sys-obj-spc-offset bin(4) bas(sys-obj-spc-offset-ptr) ;
+
+brk "ACCINPUT"                  ;
+
+        calli rslv-usrspc, *, rslv-usrspc-ptr ;
+
+        cmpbla(b) dta-type, c-dtatype-scalar / neq(=+2) ;
+        calli write-scalar-data, *, write-scalar-data-ptr ;
+:
+        cmpbla(b) dta-type, c-dtatype-ptr / neq(=+2) ;
+        calli write-pointer-data, *, write-pointer-data-ptr ;
+see-you:
+        rtx *                   ;
+
+/**
+ * internal entry point: rslv-usrspc
+ *
+ * @post usrspc-start
+ */
+dcl insptr rslv-usrspc-ptr auto ;
+entry rslv-usrspc int           ;
+brk "RSLVSPC"                   ;
+dcl con c-libl char(10) init(
+        "*LIBL"
+)                               ;
+	cmpbla(b) usrspc-lib, c-libl / eq(resolve-usrspc) ;
+        cpyblap rslv-tmpl, x'0401', x'00'                 ;
+        cpyblap rslv-tmpl(3:30), usrspc-lib, ' '              ;
+        rslvsp  usrspc-ctx,
+                rslv-tmpl,
+                *,
+                *               ;
+resolve-usrspc:
+        cpyblap rslv-tmpl, x'1934', x'00' ;
+        cpyblap rslv-tmpl(3:30), usrspc-name, ' ' ;
+        cmpptrt(b) usrspc-ctx, x'00' / eq(=+3)    ;
+        rslvsp usrspc-obj,
+               rslv-tmpl,
+               usrspc-ctx,
+               *                ;
+        b end-rslv-usrspc       ;
+:       
+        rslvsp usrspc-obj,
+               rslv-tmpl,
+               *,
+               *                ;
+end-rslv-usrspc:        
+brk "ENDRSLV"                   ;
+        setsppfp usrspc-start, usrspc-obj ;
+
+        b rslv-usrspc-ptr       ;
+
+/**
+ * internal entry point: write-scalar-data
+ */
+dcl insptr write-scalar-data-ptr auto ;
+entry write-scalar-data int           ;
+
+dcl con c-calculate bin(2) init(0) ;
+        cmpnv(b) dta-len, c-calculate / neq(=+3) ;
+        cpynv dta-len, dta-parm-len               ;
+        b decide-dta-len                          ;
+:       
+        /* make sure dta-len is less than or equal to dta-parm-len */
+        cmpnv(b) dta-len, dta-parm-len / nhi(decide-dta-len) ;
+        cpynv dta-len, dta-parm-len               ;
+decide-dta-len:
+        /* copy dta into target user space */
+        setsppfp usrspc-pos, usrspc-start ;
+        addspp usrspc-pos, usrspc-pos, spc-offset ;
+        setsppfp dta-parm-val-ptr, dta-ptr        ;
+        addspp dta-parm-val-ptr, dta-parm-val-ptr, 2 ;
+
+dcl dtaptr media-ptr auto           ;
+dcl dd dbg char(128) bas(usrspc-pos) ;
+dcl dd ch1 char(1) bas(usrspc-pos)  ;
+dcl dd ch5k char(5000) bas(dta-parm-val-ptr) ;
+dcl dd dtaptr-attr char(7) auto init(
+        x"04000000000000"
+)                               ;
+dcl dd dtaptr-attr-len bin(2) def(dtaptr-attr) pos(2) ;
+        setdp media-ptr, ch1       ;
+        cpynv dtaptr-attr-len, dta-len ;
+        setdpat media-ptr, dtaptr-attr ;
+
+        cpybla media-ptr, ch5k         ;
+
+brk "WRTSCALAR"                 ; /* check dbg */
+        b write-scalar-data-ptr ;
+
+/**
+ * internal entry point: write-pointer-data
+ */
+dcl insptr write-pointer-data-ptr auto ;
+entry write-pointer-data int           ;
+
+        /* round spc-offset to multiple of 16 bytes */
+        div(s) spc-offset, 16   ;
+        mult(s) spc-offset, 16  ;
+
+        /* set usrspc-pos */
+        setsppfp usrspc-pos, usrspc-start ;
+        addspp usrspc-pos, usrspc-pos, spc-offset ;
+
+        /* init rslv-tmpl */
+dcl sysptr sysobj-ctx auto      ;
+        cmpbla(b) sys-obj-lib, c-libl / eq(resolve-sysobj-ctx) ;
+
+        cpyblap rslv-tmpl(1:2),
+          x'0401', x'00'        ;
+        cpyblap rslv-tmpl(3:30),
+          sys-obj-lib, " "      ;
+        rslvsp sysobj-ctx, rslv-tmpl, *, * ;
+resolve-sysobj-ctx:     
+
+        /* determine object type code/subtype code */
+dcl dd cvttp-dir char(10) auto init("*SYMTOHEX") ;
+dcl spcptr cvttp-dir-ptr auto init(cvttp-dir)    ;
+dcl spcptr cvttp-hex-type-ptr auto init(rslv-tmpl)    ;
+dcl dd qusec char(16) auto      ;
+dcl spcptr qusec-ptr auto init(qusec) ;
+dcl spc qusec-t bas(qusec-ptr)        ;
+        dcl dd qusec-bytes-in bin(4) dir ;
+        dcl dd qusec-bytes-out bin(4) dir ;
+dcl ol al-qlicvttp (
+        cvttp-dir-ptr,
+        sys-obj-type-ptr,
+        cvttp-hex-type-ptr,
+        qusec-ptr
+) arg                           ;
+        cpynv qusec-bytes-in, 16      ;
+        callx sept(h'11C8'), al-qlicvttp, * ;
+        /* if qusec-bytes-out != 0 ... */
+
+        /* resolve SYP to SYSOBJ */
+dcl sysptr sysobj-ptr auto      ;
+        cpyblap rslv-tmpl(3:30),
+          sys-obj-name, " "     ;
+        cmpptrt(b) sysobj-ctx, x'00' / eq(=+3) ;
+        rslvsp sysobj-ptr, rslv-tmpl, sysobj-ctx, * ;
+        b =+2                                       ;
+:       
+        rslvsp sysobj-ptr, rslv-tmpl, *, * ;
+:       
+dcl con c-ptrtype-syp char(10) init ("*SYP") ;
+dcl con c-ptrtype-spp char(10) init ("*SPP") ;
+        cmpbla(b) ptr-type, c-ptrtype-syp / neq(=+2) ;
+        calli write-syp, *, write-syp-ptr            ;
+:       
+        cmpbla(b) ptr-type, c-ptrtype-spp / neq(=+2) ;
+        calli write-spp, *, write-spp-ptr            ;
+end-write-ptr:  
+        b write-pointer-data-ptr ;
+
+/**
+ * internal entry pointer: write-syp
+ *
+ * @pre sysobj-ptr
+ * @pre usrspc-pos
+ */
+dcl insptr write-syp-ptr auto   ;
+entry write-syp int             ;
+
+brk "WRTSYP"                    ;
+dcl dd system-pointer-data char(16) bdry(16) bas(usrspc-pos) ;
+        cpybwp system-pointer-data, sysobj-ptr ;
+
+end-write-syp:  
+        b write-syp-ptr         ;
+
+/**
+ * internal entry pointer: write-spp
+ *
+ * @pre usrspc-pos
+ */
+dcl insptr write-spp-ptr auto   ;
+entry write-spp int             ;
+
+brk "WRTSPP"                    ;
+dcl spcptr associated-spp auto  ;
+dcl dd space-pointer-data char(16) bdry(16) bas(usrspc-pos) ;
+
+        setsppfp associated-spp, sysobj-ptr  ;
+        addspp associated-spp,
+          associated-spp,
+          sys-obj-spc-offset    ;
+        cpybwp space-pointer-data, associated-spp ;
+
+end-write-spp:  
+        b write-spp-ptr         ;
+
+/* globals */
+dcl con c-dtatype-ptr char(10) init("*PTR") ;
+dcl con c-dtatype-scalar char(10) init("*SCALAR") ;
+dcl sysptr usrspc-obj auto      ;
+dcl sysptr usrspc-ctx auto      ;
+dcl dd rslv-tmpl char(34) auto  ;
+dcl dd msg char(128) auto       ;
+dcl dd len bin(4) auto          ;
+dcl spcptr usrspc-pos auto      ;
+dcl spcptr usrspc-start auto    ;
+
+/**
+ * APIs
+ *   QLICVTTP - h'11C8'
+ */
+dcl spc poc-t baspco            ;
+        dcl spcptr sept-ptr dir ;
+dcl sysptr sept(7000) bas(sept-ptr) ;
+
+pend                            ;

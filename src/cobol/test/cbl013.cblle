@@ -1,0 +1,95 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file cbl013.cblle
+      *
+      * Test of:
+      *  - _MATS (Create Space)
+      */
+
+       process
+           NOSTDTRUNC
+           NOMONOPRC.
+
+       id division.
+       program-id. cbl013.
+
+       environment division.
+       configuration section.
+       special-names.
+           copy mih-lnktyp.
+
+       data division.
+       working-storage section.
+
+       01 len      pic 9(9) usage comp-4.
+       01 rtn      pic 9(9) usage comp-4.
+       01 tmpl-ptr usage pointer.
+
+       linkage section.
+           copy mih-comp.
+           copy mih-spc.
+
+       77 romio    usage pointer.
+       77 tmpl     type mats-tmpl-t.
+       77 str      pic x(116).
+
+       procedure division using
+           romio.
+       main-pgm.
+
+      * test if the input pointer is a valid system pointer
+           call "_CMPPTRT" using
+                by value       x"01"
+                by value       romio
+                returning into rtn.
+           if rtn not equal to 1
+              then
+              display "romio is NOT a system pointer."
+              perform see-you
+           end-if.
+
+      * materailize space attributes
+           move length of mats-tmpl-t to len.
+           call "_MODASA" using
+                by value       len
+                returning into tmpl-ptr.
+           call "_PROPB" using
+                by value tmpl-ptr
+                by value x"00"
+                by value len.
+           set address of tmpl to tmpl-ptr.
+           move len to bytes-in of tmpl.
+           call "_MATS" using
+                by reference tmpl
+                by reference romio.
+
+           display "Nice to meet you, " obj-name
+                   of obj-id of tmpl
+                   " (space size: "
+                   spc-size of tmpl
+                   " bytes).".
+
+       see-you.
+           stop run.
+       end program cbl013.
+
+      * Call cbl009, output is the following:
+      * Nice to meet you, Romio

@@ -1,0 +1,48 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-pgmmng.cblleinc
+      *
+      * Program Management instructions.
+      */
+
+      *A   B
+
+     /**
+      * Instruction template of _MATPGMNM.
+      *
+      * @remark size of matpgmnm-t is 80.
+      */
+       01 matpgmnm-t is typedef.
+          05 bytes-in  pic 9(9) usage comp-4.
+          05 bytes-out pic 9(9) usage comp-4.
+      * @remark the value of fmt should be 0.
+          05 fmt    pic 9(9) usage comp-4.
+          05 filler    pic x(4).
+          05 context-type pic x(2).
+          05 context-name pic x(30).
+          05 program-type pic x(2).
+          05 program-name pic x(30).
+
+     /**
+      * @BIF _MATPGMNM (Materialize Program Name (MATPGMNM))
+      *
+      * @example test/cbl005.cblle
+      */

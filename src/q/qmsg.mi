@@ -1,0 +1,1025 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file qmsg.mi
+ *
+ * display q message
+ */
+
+/include qusec.mi;
+/include uim.mi;
+/include ptrres.mi;
+
+/include qcmn.mi;
+
+/* debug */
+dcl dd chdbg char(512) bas(*);
+
+/* external entry point */
+dcl spcptr .q-object parm;
+dcl dd q-object-lib char(20) bas(.q-object);
+dcl dd q-name char(10) bas(.q-object) pos(1);
+dcl dd q-lib char(10) bas(.q-object) pos(11);
+/* system pointer to the queue we operate on */
+dcl sysptr q auto;
+dcl sysptr ctx auto;
+dcl spcptr .q-type   parm;
+dcl dd q-type char(10) bas(.q-type);
+
+dcl ol plist-main(
+  .q-object,
+  .q-type
+) parm ext;
+
+/**
+ * if we issue QMHRDQM() on a DDM data queue,
+ * we will receive CPF9511(Function not supported
+ * for DDM data queue &1), so we will prevent the
+ * user from ...
+ */
+entry i-always-main(plist-main) ext;
+
+  /* accept and validate command parameters */
+  search found, valid-q-types, q-type, 1;
+  cmpnv(b) found, 0 / neq(=+8); /* invalid q type */
+  cpyblap error-msg, "Invalid queue type ", " ";
+  setsppd .error-msg, error-msg, 19;
+  cpybla .error-msg->varch10, q-type;
+
+  setspp .sendmsg-msg, error-msg;
+  setspp .sendmsg-msglen, len;
+  calli send-msg, argl-sendmsg, .send-msg;
+  b farewell;
+:
+  calli get-object-attr, argl-get-object-attr, .get-object-attr;
+  cmpnv(b) ec-bytes-out, 0 / eq(=+3);
+  /* report error message */
+  calli report-error, *, .report-error;
+  b farewell;
+:
+  /* resolve q */
+dcl dd q-obj-type char(2) auto  ; 
+  cmpnv(b) found, 1 / neq(=+3);
+  cpybla q-obj-type, x"0A02"; /* usrq */
+  b =+2;
+:
+  cpybla q-obj-type, x"0A01";
+:
+  cmpbla(b) q-lib, "*CURLIB" / eq(resolve-q);
+  cmpbla(b) q-lib, "*LIBL" / eq(resolve-q);
+  cpybla rslv-option-obj-type, x"0401";
+  cpyblap rslv-option-obj-name, q-lib, " ";
+  rslvsp ctx, rslv-option-short, *, x'0000';
+  cpybla rslv-option-obj-type, q-obj-type ; 
+  cpyblap rslv-option-obj-name, q-name, " ";
+  rslvsp q, rslv-option-short, ctx, x'0000';
+  b end-resolve;
+resolve-q:
+  cpybla rslv-option-obj-type, q-obj-type ; 
+  cpyblap rslv-option-obj-name, q-name, " ";
+  rslvsp q, rslv-option-short, *, x'0000';
+end-resolve:
+
+  /* open display application */
+  cpyblap pnlgrp, "DSPQM     I5TOOLKIT", " ";
+  callx .quiopnda, argl-opnda, *;
+  cmpnv(b) uim-ec-bytes-out, 0 / eq(=+4);
+  setspp .qusec, uim-ec;
+  calli report-error, *, .report-error;
+  b farewell;
+:
+  /* set varrcd RPGM */
+  setspp .var-buffer, exit-pgms;
+  cpynv var-buflen, exit-pgms-len;
+  cpyblap rcd-name, "RPGM", " ";
+  callx .quiputv, argl-putv, *;
+retrieve-q-messages:    
+  /* retrieve q messages */
+  cmpnv(b) found, 1 / neq(=+2); /* usrq */
+  calli read-usrq, *, .read-usrq;
+:
+  cmpnv(b) found, 2 / neq(=+2); /* dtaq */
+  calli read-dtaq, *, .read-dtaq;
+:
+  /* update common q attr uim variables */
+  cpybla common-q-attr-vqname, qus-objd0200-obj-name;
+  cpybla common-q-attr-vqlib, qus-objd0200-rtn-lib;
+  cpybla common-q-attr-vqobjtype, q-type;
+  cpynv  common-q-attr-vqobjasp, qus-objd0200-asp-num;
+  cpybla common-q-attr-vextattr, qus-objd0200-ext-obj-attr;
+  cpybla common-q-attr-vowner, qus-objd0200-obj-owner;
+  cmpbla(b) qus-objd0200-obj-domain, '*U' / neq(=+2);
+  cpyblap common-q-attr-vdomain, "User", " ";
+:
+  cmpbla(b) qus-objd0200-obj-domain, '*S' / neq(=+2);
+  cpyblap common-q-attr-vdomain, "System", " ";
+:
+  cpynv common-q-attr-vqkeylen, qmsg-key-len ;
+  cpynv common-q-attr-vqtxtlen, qmsg-text-len ;
+  cpynv common-q-attr-vqmsgs, qmsg-messages ; 
+
+  setspp .var-buffer, common-q-attrs;
+  cpynv var-buflen, common-q-attrs-len-long;
+  cpyblap rcd-name, "RCOMMON", " ";
+  callx .quiputv, argl-putv, *;
+
+  /* fill list ... */
+  calli fill-list, *, .fill-list;
+
+  /* set varrcd RPGM */
+  setspp .var-buffer, exit-pgms;
+  cpynv var-buflen, exit-pgms-len;
+  cpyblap rcd-name, "RPGM", " ";
+  callx .quiputv, argl-putv, *;
+
+  /* display panel: dspqm */
+  cpyblap panel-name, "DSPQM", " ";
+  callx .quidspp, argl-dspp, *;
+
+  cmpnv(b) pnl-func, uim-return-f5 / neq(=+2) ;
+  b retrieve-q-messages         ; 
+
+farewell:
+  /* close display application */
+  callx .quicloa, argl-cloa, *;
+
+  brk 'RTN';
+  rtx *;
+/* end of i-always-main */
+
+/**
+ * @function fill-list
+ *
+ * fill list `lstmsg' with message number,
+ * message enqueued time, and message key.
+ *
+ * @pre apph
+ * @pre .q-messages
+ */
+dcl spcptr .uim-liste-lstmsg-key auto;
+
+dcl insptr .fill-list auto;
+entry fill-list int;
+
+  /* clear list LSTMSG */
+  setspp .var-buffer, uim-liste-lstmsg;
+  cpynv  var-buflen, uim-liste-lstmsg-len;
+  cpyblap rcd-name, "RLSGMSG", " ";
+  cpyblap list-name, "LSTMSG", " ";
+  callx .quiaddle, argl-addle, *;
+  callx .quidltl, argl-dltl, * ;
+
+  cpynv index, 0;
+  addspp .q-message, .q-messages, q-messages-t-len;
+loop-fill-list:
+  addn(s) index, 1;
+  cmpnv(b) index, qmsg-messages / hi(end-loop-fill-list);
+
+  /* set uim varrcd: rlstmsg */
+  /* uim-liste-lstmsg-option: 0 */
+  cpynv  uim-liste-lstmsg-number, qmsg-index;
+  cpybla uim-liste-lstmsg-time-enqueued, qmsg-enqueued-time;
+
+  addspp .qmsg-key, .q-message, q-message-t-len;
+  cmpnv(b) qmsg-key-len, 32 / hi(show-partitial-key-string),
+                              nhi(show-entire-key-string);
+show-entire-key-string:
+
+  cpybrep uim-liste-lstmsg-key, " ";
+  setspp .uim-liste-lstmsg-key, uim-liste-lstmsg-key;
+  setsppfp .a-copy-bytes-receiver, .uim-liste-lstmsg-key;
+  setsppfp .a-copy-bytes-source, .qmsg-key;
+  cpynv a-copy-bytes-length, qmsg-key-len;
+  calli copy-bytes, argl-copy-bytes, .copy-bytes;
+
+  b end-show-key-string;
+
+show-partitial-key-string:
+
+  setspp .uim-liste-lstmsg-key, uim-liste-lstmsg-key;
+  setsppfp .a-copy-bytes-receiver, .uim-liste-lstmsg-key;
+  setsppfp .a-copy-bytes-source, .qmsg-key;
+  cpynv a-copy-bytes-length, 28;
+  calli copy-bytes, argl-copy-bytes, .copy-bytes;
+
+  cpybra uim-liste-lstmsg-key, " ...";
+
+  b end-show-key-string;
+
+end-show-key-string:
+
+  /* insert a list entry */
+  setspp .var-buffer, uim-liste-lstmsg;
+  cpynv  var-buflen, uim-liste-lstmsg-len;
+  cpyblap rcd-name, "RLSGMSG", " ";
+  cpyblap list-name, "LSTMSG", " ";
+  callx .quiaddle, argl-addle, *;
+
+  cmpnv(b) uim-ec-bytes-out, 0 / eq(=+4);
+  cpybla uim-ec, qusec;
+  calli report-error, *, .report-error; /* ?? 扔哪去了 */
+  b end-loop-fill-list;
+:
+  /* next q message */
+  addspp .q-message, .q-message, q-message-entry-length;
+
+  b loop-fill-list;
+end-loop-fill-list:
+
+  b .fill-list;
+
+/**
+ * @function read-usrq
+ *
+ * retrieve messages from a usrq
+ *
+ * @post .q-messages, addressed to space object q-msg-space
+ */
+/**
+ * receiver template
+ */
+
+/* matqmsg template */
+dcl dd matqmsg-tmpl char(32) auto bdry(16);
+dcl spcptr .matqmsg-tmpl auto init(matqmsg-tmpl);
+dcl spc * bas(.matqmsg-tmpl);
+  dcl dd matqmsg-bytes-in      bin(4) dir;
+  dcl dd matqmsg-bytes-needed  bin(4) dir;
+  dcl dd matqmsg-msgs-returned bin(4) dir;
+  dcl dd matqmsg-msgs-on-q     bin(4) dir;
+  dcl dd matqmsg-msg-size      bin(4) dir;
+  dcl dd matqmsg-key-size      bin(4) dir;
+dcl con min-matqmsg-tmpl-len bin(4) init(32);
+
+/*selection template */
+dcl dd matqmsg-selection char(16) auto;
+  dcl dd * char(2) def(matqmsg-selection) pos(1) init(x"1000");
+    /* select all messages: 00010000, 00000000 */
+  dcl dd matqmsg-selection-key-bytes bin(4) def(matqmsg-selection) pos(3);
+  dcl dd matqmsg-selection-msg-bytes bin(4) def(matqmsg-selection) pos(7);
+
+/* user q message entry */
+dcl spcptr .usrq-message-entry auto;
+dcl spc * bas(.usrq-message-entry);
+  dcl dd usrq-msge-enqueque-time char(8) dir;
+  dcl dd usrq-msge-length bin(4) dir;
+/* MAT到的usrq entry length */
+dcl dd usrq-message-entry-length bin(4) auto;
+/**
+ * used for both usrq and dtaq, set to length of message entry in storage
+ */
+dcl dd q-message-entry-length bin(4) auto;
+dcl con usrq-message-entry-header-len bin(4) init(16);
+
+dcl sysptr q-msg-space auto;
+dcl dd q-msg-space-name char(30) auto init("Q-MSG-SPACE");
+dcl dd q-msg-space-size bin(4) auto;
+
+/* used to locate materialized user q data */
+dcl spcptr .usrq-msg-key auto;
+dcl spcptr .usrq-msg-text auto;
+
+dcl insptr .read-usrq;
+entry read-usrq int;
+
+  /* read usrq, twice to get max size of storage to allocate */
+  /*
+   * first time, get:
+   *  - matqmsg-msg-size
+   *  - matqmsg-key-size
+   */
+  cpynv matqmsg-bytes-in, min-matqmsg-tmpl-len;
+  matqmsg .matqmsg-tmpl, q, matqmsg-selection;
+
+  /**
+   * second time, get;
+   *  - storage needed by all messages include keys and message text
+   *    matqmsg-bytes-needed
+   */
+  calli cal-message-entry-length, *, .cal-message-entry-length;
+  matqmsg .matqmsg-tmpl, q, matqmsg-selection;
+
+  /* create space object q-msg-space */
+  cmpptre(b) q-msg-space, nil / eq(=+2) ;
+  dess q-msg-space              ; 
+:
+  /* cal q-msg-space-size:
+         q-messages-t-len +
+           (q-message-t-len + qmsg-key-len + qmsg-text-len) *
+             qmsg-messages
+   */
+  addn q-msg-space-size, matqmsg-key-size, matqmsg-msg-size;
+  addn(s) q-msg-space-size, q-message-t-len;
+  mult(s) q-msg-space-size, matqmsg-msgs-on-q;
+  addn(s) q-msg-space-size, q-messages-t-len;
+
+  setspp .crts-space, q-msg-space;
+  setspp .crts-space-name, q-msg-space-name;
+  setspp .crts-space-size, q-msg-space-size;
+  calli create-space, argl-create-space, .create-space;
+  setsppfp .q-messages, q-msg-space;
+  setsppfp .qmdtl-q-messages, .q-messages; /* for QMDTL */
+
+  /**
+   * third time:
+   *  - save matqmsg-bytes-needed
+   *  - re-allocate on .matqmsg-tmpl
+   *  - really retrieve messages
+   */
+dcl dd final-receiver-size bin(4) auto;
+  cpynv final-receiver-size, matqmsg-bytes-needed;
+  modasa .matqmsg-tmpl, matqmsg-bytes-needed;
+  cpynv matqmsg-bytes-in, final-receiver-size;
+  matqmsg .matqmsg-tmpl, q, matqmsg-selection;
+
+  /* set q-messages-t */
+  cpynv qmsg-key-len,  matqmsg-key-size;
+  cpynv qmsg-text-len, matqmsg-msg-size;
+  cpynv qmsg-messages, matqmsg-msgs-on-q;
+
+  /* cal q-message-entry-length(storage length) */
+  addn q-message-entry-length,
+    matqmsg-key-size,
+    matqmsg-msg-size;
+  addn(s) q-message-entry-length, q-message-t-len;
+
+  /* read usrq, save each q message entry */
+  cpynv index, 0;
+  addspp .usrq-message-entry,
+    .matqmsg-tmpl, min-matqmsg-tmpl-len; /* offset source */
+  addspp .q-message, .q-messages, q-messages-t-len; /* offset receiver */
+loop-read-usrq:
+  addn(s) index, 1;
+  cmpnv(b) index, matqmsg-msgs-on-q / hi(end-loop-read-usrq);
+
+  /* read a user q entry */
+  /* number */
+  cpynv qmsg-index, index;
+
+  /* time enqueued */
+  setspp .a-system-clock, usrq-msge-enqueque-time;
+  setspp .a-timestamp, qmsg-enqueued-time;
+  calli 
+    get-local-saa-timestamp,
+    argl-get-local-saa-timestamp,
+    .get-local-saa-timestamp;
+
+  /* key */
+  addspp .usrq-msg-key, .usrq-message-entry, usrq-message-entry-header-len;
+  addspp .qmsg-key, .q-message, q-message-t-len;
+  /* copy `matqmsg-key-size' bytes from .usrq-msg-key to .qmsg-key */
+  cmpnv(b) matqmsg-key-size, 0 / eq(=+5);
+  setsppfp   .a-copy-bytes-receiver, .qmsg-key;
+  setsppfp .a-copy-bytes-source, .usrq-msg-key;
+  cpynv a-copy-bytes-length, matqmsg-key-size;
+  calli copy-bytes, argl-copy-bytes, .copy-bytes;
+:
+  /* text */
+  addspp .usrq-msg-text, .usrq-msg-key, matqmsg-selection-key-bytes;
+  addspp .qmsg-text, .qmsg-key, matqmsg-key-size;
+    /* 因为我在存储中只要实际的key length */
+    /* replace matqmsg-selection-key-bytes with matqmsg-key-size */
+  /* copy `qmsg-text-len' from .usrq-msg-text to .qmsg-text */
+  setsppfp   .a-copy-bytes-receiver, .qmsg-text;
+  setsppfp .a-copy-bytes-source, .usrq-msg-text;
+  cpynv a-copy-bytes-length, usrq-msge-length;
+  calli copy-bytes, argl-copy-bytes, .copy-bytes;
+
+  addspp .q-message,
+    .q-message, q-message-entry-length; /* offset receiver */
+  addspp .usrq-message-entry,
+    .usrq-message-entry, usrq-message-entry-length; /* offset source */
+  b loop-read-usrq;
+end-loop-read-usrq:
+
+  b .read-usrq;
+
+/**
+ * @function read-dtaq
+ *
+ * retrieve messages from a dtaq
+ *
+ * @post .q-messages
+ */
+dcl insptr .read-dtaq;
+entry read-dtaq int;
+
+  /* determine q type */
+dcl dd dtaq-attr char(108) auto;
+  setspp .dtaq-attr, dtaq-attr;
+  setspp .qmhqrdqd-receiver, dtaq-attr;
+  cpynv qmhqrdqd-receiver-len, RDQD0100-LEN;
+  cpynv dtaq-attr-bytes-in, RDQD0100-LEN;
+  cpyblap qmhqrdqd-q-lib, q-name, " ";
+  cpybra  qmhqrdqd-q-lib, q-lib;
+  callx septs(h"0C89"), argl-qmhqrdqd, *;
+
+  cmpbla(b) dtaq-attr-type, "1" / neq(=+7); /* ddm dtaq */
+  cpyblap error-msg, "DDM data queue is not supported.", " ";
+  triml len, error-msg, " ";
+  setspp .sendmsg-msg, error-msg;
+  setspp .sendmsg-msglen, len;
+  calli send-msg, argl-sendmsg, .send-msg;
+  b farewell;
+:
+  cmpbla(b) dtaq-attr-sequence, "K" / neq(=+3);
+  calli mat-keyed-q-msg, *, .mat-keyed-q-msg;
+  b =+2;
+:
+  calli mat-nonkeyed-q-msg, *, .mat-nonkeyed-q-msg;
+:
+  b .read-dtaq;
+
+/**
+ * @function  mat-keyed-q-msg
+ *
+ * @post .q-messages
+ */
+dcl spcptr .q-entry-keyed auto;
+dcl spc q-entry-keyed-t bas(.q-entry-keyed);
+  dcl dd qentry0200-next-entry bin(4) dir;
+  dcl dd qentry0200-enqueque-time char(8) dir;
+  dcl dd qentry0200-msgtxt-len bin(4) dir;
+dcl con q-entry-keyed-t-len bin(4) init(16);
+  /* key length is determined by rdqm-keylen-returned */
+  /* message text is placed after message key, of length qentry0200-msgtxt-len */
+
+/* should be set to .q-entry-keyed plus 4+8+4=16 */
+dcl spcptr .qentry0200-key auto;
+/* should be set to .q-entry-keyed + rdqm-keylen-returned */
+dcl spcptr .qentry0200-msg auto;
+
+dcl insptr .mat-keyed-q-msg auto;
+entry mat-keyed-q-msg int;
+
+  /* call qmhrdqm the first time */
+  setspp .rdqm0200, rdqm0200     ; 
+  setsppfp .a-qmhrdqm-receiver, .rdqm0200;
+  cpynv a-qmhrdqm-receiver-len, min-rdqm0200-len;
+  cpyblap a-qmhrdqm-q-name, q-name, " ";
+  cpybra a-qmhrdqm-q-name, q-lib;
+  setsppfp .a-qmhrdqm-selection, .rdqs0200;
+  setsppfp .a-qmhrdqm-ec, .qusec;
+  cpynv ec-bytes-in, _USECLEN   ; 
+  callx septs(h'130D'), argl-qmhrdqm, *;
+  brk '1ST';
+
+  cmpnv(b) ec-bytes-out, 0 / eq(=+3);
+  calli report-error, *, .report-error;
+  b .mat-keyed-q-msg;
+:
+  /* second time */
+  cpynv a-qmhrdqm-receiver-len, rdqm-bytes-available ;
+  cpynv rdqs0200-msgtxt-bytes-to-get, rdqm-textlen-available;
+  cpynv rdqs0200-msgkey-bytes-to-get, rdqm-keylen-available;
+  cpynv rdqs0200-key-len, rdqm-keylen-available;
+  cpybrep rdqs0200-key, x"00";
+  modasa .rdqm0200, rdqm-bytes-available ; 
+  setsppfp .a-qmhrdqm-receiver, .rdqm0200;
+  callx septs(h'130D'), argl-qmhrdqm, *;
+  brk '2ND';
+
+  cmpnv(b) ec-bytes-out, 0 / eq(=+3);
+  calli report-error, *, .report-error;
+  b .mat-keyed-q-msg;
+:
+  /* save materialized messages */
+  /* cal q-msg-space-size */
+  addn q-msg-space-size, rdqm-keylen-returned, rdqm-textlen-requested;
+  addn(s) q-msg-space-size, q-message-t-len;
+  mult(s) q-msg-space-size, rdqm-msgs-returned;
+  addn(s) q-msg-space-size, q-messages-t-len;
+
+  /* create space object q-msg-space */
+  cmpptre(b) q-msg-space, nil / eq(=+2) ;
+  dess q-msg-space              ; 
+:
+  setspp .crts-space, q-msg-space;
+  setspp .crts-space-name, q-msg-space-name;
+  setspp .crts-space-size, q-msg-space-size;
+  calli create-space, argl-create-space, .create-space;
+  setsppfp .q-messages, q-msg-space;
+  setsppfp .qmdtl-q-messages, .q-messages;  /* for QMDTL */
+
+  /* save q-messages-t */
+  cpynv qmsg-key-len, rdqm-keylen-available;
+  cpynv qmsg-text-len, rdqm-textlen-available;
+  cpynv qmsg-messages, rdqm-msgs-returned;
+
+  /* cal q-message-entry-length */
+  addn q-message-entry-length,
+    rdqm-keylen-returned,
+    rdqm-textlen-requested;
+  addn(s) q-message-entry-length, q-message-t-len;
+
+  /* read each message */
+  cpynv index, 0;
+  addspp .q-entry-keyed, .rdqm0200, rdqm-first-entry-offset;
+  addspp .q-message, .q-messages, q-messages-t-len;
+loop-keyed-dtaq:
+  addn(s) index, 1;
+  cmpnv(b) index, rdqm-msgs-returned / hi(end-loop-keyed-dtaq);
+
+  /* number */
+  cpynv qmsg-index, index;
+
+  /* time enqueued */
+  setspp .a-system-clock, qentry0200-enqueque-time;
+  setspp .a-timestamp, qmsg-enqueued-time;
+  calli 
+    get-local-saa-timestamp,
+    argl-get-local-saa-timestamp,
+    .get-local-saa-timestamp;
+
+  /* key */
+  addspp .qentry0200-key, .q-entry-keyed, q-entry-keyed-t-len;
+  addspp .qmsg-key, .q-message, q-message-t-len;
+  cmpnv(b) rdqm-keylen-returned, 0 / eq(=+5);
+  setsppfp .a-copy-bytes-receiver, .qmsg-key;
+  setsppfp .a-copy-bytes-source, .qentry0200-key;
+  cpynv a-copy-bytes-length, rdqm-keylen-returned;
+  calli copy-bytes, argl-copy-bytes, .copy-bytes;
+:
+  /* message text */
+  addspp .qentry0200-msg, .qentry0200-key, rdqm-keylen-returned;
+  addspp .qmsg-text, .qmsg-key, rdqm-keylen-returned ;
+
+  /* clear .qmsg-text, lenght = rdqm-textlen-requested */
+  setsppfp .a-set-bytes-receiver, .qmsg-text ;
+  cpybla a-set-bytes-value, x"00" ;
+  cpynv a-set-bytes-length, rdqm-textlen-requested ;
+  calli set-bytes, argl-set-bytes, .set-bytes ; 
+
+  setsppfp .a-copy-bytes-receiver, .qmsg-text;
+  setsppfp .a-copy-bytes-source, .qentry0200-msg;
+  cpynv a-copy-bytes-length, qentry0200-msgtxt-len ; 
+  calli copy-bytes, argl-copy-bytes, .copy-bytes;
+
+  addspp .q-entry-keyed, .rdqm0200, qentry0200-next-entry;
+  addspp .q-message, .q-message, q-message-entry-length;
+
+  b loop-keyed-dtaq;
+end-loop-keyed-dtaq:
+
+  b .mat-keyed-q-msg;
+/* eof - mat-keyed-q-msg */
+
+/**
+ * mat-nonkeyed-q-msg
+ *
+ * for nonkeyed dataq, rdqm-entlen-returned is set
+ * to the returned entry length.
+ */
+dcl spcptr .q-entry-non-keyed auto;
+dcl spc * bas(.q-entry-non-keyed);
+  dcl dd qentry0100-next-entry bin(4) dir;
+  dcl dd qentry0100-enqueque-time char(8) dir;
+/* should be set to .q-entry-non-keyed plus 12 */
+dcl spcptr .qentry0100-msgtxt auto;
+dcl con qentry0100-msg-offset bin(4) init(12);
+
+dcl insptr .mat-nonkeyed-q-msg auto;
+entry mat-nonkeyed-q-msg int;
+
+  /* first time */
+  cpybla a-qmhrdqm-format, "RDQM0100";
+  cpybla a-qmhrdqm-selection-format, "RDQS0100";
+  cpynv a-qmhrdqm-selection-len, 8; /* length of RDQS0100 */
+  setspp .rdqm0200, rdqm0200     ; 
+  setsppfp .a-qmhrdqm-receiver, .rdqm0200;
+  cpynv a-qmhrdqm-receiver-len, min-rdqm0200-len;
+  cpyblap a-qmhrdqm-q-name, q-name, " ";
+  cpybra a-qmhrdqm-q-name, q-lib;
+  setsppfp .a-qmhrdqm-selection, .rdqs0100;
+  setsppfp .a-qmhrdqm-ec, .qusec;
+  callx septs(h'130D'), argl-qmhrdqm, *;
+  brk 'N1ST';
+
+  cmpnv(b) ec-bytes-out, 0 / eq(=+3);
+  calli report-error, *, .report-error;
+  b .mat-nonkeyed-q-msg;
+:
+  /* second time */
+  cpynv a-qmhrdqm-receiver-len, rdqm-bytes-available;
+  cpynv rdqs-msg-bytes-to-retrieve, rdqm-textlen-available;
+  modasa .rdqm0200, rdqm-bytes-available;
+  setsppfp .a-qmhrdqm-receiver, .rdqm0200;
+  callx septs(h'130D'), argl-qmhrdqm, *;
+  brk 'N2ND';
+
+  cmpnv(b) ec-bytes-out, 0 / eq(=+3);
+  calli report-error, *, .report-error;
+  b .mat-nonkeyed-q-msg;
+:
+  /* save materialized messages */
+  /* cal q-msg-space-size */
+  addn q-msg-space-size, q-message-t-len, rdqm-textlen-requested;
+  mult(s) q-msg-space-size, rdqm-msgs-returned;
+  addn(s) q-msg-space-size, q-messages-t-len;
+
+  /* create space object q-msg-space */
+  cmpptre(b) q-msg-space, nil / eq(=+2) ;
+  dess q-msg-space              ; 
+:
+  setspp .crts-space, q-msg-space;
+  setspp .crts-space-name, q-msg-space-name;
+  setspp .crts-space-size, q-msg-space-size;
+  calli create-space, argl-create-space, .create-space;
+  setsppfp .q-messages, q-msg-space;
+  setsppfp .qmdtl-q-messages, .q-messages; /* for QMDTL */
+
+  /* save q-messages-t */
+  cpynv qmsg-key-len, rdqm-keylen-available;
+  cpynv qmsg-text-len, rdqm-textlen-available;
+  cpynv qmsg-messages, rdqm-msgs-returned;
+
+  /* cal q-message-entry-length */
+  addn q-message-entry-length,
+    q-message-t-len,
+    rdqm-textlen-requested;
+
+  /* read each message */
+  cpynv index, 0;
+  addspp .q-entry-non-keyed, .rdqm0200, rdqm-first-entry-offset;
+  addspp .q-message, .q-messages, q-messages-t-len;
+loop-non-keyed-dtaq:
+  addn(s) index, 1;
+  cmpnv(b) index, rdqm-msgs-returned / hi(end-loop-non-keyed-dtaq);
+
+  /* number */
+  cpynv qmsg-index, index;
+
+  /* time enqueued */
+  setspp .a-system-clock, qentry0100-enqueque-time;
+  setspp .a-timestamp, qmsg-enqueued-time;
+  calli 
+    get-local-saa-timestamp,
+    argl-get-local-saa-timestamp,
+    .get-local-saa-timestamp;
+
+  /* message text */
+  addspp .qentry0100-msgtxt,
+    .q-entry-non-keyed,
+    qentry0100-msg-offset;
+  addspp .qmsg-text, .q-message, q-message-t-len;
+
+  /* here memset .qmsg-text, 0, rdqm-textlen-requested */
+  setsppfp .a-set-bytes-receiver, .qmsg-text ;
+  cpybla a-set-bytes-value, x"00" ;
+  cpynv a-set-bytes-length, rdqm-textlen-requested ;
+  calli set-bytes, argl-set-bytes, .set-bytes ; 
+
+  setsppfp .a-copy-bytes-receiver, .qmsg-text;
+  setsppfp .a-copy-bytes-source, .qentry0100-msgtxt;
+  cpynv a-copy-bytes-length, rdqm-textlen-requested;
+  calli copy-bytes, argl-copy-bytes, .copy-bytes;
+
+  addspp .q-entry-non-keyed, .rdqm0200, qentry0100-next-entry;
+  addspp .q-message, .q-message, q-message-entry-length;
+
+  b loop-non-keyed-dtaq;
+end-loop-non-keyed-dtaq:
+
+  b .mat-nonkeyed-q-msg;
+/* eof - mat-nonkeyed-q-msg */
+
+/**
+ * @fn get-object-attr
+ *
+ * retreive extended object attriute, using OBJD0200 format
+ *
+ * @param object-attr, char(10)
+ */
+dcl dd object-attr char(10) auto;
+dcl spcptr .object-attr auto init(object-attr);
+dcl ol argl-get-object-attr(
+  .object-attr
+) arg;
+
+dcl spcptr .p-object-attr parm;
+dcl dd p-object-attr char(10) bas(.p-object-attr);
+dcl ol pl-get-object-attr(
+  .p-object-attr
+) parm int;
+
+/include qusrobjd.mi;
+dcl dd objd0200 char(180) auto;
+
+dcl insptr .get-object-attr;
+entry get-object-attr(pl-get-object-attr) int;
+
+  setspp .qus-objd0200, objd0200;
+  cpynv qus-objd0200-bytes-in, _QUS-OBJD0200-LEN;
+  setsppfp .qusrobjd-receiver, .qus-objd0200;
+  cpynv qusrobjd-buflen, _QUS-OBJD0200-LEN;
+  cpybla qusrobjd-format-name, "OBJD0200";
+  cpybla qusrobjd-object-lib, q-object-lib;
+  cpybla qusrobjd-object-type, q-type;
+  cpynv ec-bytes-in, _USECLEN;
+  setsppfp .qusrobjd-ec, .qusec;
+  callx .qusrobjd, argl-qusrobjd, *;
+
+  /* set object attr param */
+  cpybla p-object-attr, qus-objd0200-ext-obj-attr;
+
+  b .get-object-attr;
+
+/**
+ * report error
+ *
+ * @param[in]  qusec
+ * @post       send message to interactive user
+ */
+dcl insptr .report-error;
+entry report-error int;
+
+  brk 'RTPERR';
+
+  cpybla sndpm-msgid, ec-exid;
+  cpyblap sndpm-msgf, "QCPFMSG   QSYS", " ";
+  setspp .sendmsg-msg, ec-exdata;
+  setspp .sendmsg-msglen, ec-bytes-out;
+  calli send-msg, argl-sendmsg, .send-msg;
+
+  b .report-error;
+
+/**
+ * @function cal-message-entry-length
+ *
+ * @pre matqmsg-msg-size
+ * @pre matqmsg-key-size
+ *
+ * @post matqmsg-selection-key-bytes
+ * @post matqmsg-selection-msg-bytes
+ * @post usrq-message-entry-length
+ */
+dcl insptr .cal-message-entry-length auto;
+entry cal-message-entry-length int;
+
+dcl dd quotient bin(4) auto;
+dcl dd remainder bin(4) auto;
+  divrem quotient, matqmsg-msg-size, 16, remainder;
+  cmpnv(b) remainder, 0 / eq(=+2);
+  addn(s) quotient, 1;
+:
+  mult matqmsg-selection-msg-bytes, quotient, 16;
+
+  divrem quotient, matqmsg-key-size, 16, remainder;
+  cmpnv(b) remainder, 0 / eq(=+2);
+  addn(s) quotient, 1;
+:
+  mult matqmsg-selection-key-bytes, quotient, 16;
+
+  addn usrq-message-entry-length, matqmsg-selection-msg-bytes, matqmsg-selection-key-bytes;
+  addn(s) usrq-message-entry-length, usrq-message-entry-header-len;
+
+  b .cal-message-entry-length;
+
+/**
+ * @function copy-bytes
+ */
+dcl spcptr .a-copy-bytes-receiver auto;
+dcl spcptr .a-copy-bytes-source auto;
+dcl dd a-copy-bytes-length bin(4) unsgnd auto;
+dcl spcptr .a-copy-bytes-length auto init(a-copy-bytes-length);
+dcl ol argl-copy-bytes(
+  .a-copy-bytes-receiver,
+  .a-copy-bytes-source,
+  .a-copy-bytes-length
+) arg;
+
+dcl spcptr .p-copy-bytes-receiver parm;
+dcl spcptr .p-copy-bytes-source parm;
+dcl spcptr .p-copy-bytes-length parm;
+dcl dd p-copy-bytes-length bin(4) unsgnd bas(.p-copy-bytes-length);
+dcl ol pl-copy-bytes (
+  .p-copy-bytes-receiver,
+  .p-copy-bytes-source,
+  .p-copy-bytes-length
+) parm int;
+
+dcl dd copy-bytes-index bin(4) unsgnd auto;
+dcl dd copy-bytes-source-byte char(1) bas(*);
+dcl dd copy-bytes-receiver-byte char(1) bas(*);
+dcl spcptr .copy-bytes-receiver auto;
+dcl spcptr .copy-bytes-source auto;
+
+dcl insptr .copy-bytes auto;
+entry copy-bytes(pl-copy-bytes) int;
+
+  cpynv copy-bytes-index, 0;
+  setsppfp .copy-bytes-receiver, .p-copy-bytes-receiver;
+  setsppfp .copy-bytes-source, .p-copy-bytes-source;
+loop-copy-bytes:
+  addn(s) copy-bytes-index, 1;
+  cmpnv(b) copy-bytes-index, p-copy-bytes-length / hi(end-loop-copy-bytes);
+
+  cpybla
+    .copy-bytes-receiver->copy-bytes-receiver-byte,
+    .copy-bytes-source->copy-bytes-source-byte;
+
+  addspp .copy-bytes-receiver, .copy-bytes-receiver, 1;
+  addspp .copy-bytes-source, .copy-bytes-source, 1;
+  b loop-copy-bytes;
+end-loop-copy-bytes:
+
+  b .copy-bytes;
+
+/**
+ * @function set-bytes
+ */
+dcl spcptr .a-set-bytes-receiver auto;
+dcl dd a-set-bytes-value char(1) auto ; 
+dcl spcptr .a-set-bytes-value auto init(a-set-bytes-value);
+dcl dd a-set-bytes-length bin(4) unsgnd auto;
+dcl spcptr .a-set-bytes-length auto init(a-set-bytes-length);
+dcl ol argl-set-bytes(
+  .a-set-bytes-receiver,
+  .a-set-bytes-value,
+  .a-set-bytes-length
+) arg;
+
+dcl spcptr .p-set-bytes-receiver parm;
+dcl spcptr .p-set-bytes-value parm;
+dcl spcptr .p-set-bytes-length parm;
+dcl dd p-set-bytes-length bin(4) unsgnd bas(.p-set-bytes-length);
+dcl ol pl-set-bytes (
+  .p-set-bytes-receiver,
+  .p-set-bytes-value,
+  .p-set-bytes-length
+) parm int;
+
+dcl dd set-bytes-index bin(4) unsgnd auto;
+dcl dd set-bytes-value char(1) bas(.p-set-bytes-value);
+dcl dd set-bytes-receiver-byte char(1) bas(*);
+dcl spcptr .set-bytes-receiver auto;
+
+dcl insptr .set-bytes auto;
+entry set-bytes(pl-set-bytes) int;
+
+  cpynv set-bytes-index, 0;
+  setsppfp .set-bytes-receiver, .p-set-bytes-receiver;
+loop-set-bytes:
+  addn(s) set-bytes-index, 1;
+  cmpnv(b) set-bytes-index, p-set-bytes-length / hi(end-loop-set-bytes);
+
+  cpybla
+    .set-bytes-receiver->set-bytes-receiver-byte,
+    set-bytes-value             ; 
+
+  addspp .set-bytes-receiver, .set-bytes-receiver, 1;
+  b loop-set-bytes;
+end-loop-set-bytes:
+
+  b .set-bytes;
+
+/* declarations */
+dcl dd found bin(4) auto;
+dcl dd error-msg char(512) auto;
+dcl dd varch10 char(10) bas(*);
+dcl spcptr .error-msg auto init(error-msg);
+dcl dd len bin(4) auto;
+dcl dd index bin(4) auto;
+dcl dd valid-q-types(2) char(10) auto init(
+  *(1)"*USRQ",
+  "*DTAQ"
+);
+dcl con uim-return-f5 bin(4) init(105) ; /* F5 */
+dcl ptr nil auto                ; 
+
+/* for varrcd RPGM */
+dcl dd exit-pgms(2) char(20) init(
+  *(1)"QMDTL     *LIBL",
+  "QMDTL     *LIBL"
+);
+dcl con exit-pgms-len bin(4) init(40);
+
+/* SEPT */
+dcl spcptr .sept-ptr baspco;
+dcl sysptr septs(0:7000) bas(.sept-ptr);
+
+/* QMHRDQM, 130D */
+dcl spcptr .a-qmhrdqm-receiver auto;
+dcl dd a-qmhrdqm-receiver-len bin(4) auto;
+dcl spcptr .a-qmhrdqm-receiver-len auto init(a-qmhrdqm-receiver-len);
+dcl dd a-qmhrdqm-format char(8) auto init("RDQM0200");
+dcl spcptr .a-qmhrdqm-format auto init(a-qmhrdqm-format);
+dcl dd a-qmhrdqm-q-name char(20) auto;
+dcl spcptr .a-qmhrdqm-q-name auto init(a-qmhrdqm-q-name);
+dcl spcptr .a-qmhrdqm-selection auto;
+dcl dd a-qmhrdqm-selection-len bin(4) auto init(272);
+dcl spcptr .a-qmhrdqm-selection-len auto init(a-qmhrdqm-selection-len);
+dcl dd a-qmhrdqm-selection-format char(10) auto init("RDQS0200");
+dcl spcptr .a-qmhrdqm-selection-format auto init(a-qmhrdqm-selection-format);
+dcl spcptr .a-qmhrdqm-ec auto;
+dcl ol argl-qmhrdqm(
+  .a-qmhrdqm-receiver,
+  .a-qmhrdqm-receiver-len,
+  .a-qmhrdqm-format,
+  .a-qmhrdqm-q-name,
+  .a-qmhrdqm-selection,
+  .a-qmhrdqm-selection-len,
+  .a-qmhrdqm-selection-format,
+  .a-qmhrdqm-ec
+) arg;
+
+/* RDQM0200 */
+dcl dd rdqm0200 char(54) auto bdry(16);
+dcl spcptr .rdqm0200 auto init(rdqm0200);
+dcl spc * bas(.rdqm0200);
+  dcl dd rdqm-bytes-returned bin(4) dir;
+  dcl dd rdqm-bytes-available bin(4) dir;
+  dcl dd rdqm-msgs-returned bin(4) dir;
+  dcl dd rdqm-msgs-available bin(4) dir;
+  dcl dd rdqm-keylen-returned bin(4) dir;
+  dcl dd rdqm-keylen-available bin(4) dir;
+  dcl dd rdqm-textlen-requested bin(4) dir;
+  dcl dd rdqm-textlen-available bin(4) dir;
+  dcl dd rdqm-entlen-returned bin(4) dir;
+  dcl dd rdqm-entlen-available bin(4) dir;
+  dcl dd rdqm-first-entry-offset bin(4) dir;
+  dcl dd rdqm-libname-returned char(10) dir;
+dcl con min-rdqm0200-len bin(4) init(54);
+
+dcl dd dtaq-receiver-length bin(4) auto ; 
+
+/* selection template: RDQS0100 */
+dcl dd rdqs0100 char(8) auto;
+  dcl dd rdqs-type char(1) def(rdqs0100) pos(1) init("A");
+  dcl dd * char(3) def(rdqs0100) pos(2);
+  dcl dd rdqs-msg-bytes-to-retrieve bin(4) def(rdqs0100) pos(5);
+dcl spcptr .rdqs0100 auto init(rdqs0100);
+
+/* selection template: RDQS0200 */
+dcl dd rdqs0200 char(272) auto;
+  dcl dd rdqs0200-type char(1) def(rdqs0200) pos(1) init("K");
+  dcl dd rdqs0200-search-order char(2) def(rdqs0200) pos(2) init("GE");
+  dcl dd rdqs0200-reserved char(1) def(rdqs0200) pos(4);
+  dcl dd rdqs0200-msgtxt-bytes-to-get bin(4) def(rdqs0200) pos(5);
+  dcl dd rdqs0200-msgkey-bytes-to-get bin(4) def(rdqs0200) pos(9);
+  dcl dd rdqs0200-key-len bin(4) def(rdqs0200) pos(13);
+  dcl dd rdqs0200-key char(256) def(rdqs0200) pos(17);
+dcl spcptr .rdqs0200 auto init(rdqs0200);
+
+/**
+ * list entry structure of list lstmsg
+ */
+dcl dd uim-liste-lstmsg char(68) auto;
+dcl spcptr .uim-liste-lstmsg auto init(uim-liste-lstmsg);
+dcl spc * bas(.uim-liste-lstmsg);
+  dcl dd uim-liste-lstmsg-option bin(2) dir;
+  dcl dd uim-liste-lstmsg-number znd(8,0) dir;
+  dcl dd uim-liste-lstmsg-time-enqueued char(26) dir;
+  dcl dd uim-liste-lstmsg-key char(32) dir;
+dcl con uim-liste-lstmsg-len bin(4) init(68);
+
+/**
+ * q message structure
+ *
+ * used both by usrq and dtaq
+ */
+dcl spcptr .q-messages auto;
+dcl spc q-messages-t bas(.q-messages);
+  dcl dd qmsg-key-len bin(4) dir; /* zero for non-keyed queues */
+  dcl dd qmsg-text-len bin(4) dir;
+  dcl dd qmsg-messages bin(4) dir;
+dcl con q-messages-t-len bin(4) init(12);
+/* messages */
+
+/* for qmdtl */
+dcl dd for-qmdtl char(64) ext bdry(16);
+  dcl spcptr .qmdtl-q-messages def(for-qmdtl) pos(1);
+
+dcl spcptr .q-message auto;
+dcl spc q-message-t bas(.q-message);
+  dcl dd qmsg-index znd(8,0) dir;
+  dcl dd qmsg-enqueued-time char(26) dir;
+dcl con q-message-t-len bin(4) init(34);
+/* key and text */
+dcl spcptr .qmsg-key auto;
+dcl spcptr .qmsg-text auto;
+
+/* misc includes */
+/include space.mi;
+/include sendmsg.mi;
+/include when.mi;
+
+pend;
+
+/* eof - qmsg.mi */

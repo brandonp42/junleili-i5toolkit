@@ -1,0 +1,13 @@
+     /*                                                   */
+     /* @file teamates.pf                                 */
+     /*                                                   */
+
+     A          R REC
+     A
+     A            MBRID         16H         COLHDG('Member Identifier')
+     A            FNAM          16A         COLHDG('First Name')
+     A            LNAM          16A         COLHDG('Last Name')
+     A            OCCU          16A         COLHDG('Occupation')
+     A            AGE            5P 0       COLHDG('Age')
+     A            LOCATION      64A         COLHDG('Location')
+     A            EXPE          32A         COLHDG('特长')

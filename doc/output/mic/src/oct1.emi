@@ -1,0 +1,29 @@
+/* *
+ * @file oct1.emi
+ *
+ * includes oct-inc.emi
+ */
+
+/define __chinese__         ;  /* defines MACRO __chinese__ */
+        
+entry * ext                     ;
+
+dcl dd buf char(40) auto        ;
+dcl dd hex char(2) auto         ;
+dcl dd str char(4) auto init('19EF') ;
+
+        cvtch hex, str          ;
+
+        cpyblap oct-err,
+          oct-greeting,
+          " "                   ;
+        triml oct-len, oct-err, ' ' ;
+        %sendmsg(oct-err, oct-len)  ;
+
+brk 'RRR'                       ;
+        rtx *                   ;
+
+/include oct-inc.emi            ;
+/include oct-inc.emi            ; /* includes oct-inc.emi twice */
+
+pend                            ;

@@ -1,0 +1,116 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-stgsync.rpgleinc
+      *
+      * Header of system builtins for ILE RPG provided by the
+      * open-source project i5/OS Programmer's Toolkit.
+      * For details please refer to the project's web site,
+      * http://i5toolkit.sourceforge.net/
+      */
+
+      /if not defined(i5toolkit_rpg_mih_stgsync)
+      /define i5toolkit_rpg_mih_stgsync
+
+      /if defined(*V5R4M0)
+     /**
+      * @BIF _ATMCADD4 (Atomic Add (ATMCADD))
+      *
+      * @return original value of sum_addend
+      */
+     d atmcadd4        pr            10i 0 extproc('_ATMCADD4')
+     d     sum_addend                10i 0
+     d     augend                    10i 0 value
+
+     /**
+      * @BIF _ATMCADD8 (Atomic Add (ATMCADD))
+      *
+      * atomic add 8-byte singed binary value.
+      */
+     d atmcadd8        pr            20i 0 extproc('_ATMCADD8')
+     d     sum_addend                20i 0
+     d     augend                    20i 0 value
+
+     /**
+      * @BIF _ATMCAND4 (Atomic And (ATMCAND))
+      *
+      * @return original value of op1
+      */
+     d atmcand4        pr            10u 0 extproc('_ATMCAND4')
+     d     op1                       10u 0
+     d     mask                      10u 0 value
+
+     /**
+      * @BIF _ATMCAND8 (Atomic And (ATMCAND))
+      *
+      * atomic and 8-byte unsinged binary value.
+      */
+     d atmcand8        pr            20u 0 extproc('_ATMCAND8')
+     d     op1                       20u 0
+     d     mask                      20u 0 value
+
+     /**
+      * @BIF _ATMCOR4 (Atomic Or (ATMCOR))
+      *
+      * atomic or 4-byte unsinged binary value.
+      *
+      * @return original value of op1
+      */
+     d atmcor4         pr            10u 0 extproc('_ATMCOR4')
+     d     op1                       10u 0
+     d     mask                      10u 0 value
+
+     /**
+      * @BIF _ATMCOR8 (Atomic Or (ATMCOR))
+      *
+      * atomic or 8-byte unsinged binary value.
+      *
+      * @return original value of op1
+      */
+     d atmcor8         pr            20u 0 extproc('_ATMCOR8')
+     d     op1                       20u 0
+     d     mask                      20u 0 value
+
+     /**
+      * @BIF _CHKLKVAL (Check Lock Value (CHKLKVAL))
+      *
+      * @remark CHKLKVAL and CLRLKVAL are available since V5R3
+      */
+     d chklkval        pr            10i 0 extproc('_CHKLKVAL')
+     d     lock                      20i 0
+     d     old_val                   20i 0 value
+     d     new_val                   20i 0 value
+
+     /**
+      * @BIF _CLRKLVAL (Clear Lock Value (CLRLKVAL))
+      */
+     d clrlkval        pr                  extproc('_CLRLKVAL')
+     d     lock                      20i 0
+     d     new_val                   20i 0 value
+
+     /**
+      * @BIF _SYNCSTG (Synchronize Shared Storage Accesses (SYNCSTG))
+      */
+     d syncstg         pr                  extproc('_SYNCSTG')
+     d     action                    10u 0 value
+      * defined(*V5R4M0)
+      /endif
+
+      /endif

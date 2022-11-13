@@ -1,0 +1,57 @@
+/**
+ * This file is part of i5/OS Programmer's Toolkit.
+ *
+ * Copyright (C) 2010, 2011  Junlei Li.
+ *
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file nov6.emi
+ *
+ * test of compiler pre-defined include: pgm-act.emi
+ *
+ * List basic info of an AG
+ *
+ * save pgm-act.emi
+ */
+
+entry * ext                     ;
+
+dcl spcptr ag-mark-ptr parm     ;
+dcl ol pl-main(
+        ag-mark-ptr
+)parm ext ;
+
+dcl dd ag-attr-len bin(2) auto                ;
+dcl dd ag-mark bin(4) unsgnd bas(ag-mark-ptr) ;
+
+	/* alloc buffer for ag-attr */
+        cpynv ag-attr-len, emi-ag-attr-len-basic ;
+        modasa emi-ag-attr-ptr, ag-attr-len ;
+
+        /* materialize AG info */
+        cpynv emi-ag-attr-bytes-in, emi-ag-attr-len-basic ;
+        matagpat emi-ag-attr-ptr, ag-mark, x'00'          ;
+brk 'AG-INFO'                               ;
+
+        neg(s) ag-attr-len                  ;
+        modasa emi-ag-attr-ptr, ag-attr-len ;
+
+brk 'END'                       ;
+        rtx *                   ;
+
+/include pgm-act.emi            ;
+
+pend                            ;

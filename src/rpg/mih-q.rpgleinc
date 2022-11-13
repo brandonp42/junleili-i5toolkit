@@ -1,0 +1,68 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-q.rpgleinc
+      *
+      * Queue management instructions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_q)
+      /define i5toolkit_rpg_mih_q
+
+     /* message prefix used by instruction ENQ */
+     d enq_prefix_t    ds                  qualified
+     d     msg_len                   10i 0
+      * for keyed queue objects
+     d     msg_key                  256a
+
+     /**
+      * @BIF _ENQ (Enqueue (ENQ))
+      */
+     d enq             pr                  extproc('_ENQ')
+     d     queue                       *
+     d     msg_prefix                  *   value
+     d     msg                         *   value
+
+     /* message prefix used by instruction DEQ */
+     d deq_prefix_t    ds                  qualified
+     d     deq_time                   8a
+     d     time_out                   8a
+     d     msg_len                   10i 0
+     d     state_flag                 1a
+      * for keyed queue objects; input key, output key
+     d     msg_keys                 512a
+
+     /**
+      * @BIF _DEQI (Dequeue from a queue object without waiting (DEQ))
+      */
+     d deqi            pr            10i 0 extproc('_DEQI')
+     d     msg_prefix                  *   value
+     d     msg                         *   value
+     d     queue                       *
+
+     /**
+      * @BIF _DEQWAIT (Dequeue from or wait on a queue object (DEQ))
+      */
+     d deqwait         pr                  extproc('_DEQWAIT')
+     d     msg_prefix                  *   value
+     d     msg                         *   value
+     d     queue                       *
+
+      /endif

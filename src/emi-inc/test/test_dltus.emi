@@ -1,0 +1,70 @@
+/**
+ * This file is part of i5/OS Programmer's Toolkit.
+ *
+ * Copyright (C) 2010, 2011  Junlei Li.
+ *
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file nov5.emi
+ *
+ * test of compiler include: qusdltus.emi
+ *
+ * @pre call QUSCRTUS to create a *USRSPC like the following
+ * @code
+    CALL PGM(QUSCRTUS) PARM(
+        'SPC01     *CURLIB'
+        'SSPPCC'
+        X'00000200'
+        X'00'
+        '*CHANGE'
+        '*USRSPC SPC01 -- to be deleted'
+    )
+ * @endcode
+ */
+
+entry * ext                     ;
+
+dcl dd usrspc char(20) auto     ;
+
+        cpyblap usrspc, 'SPC01', ' ' ;
+        cpybla usrspc(11:10), "*LIBL" ;
+        cpynv emi-ec-bytes-in, emi-qusec-len ;
+
+        /* call QUSDLTUS */
+        setspp .emi-qusdltus-al-usrspc, usrspc ;
+        setspp .emi-qusdltus-al-ec, emi-qusec  ;
+        callx emi-qusdltus, emi-qusdltus-al, * ;
+
+        /* check qusec */
+dcl dd err_msg char(64) auto    ;
+        cmpnv(b) emi-ec-bytes-out, 0 / neq(=+3)  ;
+        cpyblap err_msg, "*USRIDX deleted.", " " ;
+        b report                ;
+:       
+        cpyblap err_msg,
+          "QUSDLTUS failed with exception ID", ' ' ;
+        cpybla err_msg(35:7), emi-ec-exid          ;
+report:
+
+        %sendmsg(err_msg, 64)   ;
+
+brk 'END'                       ;
+        rtx *                   ;
+
+/include qusdltus.emi           ;
+/include qusec.emi              ;
+
+pend                            ;

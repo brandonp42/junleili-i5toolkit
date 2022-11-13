@@ -1,0 +1,481 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file dequsrq.mi
+ *
+ * dequeue a message from a user queue
+ */
+
+/* constants */
+dcl dd valid-key-relations(6) char(2) auto init(
+        "GT", "LT", "NE", "EQ", "GE", "LE"
+) ; 
+dcl dd key-relation-bits(6) char(1) auto init(
+        x"02", x"04", x"06", x"08", x"0A", x"0C"
+)                               ; 
+
+/* indicators */
+dcl dd inxx char(100) auto      ;
+        dcl dd ind-1 char(1) def(inxx) pos(1) ; 
+        dcl dd ind-2 char(2) def(inxx) pos(1) ;
+                dcl dd ind-2-1 char(1) def(ind-2) pos(1) ; 
+                dcl dd ind-2-2 char(1) def(ind-2) pos(2) ; 
+
+dcl spcptr .q-object parm ;
+dcl spcptr .time-enqueued parm ;
+dcl spcptr .wait parm ;
+dcl spcptr .timeout-value parm ;
+dcl spcptr .mod-acc-state parm ;
+dcl spcptr .mpl-option parm ;
+dcl spcptr .key-data parm ;
+dcl spcptr .key-relation parm ;
+dcl spcptr .key-length parm ;
+dcl spcptr .key-length-available parm ;
+dcl spcptr .msg-text parm ;
+dcl spcptr .msg-text-length parm ;
+dcl spcptr .msg-text-length-available      parm ; 
+
+dcl dd q-name char(10) bas(.q-object) ; 
+dcl dd q-lib char(10) bas(.q-object) pos(11);
+dcl dd time-enqueued char(26) bas(.time-enqueued) ; 
+dcl dd wait char(1) bas(.wait) ; 
+dcl dd timeout-value bin(4) bas(.timeout-value) ; 
+dcl dd mod-acc-state char(1) bas(.mod-acc-state) ; 
+dcl dd mpl-option char(1) bas(.mpl-option) ; 
+dcl dd key-data char(1) bas(.key-data) ; 
+dcl dd key-relation char(2) bas(.key-relation) ; 
+dcl dd key-length bin(4) bas(.key-length) ; 
+dcl dd key-length-available bin(4) bas(.key-length-available) ; 
+dcl dd msg-text char(1) bas(.msg-text) ; 
+dcl dd msg-text-length bin(4) bas(.msg-text-length) ; 
+dcl dd msg-text-length-available bin(4) bas(.msg-text-length-available) ; 
+
+dcl ol pl-main(
+        .q-object,                 /* q object name:      'Q_NAME    Q_LIB     ' */
+        .time-enqueued,            /* [out] */
+        .wait,                     /* '0', do NOT wiat, '1', wait with timeout value */
+        .timeout-value,            /* timeout value in seconds, -1 indicate wait infinitely */
+        .mod-acc-state,            /* '0', not modify, '1', modify */
+        .mpl-option,               /* '0', leave current MPL, '1', remain in current MPL */
+        .key-data,                 /* [in/out] */
+        .key-relation,             /* valid values:       'GT', 'LT', 'NE', 'EQ', 'GE', 'LE' */
+        .key-length,               /* input key length */
+        .key-length-available,     /* [out] */
+        .msg-text,                 /* [out] */
+        .msg-text-length,          /* input msg text length */
+        .msg-text-length-available /* [out] */
+) parm ext;
+
+entry *(pl-main) ext            ;
+
+brk "INIT"                      ;
+        cpybrep inxx, "0"       ; 
+
+brk "RSLVQ"                     ; 
+dcl sysptr q auto                ;
+dcl sysptr ctx auto             ; 
+dcl dd q-obj-type char(2) auto init(x"0A02") ; 
+        cpyblap rslv-option-obj-name, q-name, " " ; 
+        cmpbla(b) q-lib, "*CURLIB" / eq(resolve-q);
+        cmpbla(b) q-lib, "*LIBL" / eq(resolve-q);
+        cpybla rslv-option-obj-type, x"0401";
+        cpyblap rslv-option-obj-name, q-lib, " ";
+        rslvsp ctx, rslv-option-short, *, x'0000';
+        cpybla rslv-option-obj-type, q-obj-type ; 
+        cpyblap rslv-option-obj-name, q-name, " ";
+        rslvsp q, rslv-option-short, ctx, x'0000';
+        b end-resolve;
+resolve-q:
+        cpybla rslv-option-obj-type, q-obj-type ; 
+        cpyblap rslv-option-obj-name, q-name, " ";
+        rslvsp q, rslv-option-short, *, x'0000';
+end-resolve:
+
+brk "MATQAT"                    ; 
+        cpynv matqat-bytes-in, MATQAT-TEMPLATE-LEN ; 
+        matqat .matqat-template, q ; 
+
+brk "CHKPARM"                   ; 
+        calli check-params, *, .check-params ; 
+
+brk "DETTIMOUT"                 ; 
+dcl spcptr deq-prefix-ptr       ; 
+dcl spc deq-prefix-t bas(deq-prefix-ptr) ; 
+        dcl dd pre-time-enq char(8) dir ;
+        dcl dd pre-deq-timeout char(8) dir ;
+        dcl dd pre-msg-size bin(4) dir ;
+        dcl dd pre-option char(1) dir ;
+        dcl dd pre-input-key char(1) dir ; 
+dcl spcptr deq-msg-text-ptr     ; 
+
+        calli determine-prefix, *, .determine-prefix ; 
+
+brk "DEQ"                       ;
+dcl excm ex-deq-timedout excid(h"3A01") bp(deq-timedout) imd cv("MCH") ; 
+dcl dd large-buf char(1024) bas(*)   ;
+        cmpbla(b) wait, "1" / neq(=+3) ; 
+        deq deq-prefix-ptr->large-buf, deq-msg-text-ptr, q ;
+        cpynv msg-text-length-available, pre-msg-size ; /* msg deqeued */
+:
+        cmpbla(b) wait, "0" / neq(after-dequeue) ; 
+        deq(b) deq-prefix-ptr->large-buf, deq-msg-text-ptr, q / eq(=+3) ; 
+        cpynv msg-text-length-available, 0 ;            /* msg not deqeued */
+        b after-dequeue         ; 
+:
+        cpynv msg-text-length-available, pre-msg-size ; /* msg deqeued */
+after-dequeue:
+brk "FEEDBK"                    ;
+        setspp .a-system-clock, pre-time-enq ;
+        setsppfp .a-timestamp, .time-enqueued ; 
+        calli get-local-saa-timestamp,
+              argl-get-local-saa-timestamp,
+              .get-local-saa-timestamp;
+
+        /* msg-text */
+        setsppfp .a-memcpy-target, .msg-text ;
+        setsppfp .a-memcpy-source, deq-msg-text-ptr ;
+        setspp .a-memcpy-length, pre-msg-size ;
+        calli memcpy, al-memcpy, .memcpy ; 
+
+        cpynv key-length-available, matqat-key-len ;
+
+        /* key dequeued */
+dcl dd offset bin(4) auto       ;
+dcl dd return-key-len bin(4) auto       ;
+dcl spcptr output-key-ptr auto  ;
+        /* if matqat-key-len > 0 && key-length > 0 */
+        cmpnv(i) matqat-key-len, 0 / hi(ind-2-1) ;
+        cmpnv(i) key-length, 0 / hi(ind-2-2) ;
+        cmpbla(b) inxx, "11" / neq(do-release) ; 
+        addn offset, MIN-DEQ-PREFIX-LEN, matqat-key-len ;
+        addspp output-key-ptr, deq-prefix-ptr, offset ;
+        setsppfp .a-memcpy-target, .key-data ;
+        setsppfp .a-memcpy-source, output-key-ptr ;
+        setspp .a-memcpy-length, return-key-len ;
+
+        cpynv return-key-len, matqat-key-len ;
+        cmpnv(b) return-key-len, key-length / lo(=+2) ;
+        exchby return-key-len, key-length ; 
+:       
+        calli memcpy, al-memcpy, .memcpy ; 
+do-release:     
+brk "RLS"                       ;
+        subn prefix-len, 0, prefix-len   ; 
+        modasa deq-prefix-ptr, prefix-len ;
+        subn matqat-max-msg-size, 0, matqat-max-msg-size ; 
+        modasa deq-msg-text-ptr, matqat-max-msg-size ;
+
+farewell:       
+brk "END"                       ; 
+        rtx *                   ; 
+
+/**
+ * exception handler for MCH5801
+ */
+deq-timedout:   
+        cpynv msg-text-length-available, 0 ;            /* deq timed-out */
+        b do-release         ; 
+
+/**
+ * subroutine determine-prefix
+ *
+ * @param [in] wait
+ * @param [in] timeout-value
+ * @param [in] mod-acc-state
+ * @param [in] mpl-option
+ * @param [in] key-relation
+ *
+ * @param [out] deq-prefix-t
+ * @param [out] deq-msg-text-ptr
+ */
+dcl insptr .determine-prefix auto ; 
+entry determine-prefix int      ;
+
+        /* determine prefix length */
+dcl con MIN-DEQ-PREFIX-LEN bin(4) init(21) ; 
+dcl dd prefix-len bin(4) auto   ;
+        mult prefix-len, matqat-key-len, 2 ;
+        addn(s) prefix-len, MIN-DEQ-PREFIX-LEN ;
+        modasa deq-prefix-ptr, prefix-len ; 
+
+        /* clear pre-option */
+        cpybla pre-option, x"00";
+
+        /* key relation, set pre-option's bit4-7 first */
+dcl dd array-index bin(2) auto ;
+        search array-index, valid-key-relations, key-relation, 1 ;
+        cpybla pre-option, key-relation-bits(array-index) ; 
+
+        /* acc-mod option, mpl option */
+        cmpbla(b) mod-acc-state, "1" / neq(=+3) ;
+        setbts pre-option, 0    ;
+        setbts pre-option, 1    ;
+:
+        cmpbla(b) mpl-option, "1" / neq(=+2) ;
+        setbts pre-option, 2    ; 
+:
+        /* timeout option */
+        cmpnv(b) timeout-value, 0 / hi(=+3) ;
+        setbts pre-option, 3    ;  /* deq infinitely */
+        b set-input-key         ; 
+:       
+dcl dd large-timeout char(8) auto;
+        calli cvt-time-dur, *, .cvt-time-dur ; 
+        cpybla pre-deq-timeout, large-timeout ; 
+
+set-input-key:
+        /* set pre-input-key */
+        setspp .a-memcpy-target, pre-input-key ;
+        setsppfp .a-memcpy-source, .key-data ;
+        setspp .a-memcpy-length, key-length ;
+        calli memcpy, al-memcpy, .memcpy  ; 
+
+        /* allocate deq-msg-text-ptr */
+        modasa deq-msg-text-ptr, matqat-max-msg-size ;
+
+        b .determine-prefix                 ; 
+
+/**
+ * subroutine cvt-time-dur
+ *
+ * convert time duration in seconds into standard time format
+ *
+ * @param[in] timeout-value
+ * @param[out] large-timeout
+ */
+dcl insptr .cvt-time-dur auto   ; 
+entry cvt-time-dur int          ; 
+
+dcl dd large-one-hour char(8) init(x"00000D693A400000") ; 
+dcl dd one-hour bin(4) auto     ; 
+dcl dd time-remained bin(4) auto; 
+
+        cpynv one-hour, 3600    ; 
+        cpybrep large-timeout, x"00" ; 
+        cpynv time-remained, timeout-value ; 
+cvt-time-loop:
+        cmpnv(b) time-remained, one-hour / hi(=+4) ;
+        cpynv one-hour, time-remained ;
+        mult(s) one-hour, 125000;
+        cpybtrls large-one-hour, one-hour, 17 ; 
+:
+        /* add 1hour to large-timeout */
+        addlc(s) large-timeout, large-one-hour ; 
+
+        /* decrement time-remained */
+        subn(s) time-remained, one-hour ;
+        cmpnv(b) time-remained, 0 / nhi(end-cvt-time-loop) ; 
+
+        b cvt-time-loop         ; 
+end-cvt-time-loop:      
+        b .cvt-time-dur                 ; 
+
+/* subroutine check-params */
+dcl insptr .check-params auto   ; 
+entry check-params int          ; 
+
+        /* check key-relation */
+dcl dd found bin(2) auto        ;
+        search(b) found, valid-key-relations, key-relation, 1 / pos(check-key-length) ; 
+        cpybla sndpm-msgid, "CPF9504" ;
+        cpynv sndpm-msglen, 0   ; /* no msg data */
+        calli send-escape-msg, *, .send-escape-msg ;
+
+        b farewell              ; 
+
+check-key-length:
+        cmpnv(b) key-length, matqat-key-len / nlo(end-parm-check) ;
+        cpynv key-length-available, matqat-key-len ;
+        cpybla sndpm-msgid, "CPF9507" ;
+        cpynv sndpm-msglen, 0   ; /* no msg data */
+        calli send-escape-msg, *, .send-escape-msg ;
+
+        b farewell              ; 
+
+end-parm-check: 
+        b .check-params         ; 
+
+/**
+ * memcpy()
+ *
+ * @param .a-memcpy-target
+ * @param .a-memcpy-source
+ * @param .a-memcpy-length
+ */
+dcl spcptr .a-memcpy-target auto         ; 
+dcl spcptr .a-memcpy-source auto         ;
+dcl spcptr .a-memcpy-length auto         ; 
+dcl ol al-memcpy(
+        .a-memcpy-target,
+        .a-memcpy-source,
+        .a-memcpy-length
+) arg;
+
+dcl spcptr .p-memcpy-target parm         ; 
+dcl spcptr .p-memcpy-source parm         ;
+dcl spcptr .p-memcpy-length parm         ; 
+dcl ol pl-memcpy(
+        .p-memcpy-target,
+        .p-memcpy-source,
+        .p-memcpy-length
+) parm                          ; 
+
+dcl insptr .memcpy auto         ; 
+entry memcpy(pl-memcpy) int     ; 
+/* 32752 = 32K - 16 */
+dcl con bytes-per-copy bin(4) init(32752) ;
+
+dcl dd p-memcpy-length bin(4) bas(.p-memcpy-length) ; 
+dcl dd memcpy-ch-target char(1) bas(.p-memcpy-target) ; 
+dcl dd memcpy-ch-source char(1) bas(.p-memcpy-source) ; 
+dcl dtaptr memcpy-target-ptr auto      ; 
+dcl dtaptr memcpy-source-ptr auto      ;
+dcl dd memcpy-remained bin(4) auto     ; 
+dcl dd memcpy-to-copy bin(4) auto      ; 
+
+        cpynv memcpy-remained, p-memcpy-length  ; 
+        cpynv memcpy-to-copy, bytes-per-copy ;
+loop:
+        cmpnv(b) memcpy-remained, memcpy-to-copy / hi(=+2) ;
+        cpynv memcpy-to-copy, memcpy-remained; 
+:       
+brk "SETDP"                     ; 
+        /* set source and traget data pointers */
+        setdp memcpy-target-ptr, memcpy-ch-target ; 
+        setdp memcpy-source-ptr, memcpy-ch-source ; 
+
+        /* set attributes of data pointers */
+dcl dd dtaptr-attr char(7) auto ;
+        dcl dd * char(1) def(dtaptr-attr) init(x"04") ;
+        dcl dd dtaptr-attr-length bin(2) def(dtaptr-attr) pos(2) ; 
+brk "SETDPAT"                   ; 
+        cpynv dtaptr-attr-length, memcpy-to-copy ;
+        setdpat memcpy-target-ptr, dtaptr-attr ; 
+        setdpat memcpy-source-ptr, dtaptr-attr ;
+brk "COPY"                      ; 
+        /* copy */
+        cpybla memcpy-target-ptr, memcpy-source-ptr ;
+
+        /* has it done? */
+        subn(s) memcpy-remained, memcpy-to-copy ;
+        cmpnv(b) memcpy-remained, 0 / nhi(end-loop) ;
+
+        /* offset .p-memcpy-target and .p-memcpy-source */
+        addspp .p-memcpy-target, .p-memcpy-target, memcpy-to-copy ; 
+        addspp .p-memcpy-source, .p-memcpy-source, memcpy-to-copy ; 
+
+        b loop                  ; 
+end-loop:       
+brk "MEMCPY-RTN"                       ; 
+        b .memcpy               ; 
+/* end - memcpy() */
+
+/* send escape message */
+dcl insptr .send-escape-msg auto; 
+entry send-escape-msg int       ; 
+
+dcl dd sendmsg-ec char(512) auto;
+dcl spcptr .sendmsg-ec auto init(sendmsg-ec);
+dcl spc * bas(.sendmsg-ec);
+        dcl dd sendmsg-ec-bytes-in bin(4) dir;
+        dcl dd sendmsg-ec-bytes-out bin(4) dir;
+        dcl dd sendmsg-ec-exid char(7) dir;
+        dcl dd * char(1) dir;
+        dcl dd sendmsg-ec-exdata char(496) dir;
+dcl con SENDMSG-USECLEN bin(4) init(512);
+
+dcl dd sndpm-msgid char(7) auto ; 
+dcl spcptr .sndpm-msgid auto init(sndpm-msgid);
+dcl dd sndpm-msgf char(20) auto init("QCPFMSG   QSYS") ; 
+dcl spcptr .sndpm-msgf auto init(sndpm-msgf);
+dcl dd sndpm-msg char(1) auto   ; 
+dcl spcptr .sndpm-msg auto init(sndpm-msg) ; 
+dcl dd sndpm-msglen bin(4) auto init(0) ; 
+dcl spcptr .sndpm-msglen auto init(sndpm-msglen);
+dcl dd sndpm-msgtype char(10) auto init("*ESCAPE");
+dcl spcptr .sndpm-msgtype auto init(sndpm-msgtype);
+dcl dd sndpm-callstack-entry char(10) auto init("*");
+dcl spcptr .sndpm-callstack-entry auto init(sndpm-callstack-entry);
+dcl dd sndpm-callstack-counter bin(4) auto init(1);
+dcl spcptr .sndpm-callstack-counter auto init(sndpm-callstack-counter);
+dcl dd sndpm-msgkey char(4) auto init(" ");
+dcl spcptr .sndpm-msgkey auto init(sndpm-msgkey);
+
+dcl ol argl-sndpm (
+        .sndpm-msgid,
+        .sndpm-msgf,
+        .sndpm-msg,
+        .sndpm-msglen,
+        .sndpm-msgtype,
+        .sndpm-callstack-entry,
+        .sndpm-callstack-counter,
+        .sndpm-msgkey,
+        .sendmsg-ec
+) arg;
+dcl sysptr .qmhsndpm auto init("QMHSNDPM", type(pgm));
+
+dcl spcptr .p-sendmsg-msg parm;
+dcl spcptr .p-sendmsg-msglen parm;
+dcl ol pl-sendmsg(
+        .p-sendmsg-msg,
+        .p-sendmsg-msglen
+) parm int;
+
+dcl insptr .send-msg;
+entry send-msg(pl-sendmsg) int;
+
+        cpynv sendmsg-ec-bytes-in, SENDMSG-USECLEN;
+        callx .qmhsndpm, argl-sndpm, *;
+
+        b .send-escape-msg            ; 
+/* end - send-escape-msg */
+
+/* template for MATQAT */        
+dcl dd matqat-template-buf char(128) auto bdry(16);
+dcl spcptr .matqat-template auto init(matqat-template-buf);
+dcl spc matqat-template-t bas(.matqat-template);
+        dcl dd matqat-bytes-in bin(4) dir;
+        dcl dd matqat-bytes-out bin(4) dir;
+        dcl dd matqat-obj-types char(2) dir;
+        dcl dd matqat-obj-name char(30) dir;
+        dcl dd matqat-create-options char(4) dir;
+        dcl dd * char(4) dir;
+        dcl dd matqat-space-size bin(4) dir;
+        dcl dd matqat-init-value char(1) dir;
+        dcl dd matqat-performance-class char(4) dir;
+        dcl dd * char(7) dir;
+        dcl sysptr matqat-ctx dir;
+        dcl sysptr matqat-accgrp dir;
+        dcl dd matqat-q-attr char(1) dir;
+        dcl dd matqat-cur-max-msgs bin(4) dir;
+        dcl dd matqat-cur-msg-num bin(4) dir;
+        dcl dd matqat-extension-value bin(4) dir;
+        dcl dd matqat-key-len bin(2) dir;
+        dcl dd matqat-max-msg-size bin(4) dir; /* 指被入列的message的最大长度 */
+        dcl dd * char(1) dir;
+        dcl dd matqat-max-extend-num bin(4) dir;
+        dcl dd matqat-cur-extend-num bin(4) dir;
+        dcl dd matqat-init-msg-num bin(4) dir;
+dcl con MATQAT-TEMPLATE-LEN bin(4) init(128) ;
+
+/include ptrres.mi              ; 
+/include when.mi                ; 
+
+pend;
+/* eof */

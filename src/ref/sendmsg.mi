@@ -1,0 +1,97 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2009, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file sendmsg.mi
+ *
+ *  - for OPM
+ *  - send program message to an opm pgm's caller
+ *  - call 这的之前，记着set下
+ *    - .sendmsg-msg
+ *    - .sendmsg-msglen
+ *
+ * @todo 等mic的builtin特性加了之后，把这的改为builtin, 这样调用
+ * sendmsg(msg, msglen); :p
+ */
+
+/**
+ * for caller
+ */
+dcl spcptr .sendmsg-msg auto;
+dcl spcptr .sendmsg-msglen auto;
+dcl ol argl-sendmsg(
+  .sendmsg-msg,
+  .sendmsg-msglen
+) arg;
+
+dcl dd sendmsg-ec char(512) auto;
+dcl spcptr .sendmsg-ec auto init(sendmsg-ec);
+dcl spc * bas(.sendmsg-ec);
+  dcl dd sendmsg-ec-bytes-in bin(4) dir;
+  dcl dd sendmsg-ec-bytes-out bin(4) dir;
+  dcl dd sendmsg-ec-exid char(7) dir;
+  dcl dd * char(1) dir;
+  dcl dd sendmsg-ec-exdata char(496) dir;
+dcl con SENDMSG-USECLEN bin(4) init(512);
+
+dcl dd sndpm-msgid char(7) auto init(' ');
+dcl spcptr .sndpm-msgid auto init(sndpm-msgid);
+dcl dd sndpm-msgf char(20) auto init(' ');
+dcl spcptr .sndpm-msgf auto init(sndpm-msgf);
+dcl spcptr .sndpm-msg auto;
+dcl dd sndpm-msglen bin(4) auto;
+dcl spcptr .sndpm-msglen auto init(sndpm-msglen);
+dcl dd sndpm-msgtype char(10) auto init("*INFO");
+dcl spcptr .sndpm-msgtype auto init(sndpm-msgtype);
+dcl dd sndpm-callstack-entry char(10) auto init("*");
+dcl spcptr .sndpm-callstack-entry auto init(sndpm-callstack-entry);
+dcl dd sndpm-callstack-counter bin(4) auto init(1);
+dcl spcptr .sndpm-callstack-counter auto init(sndpm-callstack-counter);
+dcl dd sndpm-msgkey char(4) auto init(" ");
+dcl spcptr .sndpm-msgkey auto init(sndpm-msgkey);
+
+dcl ol argl-sndpm (
+  .sndpm-msgid,
+  .sndpm-msgf,
+  .sndpm-msg,
+  .sndpm-msglen,
+  .sndpm-msgtype,
+  .sndpm-callstack-entry,
+  .sndpm-callstack-counter,
+  .sndpm-msgkey,
+  .sendmsg-ec
+) arg;
+dcl sysptr .qmhsndpm auto init("QMHSNDPM", type(pgm));
+
+dcl spcptr .p-sendmsg-msg parm;
+dcl spcptr .p-sendmsg-msglen parm;
+dcl ol pl-sendmsg(
+  .p-sendmsg-msg,
+  .p-sendmsg-msglen
+) parm int;
+
+dcl insptr .send-msg;
+entry send-msg(pl-sendmsg) int;
+
+  cpynv sendmsg-ec-bytes-in, SENDMSG-USECLEN;
+  setsppfp .sndpm-msg, .p-sendmsg-msg;
+  setsppfp .sndpm-msglen, .p-sendmsg-msglen;
+  callx .qmhsndpm, argl-sndpm, *;
+  b .send-msg;
+
+/* eof - sendmsg.mi */

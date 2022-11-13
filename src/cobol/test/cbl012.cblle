@@ -1,0 +1,108 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file cbl012.cblle
+      *
+      * Test of:
+      *  - _SETDP (Set Data Pointer)
+      *  - _SETDPADR (Set Data Pointer Addressability)
+      *  - _CPYECLAP (Copy Extended Characters Left-Adjusted With Pad)
+      *
+      */
+
+       process
+           NOSTDTRUNC
+           NOMONOPRC.
+
+       id division.
+       program-id. cbl012.
+
+       environment division.
+       configuration section.
+       special-names.
+           copy mih-lnktyp.
+
+       data division.
+       working-storage section.
+       01 str pic x(16).
+       01 str-2 pic x(16).
+      * scalar attributes of 16-byte open character data
+       01 scalar-attr.
+          05 scalar-type   pic x value x"09".
+          05 scalar-length pic 9(4) usage binary value 16.
+          05 filler        pic x(4) value all x"00".
+       01 tgt-dta-ptr usage pointer.
+       01 src-dta-ptr usage pointer.
+       01 src-space-ptr usage pointer.
+       01 pad         type cpyeclap-pad-t.
+
+       linkage section.
+           copy mih-comp.
+           copy mih-dtaptr.
+
+       77 user-input pic x(256).
+       77 input-len  pic 9(4) usage comp-4.
+
+       procedure division using
+           user-input
+           input-len.
+       main-pgm.
+           call "_SETDP" using
+                by reference str
+                by value     scalar-attr
+                returning into tgt-dta-ptr.
+           move input-len to scalar-length of scalar-attr.
+           call "_SETDP" using
+                by reference user-input
+                by value     scalar-attr
+                returning into src-dta-ptr.
+
+      * copy user-input into the fixed-length string str with padding or truncation.
+      * @remark it's important that CPYECLAP can truncate DBCS characters correctly!
+           call "_CPYECLAP" using
+                by reference tgt-dta-ptr
+                by reference src-dta-ptr
+                by reference pad.
+
+      * Change the addessibility of data pointer tgt-dta-ptr to address
+      * another character scalar.
+           call "_SETDPADR" using
+                by value       tgt-dta-ptr
+                by reference   str-2
+                returning into tgt-dta-ptr.
+           call "_CPYECLAP" using
+                by reference tgt-dta-ptr
+                by reference src-dta-ptr
+                by reference pad.
+
+           display "'" str "'".
+           display "'" str-2 "'".
+
+           stop run.
+       end program cbl012.
+
+      *
+      * Call cbl012 like the following:
+      *   Call CBL012 (' ＡＡＡＢＢＢＣＣＣＥＥＥＤＤＤＦＦＦＧＧＧ ' x'001E')
+      *
+      * The output would be:
+      *   ' ＡＡＡＢＢＢＣ '
+      *   ' ＡＡＡＢＢＢＣ '
+      *

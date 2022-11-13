@@ -1,0 +1,161 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-prcthd.rpgleinc
+      *
+      * Process/Thread management instructions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_prcthd)
+      /define i5toolkit_rpg_mih_prcthd
+
+     /**
+      * @BIF _PCOPTR (PCO Pointer (PCOPTR))
+      *
+      * A space pointer is returned, which points to the first byte of
+      * the PCO (process communication object) for the process which
+      * owns the program activation associated with the current
+      * invocation. If the current invocation is a client executing in
+      * a shared activation group then the pointer returned refers to
+      * an object owned by a process other than the current process.
+      */
+     d pcoptr          pr              *   extproc('_PCOPTR')
+
+     /**
+      * @BIF _PCOPTR2 (Return PCO Pointer (PCOPTR2))
+      *
+      * Return PCO Pointer (PCOPTR2) obtains addressability to a
+      * process' PCO (process communication object) and returns it in
+      * a space pointer.
+      */
+     d pcoptr2         pr              *   extproc('_PCOPTR2')
+
+     /**
+      * @BIF _MATPRAGP (Materialize Process Activation Groups (MATPRAGP))
+      */
+     d matpragp        pr                  extproc('_MATPRAGP')
+     d     receiver                    *   value
+
+     d matpragp_...
+     d   tmpl_t        ds                  qualified
+     d                                     based(dummy_ptr)
+     d     buf                    65535a
+     d     bytes_in                  10i 0 overlay(buf : 1)
+     d     bytes_out                 10i 0 overlay(buf : 5)
+     d     agp_num                   10i 0 overlay(buf : 9)
+     d     agp_marks                  4a   dim(16380)
+     d                                     overlay(buf : 13)
+
+     /**
+      * Materialization template for MATPRATR when a scalar attribute
+      * is materialized.
+      */
+     d matpratr_tmpl_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+
+     /**
+      * Materialization template for MATPRATR when a pointer attribute
+      * is materialized.
+      */
+     d matpratr_ptr_tmpl_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d                                8a
+     d     ptr                         *
+
+     /* Process priority template */
+     d process_priority_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     priority                   1a
+
+     /**
+      * @BIF _MATPRATR1 (Materialize Process Attributes (MATPRATR))
+      */
+     d matpratr1       pr                  extproc('_MATPRATR1')
+     d     receiver                        likeds(matpratr_tmpl_t)
+     d     option                     1a
+
+     /**
+      * @BIF _MATPRATR2 (Materialize Process Attributes (MATPRATR))
+      */
+     d matpratr2       pr                  extproc('_MATPRATR2')
+     d     receiver                        likeds(matpratr_tmpl_t)
+     d     pcs                         *
+     d     option                     1a
+
+     /**
+      * @BIF _RETTHCNT (Retrive Thread Count (RETTHCNT))
+      */
+     d retthcnt        pr            10u 0 extproc('_RETTHCNT')
+
+     /**
+      * @BIF _RETTHID (Retrieve Thread Identifier (RETTHID))
+      */
+     d retthid         pr             8a   extproc('_RETTHID')
+
+     /**
+      * @BIF _TSTINLTH (Test Initial Thread (TSTINLTH))
+      */
+     d tstinlth        pr            10i 0 extproc('_TSTINLTH')
+
+     /**
+      * @BIF _TESTINTR (Test Pending Interrupts (TESTINTR))
+      */
+     d testintr        pr            10u 0 extproc('_TESTINTR')
+
+     /**
+      * @BIF _WAITTIME (Wait On Time (WAITTIME))
+      */
+     d waittime        pr                  extproc('_WAITTIME')
+     d     wait_tmpl                 16a
+
+     /* wait template for WAITTIME */
+     d wait_tmpl_t     ds            16    qualified
+     d     interval                  20u 0
+     d     option                     2a
+     d                                6a
+
+     /* 8 microseconds in system closk format */
+     d sysclock_eight_microsec...
+     d                 c                   x'0000000000008000'
+
+     /* 1 millisecond in system closk format */
+     d sysclock_one_millisec...
+     d                 c                   x'00000000003E8000'
+
+     /* 1 second in format of system clock */
+     d sysclock_one_second...
+     d                 c                   x'00000000F4240000'
+
+     /* 1 hour in format of system clock */
+     d sysclock_one_hour...
+     d                 c                   x'00000D693A400000'
+
+     /* 1 week in format of system clock */
+     d sysclock_one_week...
+     d                 c                   x'0008CD0E3A000000'
+
+      /endif
+

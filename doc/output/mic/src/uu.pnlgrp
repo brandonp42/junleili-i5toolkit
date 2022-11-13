@@ -1,0 +1,72 @@
+.*
+.* @file uu.pnlgrp
+.*
+.* panel group UU
+.*
+
+:pnlgrp.
+
+:class name=a20
+       basetype='char 20'
+       .
+:eclass.
+:class name=u10
+       basetype='graphic 10 13488'
+       width=20
+       .
+:eclass.
+
+:var name=title
+     class=a20
+     .
+
+:var name=word
+     class=u10
+     .
+
+:varrcd name=rt
+        vars='title'
+        .
+
+:varrcd name=rw
+        vars='word'
+        .
+
+:keyl name=klmain.
+:keyi key=f12
+      help='hlp'
+      action='exit noset'
+      .F12=byebye
+:keyi key=enter
+      help='hlp'
+      action=enter
+      .
+:ekeyl.
+
+:panel name=pp
+       title=title
+       keyl=klmain
+       help='hlp'
+       enter='return 100'
+       .
+:data depth=2
+      layout=1
+      .
+
+:datacol width=20.
+:datacol width='*'.
+
+:datai var=word
+       help='hlp'
+       usage=out
+       .yuyu
+
+:edata.
+:epanel.
+
+:help name='hlp'.
+What can I help?
+:ehelp.
+
+:epnlgrp.
+.* eof uu.pnlgrp

@@ -1,0 +1,229 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2009, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file uim.mi
+ *
+ * uim h
+ */
+
+/* uim ec */
+dcl dd uim-ec char(256) bdry(16) auto;
+  dcl dd uim-ec-bytes-in bin(4) def(uim-ec) pos(1) init(256);
+  dcl dd uim-ec-bytes-out bin(4) def(uim-ec) pos(5);
+  dcl dd uim-ec-exid char(7) def(uim-ec) pos(9);
+  dcl dd * char(1) def(uim-ec) pos(16);
+  dcl dd uim-ex-data char(240) def(uim-ec) pos(17);
+dcl spcptr .uim-ec auto init(uim-ec);
+
+dcl dd apph char(8) auto;
+dcl spcptr .apph auto init(apph);
+dcl dd var-buffer char(256) auto;
+dcl spcptr .var-buffer auto init(var-buffer);
+dcl dd var-buflen bin(4) auto;
+dcl spcptr .var-buflen auto init(var-buflen);
+dcl dd rcd-name char(10) auto;
+dcl spcptr .rcd-name auto init(rcd-name);
+dcl dd list-name char(10) auto;
+dcl spcptr .list-name auto init(list-name);
+dcl dd addle-option char(4) auto init("LAST");
+dcl spcptr .addle-option auto init(addle-option);
+dcl dd list-entry-handle char(4) auto;
+dcl spcptr .list-entry-handle auto init(list-entry-handle);
+dcl dd positioning-option char(4) auto init("HNDL");
+dcl spcptr .positioning-option auto init(positioning-option);
+dcl dd copy-option char(1) auto init("Y");
+dcl spcptr .copy-option auto init(copy-option);
+dcl dd selection-criteria char(20) auto;
+dcl spcptr .selection-criteria auto init(selection-criteria);
+dcl dd selection-handle char(4) auto;
+dcl spcptr .selection-handle auto init(selection-handle);
+dcl dd extend-option char(1) auto init("Y");
+dcl spcptr .extend-option auto init(extend-option);
+dcl dd quiupdle-option char(4) auto init("SAME");
+dcl spcptr .quiupdle-option auto init(quiupdle-option);
+
+dcl dd pnlgrp char(20) auto;
+dcl spcptr .pnlgrp auto init(pnlgrp);
+dcl dd app-scope bin(4) auto init(-1);
+dcl spcptr .app-scope auto init(app-scope);
+dcl dd exit-pgm-interface bin(4) auto init(0);
+dcl spcptr .exit-pgm-interface auto init(exit-pgm-interface);
+dcl dd full-screen-help char(1) auto init("N");
+dcl spcptr .full-screen-help auto init(full-screen-help);
+dcl dd close-option char(1) auto init("M");
+dcl spcptr .close-option auto init(close-option);
+dcl ol argl-opnda(
+  .apph,
+  .pnlgrp,
+  .app-scope,
+  .exit-pgm-interface,
+  .full-screen-help,
+  .uim-ec
+) arg min(6);
+dcl sysptr .quiopnda init("QUIOPNDA", type(pgm));
+
+dcl ol argl-cloa(
+  .apph,
+  .close-option,
+  .uim-ec
+) arg min(3);
+dcl sysptr .quicloa init("QUICLOA", type(pgm));
+
+dcl ol argl-addle(
+  .apph,
+  .var-buffer,
+  .var-buflen,
+  .rcd-name,
+  .list-name,
+  .addle-option,
+  .list-entry-handle,
+  .uim-ec
+) arg min(8);
+dcl sysptr .quiaddle init("QUIADDLE", type(pgm));
+
+dcl ol argl-dltl (
+  .apph,
+  .list-name,
+  .uim-ec
+) arg;
+dcl sysptr .quidltl init("QUIDLTL", type(pgm));
+
+dcl ol argl-getv(
+  .apph,
+  .var-buffer,
+  .var-buflen,
+  .rcd-name,
+  .uim-ec
+) arg min(5);
+dcl sysptr .quigetv init("QUIGETV", type(pgm));
+
+dcl ol argl-putv(
+  .apph,
+  .var-buffer,
+  .var-buflen,
+  .rcd-name,
+  .uim-ec
+) arg min(5);
+dcl sysptr .quiputv init("QUIPUTV", type(pgm));
+
+dcl dd pnl-func bin(4) auto init(0);
+dcl spcptr .pnl-func auto init(pnl-func);
+dcl dd panel-name char(10) auto;
+dcl spcptr .panel-name auto init(panel-name);
+dcl dd redisplay char(1) auto init("Y");
+dcl spcptr .redisplay auto init(redisplay);
+dcl ol argl-dspp(
+  .apph,
+  .pnl-func,
+  .panel-name,
+  .redisplay,
+  .uim-ec
+) arg min(5);
+dcl sysptr .quidspp init("QUIDSPP", type(pgm));
+
+/* quiaddpw */
+dcl dd pw-location char(10) auto init("*OFFSET");
+dcl spcptr .pw-location auto init(pw-location);
+dcl dd pw-row bin(4) auto init(0);
+dcl spcptr .pw-row auto init(pw-row);
+dcl dd pw-column bin(4) auto init(0);
+dcl spcptr .pw-column auto init(pw-column);
+dcl dd pw-depth bin(4) auto init(0);
+dcl spcptr .pw-depth auto init(pw-depth);
+dcl ol argl-addpw(
+  .apph,
+  .pw-location,
+  .pw-row,
+  .pw-column,
+  .uim-ec
+) arg min(5);
+dcl sysptr .quiaddpw init("QUIADDPW", type(pgm));
+
+dcl dd pw-remove-option char(1) auto init("L");
+dcl spcptr .pw-remove-option auto init(pw-remove-option);
+dcl ol argl-rmvpw(
+  .apph,
+  .pw-remove-option,
+  .uim-ec
+) arg;
+dcl sysptr .quirmvpw init("QUIRMVPW", type(pgm));
+
+/* quigetle */
+dcl ol argl-getle (
+  .apph,
+  .var-buffer,
+  .var-buflen,
+  .rcd-name,
+  .list-name,
+  .positioning-option,
+  .copy-option,
+  .selection-criteria,
+  .selection-handle,
+  .extend-option,
+  .list-entry-handle,
+  .uim-ec
+) arg;
+dcl sysptr .quigetle init("QUIGETLE", type(pgm));
+
+/* quiupdle */
+dcl ol argl-updle (
+  .apph,
+  .var-buffer,
+  .var-buflen,
+  .rcd-name,
+  .list-name,
+  .quiupdle-option,
+  .list-entry-handle,
+  .uim-ec
+) arg;
+dcl sysptr .quiupdle init("QUIUPDLE", type(pgm));
+
+/* Qui_MIC_t */
+dcl spcptr .qui-mic parm;
+dcl spc * bas(.qui-mic);
+  dcl dd mic-struct-level bin(4) dir;
+  dcl dd * char(8) dir;
+  dcl dd mic-call-type bin(4) dir;
+  dcl dd mic-apph char(8) dir;
+  dcl dd mic-menu-option bin(4) dir;
+/* dcl ol parml-qui-mic(.qui-mic) parm ext; */
+
+/**
+ * @ref Qui_ALC_t
+ *
+ * see EUIALCL.h
+ *
+ * for programs use this structure as input parameter,
+ * parameter list can be declared like this:
+ *   dcl ol parml-qui-alc(.qui-alc) parm ext;
+ */
+dcl spcptr .qui-alc parm;
+dcl spc qui-alc-t bas(.qui-alc);
+  dcl dd alc-struct-level bin(4) dir;  /* 2 */
+  dcl dd * char(8) dir;
+  dcl dd alc-call-type bin(4) dir;     /* 3 */
+  dcl dd alc-apph char(8) dir;
+  dcl dd alc-panel-name char(10) dir;  /* e.g. 'MAINPANEL ' */
+  dcl dd alc-list-name char(10) dir;   /* e.g. 'LSTMAIN   ' */
+  dcl dd alc-list-entry char(4) dir;   /* e.g. x'000000E1'  */
+  dcl dd alc-list-option bin(4) dir;   /* e.g. h'00000005'  */
+  dcl dd alc-func-qualifier bin(4) dir;
+  dcl dd alc-pd-field-name char(10) dir;
+
+/* eof - uim.mi */

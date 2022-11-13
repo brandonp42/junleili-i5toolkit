@@ -1,0 +1,5 @@
+                R REC
+                  MTIM            Z         COLHDG('TEST TIME')
+                  MINX           3S 0       COLHDG('INDEX NUM IN PF RE')
+                  MRTN           9B 0       COLHDG('TEST RESULT: 0=OKEY')
+                  MMATCH        64O         COLHDG('MATCHED SUBSTRING')

@@ -1,0 +1,607 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2009  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih52.rpgleinc
+      *
+      * Header of system builtins for ILE RPG provided by the
+      * open-source project i5/OS Programmer's Toolkit.
+      * For details please refer to the project's web site,
+      * http://i5toolkit.sourceforge.net/
+      *
+      * @attention This header is for i5/OS Release 5 Version 2.
+      */
+
+      /if not defined(i5toolkit_rpg_mih52)
+      /define i5toolkit_rpg_mih52
+
+      /if defined(*CRTBNDRPG)
+     h dftactgrp(*no)
+      /endif
+
+     /* computation instructions */
+
+     /* CPRDATA template */
+     d cprdata_tmpl_t  ds                  qualified
+     d                                     based(dummy_ptr)
+     d     source_len                10i 0
+     d     target_len                10i 0
+     d     returned_target_len...
+     d                               10i 0
+     d     algorithm                  5i 0
+     d                               18a
+     d     source                      *
+     d     target                      *
+
+     /* length of cprdata_tmpl_t */
+     d CPRDATA_TMPL_LENGTH...
+     d                 c                   64
+
+     /* CPRDATA, compress data */
+     d cprdata         pr                  extproc('_CPRDATA')
+     d    tmpl                         *   value
+
+     /* DCPDATA template */
+     d dcpdata_tmpl_t  ds                  qualified
+     d                                     based(dummy_ptr)
+     d                                4a
+     d     result_len                10i 0
+     d     returned_result_len...
+     d                               10i 0
+     d                               20a
+     d     source                      *
+     d     target                      *
+
+     /* length of dcpdata_tmpl_t */
+     d DCPDATA_TMPL_LENGTH...
+     d                 c                   64
+
+     /* DCPDATA, decompress data */
+     d dcpdata         pr                  extproc('_DCPDATA')
+     d    tmpl                         *   value
+
+     /* end -- computation instructions */
+
+     /* bound program calculation builtins */
+
+     /* ACOS */
+     d acos            pr             8f   extproc('_ACOS')
+     d     x                          8f   value
+
+     /* ANDCSTR: And Complemented String */
+     d andcstr         pr                  extproc('_ANDCSTR')
+     d     receiver                   1a   options(*varsize)
+     d     str1                       1a   options(*varsize)
+     d     str2                       1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /* ANDSTR: and string */
+     d andstr          pr                  extproc('_ANDSTR')
+     d     receiver                   1a   options(*varsize)
+     d     str1                       1a   options(*varsize)
+     d     str2                       1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /* ASIN */
+     d asin            pr             8f   extproc('_ASIN')
+     d     x                          8f   value
+
+     /* ATAN */
+     d atan            pr             8f   extproc('_ATAN')
+     d     x                          8f   value
+
+     /* ATANH, arc tangent hyperbolic */
+     d atanh           pr             8f   extproc('_ATANH')
+     d     x                          8f   value
+
+     /* STRLENNULL, compute length of null-terminated string */
+     d strlennull      pr            10u 0 extproc('__strlen')
+     d     str                        1a   options(*varsize)
+
+     /* STRCMPNULL, compare null-terminated strings */
+     d strcmpnull      pr            10i 0 extproc('__strcmp')
+     d     str1                       1a   options(*varsize)
+     d     str2                       1a   options(*varsize)
+
+     /* STRNCMPNULL, compare null-terminated strings constrained */
+     d strncmpnull     pr            10i 0 extproc('_STRNCMPNULL')
+     d     str1                       1a   options(*varsize)
+     d     str2                       1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /* CMPTOPAD, compare to pad */
+     d cmptopad        pr            10i 0 extproc('_CMPTOPAD')
+     d     str                        1a   options(*varsize)
+     d     pad                        1a   value
+     d     length                    10u 0 value
+
+     /* COMSTR, complement string */
+     d comstr          pr                  extproc('_COMSTR')
+     d     receiver                   1a   options(*varsize)
+     d     source                     1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /* COS, cosine */
+     d cos             pr             8f   extproc('_COS')
+     d     x                          8f   value
+
+     /* COSH, cosine hyperbolic */
+     d cosh            pr             8f   extproc('_COSH')
+     d     x                          8f   value
+
+     /* COT, cotangent */
+     d cot             pr             8f   extproc('_COT')
+     d     x                          8f   value
+
+     /* CPYBYTES, copy bytes */
+     d cpybytes        pr                  extproc('_CPYBYTES')
+     d     target                      *   value
+     d     source                      *   value
+     d     length                    10u 0 value
+
+     /* CPYBO, copy bytes overlapping */
+     d cpybo           pr                  extproc('_CPYBO')
+     d     target                      *   value
+     d     source                      *   value
+     d     length                    10u 0 value
+
+     /* STRCPYNULL, copy null-terminated string */
+     d strcpynull      pr              *   extproc('__strcpy')
+     d     target                     1a   options(*varsize)
+     d     source                     1a   options(*varsize)
+
+     /* STRNCPYNULL, copy null-terminated string constrained */
+     d strncpynull     pr              *   extproc('_STRNCPYNULL')
+     d     target                     1a   options(*varsize)
+     d     source                     1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /* STRNCPYNULLPAD, copy null-terminated string constrained, null padded */
+     d strncpynullpad  pr              *   extproc('_STRNCPYNULLPAD')
+     d     target                     1a   options(*varsize)
+     d     source                     1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /* EEXP, exponential function of e */
+     d exp             pr             8f   extproc('_EEXP')
+     d     x                          8f   value
+
+     /* FINDBYTE, find byte */
+     d findbyte        pr              *   extproc('_FINDBYTE')
+     d     source                      *   value
+     d     to_search                  1a   value
+
+     /* MEMCHR, find character constrained */
+     d memchr          pr              *   extproc('_MEMCHR')
+     d     source                      *   value
+     d     to_search                  1a   value
+     d     length                    10u 0 value
+
+     /* STRCHRNULL, find character in null-terminated string */
+     d strchrnull      pr              *   extproc('_STRCHRNULL')
+     d     source                      *   value
+     d     to_search                  1a   value
+
+     /* LN, logarithm base e (natural logarithm) */
+     d log             pr             8f   extproc('_LN')
+     d     x                          8f   value
+
+     /* MEMCMP, memory compare  */
+     d memcmp          pr            10i 0 extproc('__memcmp')
+     d     addr1                       *   value
+     d     addr2                       *   value
+     d     length                    10u 0 value
+
+     /* MEMCPY, memory copy  */
+     d memcpy          pr              *   extproc('__memcpy')
+     d     target                      *   value
+     d     source                      *   value
+     d     length                    10u 0 value
+
+     /* MEMMOVE, memory move  */
+     d memmove         pr              *   extproc('_MEMMOVE')
+     d     target                      *   value
+     d     source                      *   value
+     d     length                    10u 0 value
+
+     /* ORSTR: or string */
+     d orstr           pr                  extproc('_ORSTR')
+     d     receiver                   1a   options(*varsize)
+     d     str1                       1a   options(*varsize)
+     d     str2                       1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /* POWER, x to the y power */
+     d power           pr             8f   extproc('_POWER')
+     d     x                          8f   value
+     d     x                          8f   value
+
+     /* PROPB, propogate byte */
+     d propb           pr              *   extproc('__memset')
+     d     target                      *   value
+     d     src_byte                   1a   value
+     d     length                    10u 0 value
+
+     /* RETCA, retrieve computational attributes */
+     d retca           pr            10u 0 extproc('_RETCA')
+     d     selector                   1a   value
+
+     /* SETCA, set computational attributes */
+     d setca           pr                  extproc('_SETCA')
+     d     new_ca                    10u 0 value
+     d     selector                  10u 0 value
+
+     /* SCANX, scan extended.  @todo usage */
+     d scanx           pr            10i 0 extproc('_SCANX')
+     d     base_...
+     d       locator                   *
+     d     controls                    *   value
+     d     options                    4a   value
+
+     /* SIN, sine */
+     d sin             pr             8f   extproc('_SIN')
+     d     x                          8f   value
+
+     /* SINH, sine hyperbolic */
+     d sinh            pr             8f   extproc('_SINH')
+     d     x                          8f   value
+
+     /* TAN, tangent */
+     d tan             pr             8f   extproc('_TAN')
+     d     x                          8f   value
+
+     /* TANH, tangent hyperbolic */
+     d tanh            pr             8f   extproc('_TANH')
+     d     x                          8f   value
+
+     /* TESTRPL, test and replace bytes */
+     d testrpl         pr                  extproc('_TESTRPL')
+     d     source                      *   value
+     d     src_len                   10u 0 value
+     d     cmp_str                     *   value
+     d     rpl_str                     *   value
+     d     other_len                 10u 0 value
+
+     /* TESTSUBSET, test subset */
+     d testsubset      pr            10u 0 extproc('_TESTSUBSET')
+     d     src1                        *   value
+     d     src2                        *   value
+     d     length                    10u 0 value
+
+     /* XLATEB, translate bytes */
+     d xlateb          pr                  extproc('_XLATEB')
+     d     source                      *   value
+     d     table                       *   value
+     d     length                    10u 0 value
+
+     /* XLATEB1, translate bytes one byte at a time */
+     d xlateb1         pr                  extproc('_XLATEB1')
+     d     receiver                    *   value
+     d     source                      *   value
+     d     table                       *   value
+     d     length                    10u 0 value
+
+     /* XORSTR, XOR string */
+     d xorstr          pr                  extproc('_XORSTR')
+     d     receiver                   1a   options(*varsize)
+     d     str1                       1a   options(*varsize)
+     d     str2                       1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /* end -- bound program calculation builtins */
+
+     /* computation and branching */
+
+     /* TSTBTS, test bit in string                         */
+     /* @return 1 if bit is set, otherwise 0               */
+     d tstbts          pr            10i 0 extproc('_TSTBTS')
+     d     str                         *   value
+     d     offset                    10u 0 value
+
+     /* end -- computation and branching */
+
+     /* pointer resolution */
+
+     /* CMPPTRT, compare pointer type */
+     d cmpptrt         pr            10i 0 extproc('_CMPPTRT')
+     d     ptr_type                   1a   value
+     d     ptr                         *   value
+
+     /* CPYBWP, copy bytes with pointers */
+     d cpybwp          pr                  extproc('_CPYBWP')
+     d     receiver                    *   value             
+     d     source                      *   value             
+     d     length                    10u 0 value             
+
+     /* MATPTR template header */
+     d matptr_tmpl_t   ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ptr_type                   1a                                        returned pointer type
+
+     /* length of MATPTR template header */
+     d matptr_header_...
+     d   length        c                   9
+
+     /* length of SYSPTR information */
+     d matptr_sysptr_...
+     d   info_length   c                   80
+
+     /* SYSPTR info structure */
+     d matptr_sysptr_...
+     d   info_t        ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ptr_type                   1a                                        returned pointer type
+     d     ctx_type                   2a                                        context type
+     d     ctx_name                  30a                                        context name
+     d     obj_type                   2a                                        object type
+     d     obj_name                  30a                                        object name
+     d     ptr_auth                   2a                                        PTR authorization
+     d     ptr_target                 2a                                        PTR target info
+
+     /* length of SPCPTR information */
+     d matptr_spcptr_...
+     d   info_length   c                   96
+
+     /* SPCPTR info structure */
+     d matptr_spcptr_...
+     d   info_t        ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ptr_type                   1a                                        returned pointer type
+     d     ctx_type                   2a                                        context type
+     d     ctx_name                  30a                                        context name
+     d     obj_type                   2a                                        object type
+     d     obj_name                  30a                                        object name
+     d     offset                    10i 0                                      offset into space
+     d     ptr_target                 2a                                        PTR target info
+     d                                1a                                        reserved
+     d     ext_offset                 8a                                        teraspace offest
+
+     /* length of PROCPTR information */
+     d matptr_procptr_info_length...
+     d                 c                   80
+
+     /* PROCPTR info structure */
+     d matptr_procptr_info_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ptr_type                   1a                                        returned pointer type
+     d     ptr_status                 1a                                        pointer status
+     d                                6a                                        reserved
+     d     mod_num                   10u 0                                      module number
+     d     proc_num                  10u 0                                      procedure number
+     d     act_mark                  10u 0                                      activation mark
+     d     ag_mark                   10u 0                                      activation group mark
+     d     pgm                         *                                        containing program
+     d     process                     *                                        containing process
+     d     act_mark2                  8a                                        8-bytes activation mark
+     d     ag_mark2                   8a                                        8-bytes activation group mark
+
+     /* MATPTR, materialize pointer attributes */
+     d matptr          pr                  extproc('_MATPTR')
+     d     receiver                    *   value
+     d     ptr                         *
+
+     d rslvsp_tmpl     ds                  qualified
+     d     obj_type                   2a
+     d     obj_name                  30a
+     d     auth                       2a   inz(x'0000')
+
+     d rslvsp2         pr                  extproc('_RSLVSP2')
+     d     obj                         *
+     d     opt                       34a
+
+     /* TESTPTR, test pointer */
+     d testptr         pr            10i 0 extproc('_TESTPTR')
+     d     ptr                         *   value              
+     d     type                       1a   value              
+
+     /* end -- pointer resolution */
+
+     /* program execution */
+
+     /* MODASA, modify automatic storage allocation */
+     /* Note that unlike MI instruction MODASA, builtin _MODASA */
+     /* cannot be used to truncate ASF */
+     d modasa          pr              *   extproc('_MODASA')
+     d     mod_size                  10u 0 value
+
+     /**
+      * NPM_PARMLIST_ADDR, npm procedure parameter list address.
+      *
+      * @return space pointer to a npm_plist_t structure
+      */
+     d npm_plist       pr              *   extproc('_NPMPARMLISTADDR')
+
+     d npm_plist_t     ds                  qualified based(dummy_ptr)
+     d     parm_desc_...
+     d       list                      *
+     d     mch_wrk_...
+     d       ara                     16a
+     d     argvs                       *   dim(400)
+
+     d parm_desc_...
+     d       list_t    ds                  qualified based(dummy_ptr)
+     d     argc                      10i 0
+
+     /* MATINVE, materialize invocation entry */
+     /* @todo link error! */ 
+     d*matinve         pr                  extproc('_MATINVE')
+     d*    receiver                    *   value
+     d*    option                    10u 0 value
+
+     /* end -- program execution */
+
+     /* queue management */
+
+     /* message prefix used by instruction ENQ */
+     d enq_prefix_t    ds                  qualified
+     d     msg_len                   10i 0
+      * for keyed queue objects
+     d     msg_key                  256a
+
+     /* enqueue to a queue object */
+     d enq             pr                  extproc('_ENQ')
+     d     queue                       *
+     d     msg_prefix                  *   value
+     d     msg                         *   value
+
+     /* message prefix used by instruction DEQ */
+     d deq_prefix_t    ds                  qualified
+     d     deq_time                   8a
+     d     time_out                   8a
+     d     msg_len                   10i 0
+     d     state_flag                 1a
+      * for keyed queue objects; input key, output key
+     d     msg_keys                 512a
+
+     /* dequeue from a queue object without waiting */
+     d deqi            pr            10i 0 extproc('_DEQI')
+     d     msg_prefix                  *   value
+     d     msg                         *   value
+     d     queue                       *
+
+     /* dequeue from or wait on a queue object */
+     d deqwait         pr                  extproc('_DEQWAIT')
+     d     msg_prefix                  *   value
+     d     msg                         *   value
+     d     queue                       *
+
+     /* end -- queue management */
+
+     /* context management */
+
+     /* MATCTX option structure */ 
+     d matctx_option_t...
+     d                 ds            46    qualified
+     d     sel_flag                   1a                                        selection flag
+     d     sel_criteria...
+     d                                1a                                        selection criteria
+     d     name_len                   5i 0                                      selection name length
+     d     obj_type                   1a                                        object type code
+     d     obj_subtype...
+     d                                1a                                        object sub-type code
+     d     name                      30a                                        object name
+     d     timestamp...
+     d                                8a                                        selection timestamp
+     d     asp_num                    2a                                        indepedent ASP number
+
+     /* length of MATCTX option structure */ 
+     d matctx_option_length...
+     d                 c                   46
+
+     /* MATCTX template */
+     d matctx_receiver1_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ctx_type                   2a                                        context type/sub-type
+     d     ctx_name                  30a                                        context name
+     d     ctx_opt                    4a                                        context options
+     d     rcvy_opt                   4a                                        recovery options
+     d     spc_size                  10i 0                                      space size
+     d     spc_init_val...
+     d                                1a                                        initial value of space
+     d     perf_cls                   4a                                        performance class
+     d                               23a                                        reserved
+     d     acc_grp                     *                                        access groupd
+
+     d matctx_offset1...
+     d                 c                   96
+
+     /* MATCTX, materialize context */
+     d matctx1         pr                  extproc('_MATCTX1')
+     d     receiver                    *   value
+     d     option                    46a
+
+     d matctx2         pr                  extproc('_MATCTX2')
+     d     receiver                    *   value
+     d     ctx                         *
+     d     option                    46a
+
+     /* end -- context management */
+
+     /* authorization management */
+
+     /* MATAUU template */
+     d matauu_tmpl_t   ds            16    qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     public_auth...
+     d                                2a
+     d     num_private_users...
+     d                                5i 0
+     d     reserved                   4a
+
+     /* long format privately authorized USRPRF struction */
+     d auth_desc_long_t...
+     d                 ds            80    qualified
+     d                                     based(dummy_ptr)
+     d     usrprf_type...
+     d                                2a
+     d     usrprf_name...
+     d                               30a
+     d     private_auth...
+     d                                2a
+     d     reserved                  12a
+     d     usrprf                      *
+
+     /* length of structure auth_desc_long_t */
+     d AUTH_DESC_LONG_LENGTH...
+     d                 c                   80
+
+     /* MATAUU, materialize authorized users */
+     d matauu          pr                  extproc('_MATAUU')
+     d     receiver                    *   value
+     d     obj                         *
+     d     option                     1a
+
+     /* end -- authorization management */
+
+     /* process and thread management */
+
+     /* PCOPTR, returns a SPCPTR to the PCO (process communication object) object */
+     d pcoptr          pr              *   extproc('_PCOPTR')
+
+     /* MATPRAGP, materialize process activation groups */
+     d matpragp        pr                  extproc('_MATPRAGP')
+     d     receiver                    *   value
+
+     d matpragp_...
+     d   tmpl_t        ds                  qualified
+     d                                     based(dummy_ptr)
+     d     buf                    65535a
+     d     bytes_in                  10i 0 overlay(buf : 1)
+     d     bytes_out                 10i 0 overlay(buf : 5)
+     d     agp_num                   10i 0 overlay(buf : 9)
+     d     agp_marks                  4a   dim(16380)
+     d                                     overlay(buf : 13)
+
+     /* end -- process and thread management */
+
+      /endif
+     /* eof - mih52.rpgleinc */

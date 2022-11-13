@@ -1,0 +1,75 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li.
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+ * @file cvthc.emi
+ *
+ * Each hex digit (4-bit value) of the string value in the source
+ * character string is converted to a character (8-bit value) and
+ * placed in the receiver character string.
+ *
+ * @param [out] Receiver character string
+ * @param [in]  Source character string
+ * @param [in]  bin(4). Length in nibbles of source
+ */
+
+dcl spcptr c-ptr parm           ; /* receiver */
+dcl spcptr h-ptr parm           ; /* source */
+dcl spcptr l-ptr parm           ; /* length in nibbles of source */
+dcl ol pl-main (
+        c-ptr,
+        h-ptr,
+        l-ptr
+) parm ext                      ;
+
+entry i-main(pl-main) ext       ;
+
+dcl dd l bin(4) bas(l-ptr)      ;
+dcl dd i bin(4) auto            ;
+dcl dd ch1 char(1) bas(h-ptr)   ;
+dcl dd ch2 char(2) bas(c-ptr)   ;
+        dcl dd hi char(1) def(ch2) pos(1) ;
+        dcl dd lo char(1) def(ch2) pos(2) ;
+
+        cpynv i, 0              ;
+loop:   
+        cpybrep ch2, x'00'         ;
+        cpybtrls hi, h-ptr->ch1, 4 ;
+        cpybtl lo, h-ptr->ch1, 4, 4 ;
+
+        cmpbla(b) hi, x'0A' / nlo(=+3) ;
+        or(s) hi, x'F0'                ;
+        b cvt-hi                       ;
+:
+        addlc(s) hi, x'B7'      ;
+cvt-hi: 
+        cmpbla(b) lo, x'0A' / nlo(=+3) ;
+        or(s) lo, x'F0'                ;
+        b cvt-lo                       ;
+:
+        addlc(s) lo, x'B7'      ;
+cvt-lo:
+        addspp h-ptr, h-ptr, 1    ;
+        addspp c-ptr, c-ptr, 2    ;
+        addn(s) i, 2              ;
+        cmpnv(b) i, l / lo(loop) ;
+
+brk 'END'                       ;
+        rtx *                   ;
+pend                            ; /* instruction number: hex 0012 */

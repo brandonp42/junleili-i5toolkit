@@ -1,0 +1,109 @@
+# Custom settings
+
+#########################################################
+# Basic settings
+#########################################################
+
+# Project name
+PROJECT_NAME			= "i5/OS Programmer's Toolkit: Change Managment Tools for i5/OS"
+
+# Project revision number
+PROJECT_NUMBER			= 0.2.16
+
+# Output directory
+# OUTPUT_DIRECTORY		= .
+
+# Output language.  Default is English
+OUTPUT_LANGUAGE			= English
+
+# ....
+BRIEF_MEMBER_DESC		= YES
+
+# Multi-line brief description.
+MULTILINE_CPP_IS_BRIEF		= YES
+
+# Set tab-size to 2.  Note that the default tab-size used by doxygen is too large.
+TAB_SIZE			= 2
+
+# ALIASES 
+# This tag can be used to specify a number of aliases that acts as commands in the documentation. An alias has the form  name=value
+# For example adding  "sideeffect=\par Side Effects:\n" 
+# will allow you to put the command \sideeffect (or @sideeffect) in the documentation, which will result in a user-defined paragraph with heading "Side Effects:". You can put \n's in the value part of an alias to insert newlines.
+
+#########################################################
+# Input related settings
+#########################################################
+
+# Path of input files
+INPUT				= ../feature/cm
+
+# File patterns
+FILE_PATTERNS			= *.txt
+# *.mi
+
+# Recursive.  So important!
+RECURSIVE			= YES
+
+# Exclude files
+EXCLUDE				=
+
+EXCLUDE_SYMLINKS		= YES
+
+# Path of example files
+EXAMPLE_PATH			= output/cm/src
+EXAMPLE_RECURSIVE		= YES
+
+# Path of image files.  It would be usefule while using \image command
+IMAGE_PATH                      = image/cm
+
+# Enable preprocessing.
+ENABLE_PREPROCESSING		= YES
+
+# Enable ALPHABETICAL_INDEX
+ALPHABETICAL_INDEX		= YES
+
+# Generate XML files
+GENERATE_XML			= NO
+GENERATE_LATEX			= NO
+
+##########################################################
+# Graphic settings
+##########################################################
+# I have DOT!
+HAVE_DOT			= YES
+
+CLASS_DIAGRAMS 			= YES
+CLASS_GRAPH 			= YES
+COLLABORATION_GRAPH 		= YES
+TEMPLATE_RELATIONS 		= YES
+INCLUDE_GRAPH 			= YES
+INCLUDED_BY_GRAPH 		= YES
+CALL_GRAPH 			= YES
+GRAPHICAL_HIERARCHY 		= YES
+# DOT_PATH 
+DOTFILE_DIRS			= dot_files/cm
+DOTFILE_ENCODING		= UTF-8
+GENERATE_LEGEND 		= YES
+
+#########################################################
+# HTML settings
+#########################################################
+HTML_HEADER			= header.html
+HTML_FOOTER			= footer.html
+HTML_STYLESHEET			= docs.css
+HTML_OUTPUT                     = output/cm
+# GENERATE_HTMLHELP		=
+# HHC_LOCATION			=
+CHM_FILE			= NO
+GENERATE_CHI			= NO
+GENERATE_TREEVIEW		= NONE
+TREEVIEW_WIDTH			= 180
+
+#########################################################
+# Miscellaneous settings
+#########################################################
+# I like search engine supports
+# SEARCHENGINE			= YES
+EXTRACT_PRIVATE     = YES
+EXTRACT_STATIC      = YES
+EXTRACT_LOCAL_CLASSES = YES

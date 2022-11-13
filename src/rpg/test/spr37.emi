@@ -1,0 +1,53 @@
+/**
+ * This file is part of i5/OS Programmer's Toolkit.
+ *
+ * Copyright (C) 2010, 2011  Junlei Li.
+ *
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file spr37.emi
+ *
+ * Co-operate with t100.rpgle.
+ *
+ * @pre *USRSPC *LIBL/SPR37
+ * CALL PGM(QUSCRTUS) PARM('SPR37     LSBIN     ' 'PCS' X'00000100' X'00' '*CHANGE' 'NOTHING')
+ */
+
+dcl sysptr space auto init (
+        "SPR37", type(spc, h'34')
+)                               ;
+
+dcl dd tmpl char(32) auto bdry(16) ;
+dcl spcptr tmpl-ptr auto init(tmpl) ;
+dcl spc * bas(tmpl-ptr)             ;
+        dcl dd bin bin(4) dir       ;
+        dcl dd bout bin(4) dir      ;
+        dcl dd * char(8) dir        ;
+        dcl sysptr pcs-ptr dir      ;
+
+        cpynv bin, 32           ;
+        matpratr tmpl-ptr, *, x'25' ;
+brk '1'                             ;
+
+dcl spcptr space-ptr auto       ;
+dcl spc pcs-t bas(space-ptr)    ;
+        dcl sysptr tgt-ptr dir  ;
+        rslvsp space, *, *, *   ;
+        setsppfp space-ptr, space ;
+        cpybwp tgt-ptr, pcs-ptr    ;
+brk 'END'                       ;
+        rtx *                   ;
+pend                            ;

@@ -1,0 +1,28 @@
+/* *
+ * @file sep10.emi
+ *
+ * @attention applicable on V5R4 and later 
+ */
+
+dcl dd os-version char(6) bas(.os-version) ; 
+
+entry *(plist-main) ext         ; 
+
+dcl dd mat-tmpl char(16) auto        ;
+dcl spcptr .mat-tmpl auto init(mat-tmpl) ; 
+        dcl dd bytes-in bin(4) def(mat-tmpl) pos(1) init(16) ; 
+        dcl dd bytes-available bin(4) def(mat-tmpl) pos(5) ; 
+        dcl dd lic-version char(6) def(mat-tmpl) pos(9) ; 
+
+        cpynv bytes-in, 16             ;
+        cpybrep os-version, ' '        ;
+        matmatr .mat-tmpl, x"020C" ; 
+        cpybla os-version, lic-version ; 
+
+dcl dd len bin(2) auto          ;
+        triml len, os-version   ;
+        %sendmsg(os-version, len) ;
+
+brk 'RTN'                       ;
+        rtx *                   ; 
+pend                            ;

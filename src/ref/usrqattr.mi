@@ -1,0 +1,58 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2009, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file usrqattr.mi
+ *
+ * structures declared here
+ *  - matqat-template-t, used by instruction MATQAT
+ *
+ * constants defined here
+ *  - _MATQAT-TEMPLATE-LEN, length of matqat-template-t
+ */
+
+/* 因为这是16字节对齐的，所以我把这的声明在这里，回头想下，类似的情况如何处理 */
+dcl dd matqat-template-buf char(128) auto bdry(16);
+dcl spcptr .matqat-template auto init(matqat-template-buf);
+dcl spc matqat-template-t bas(.matqat-template);
+  dcl dd matqat-bytes-in bin(4) dir;
+  dcl dd matqat-bytes-out bin(4) dir;
+  dcl dd matqat-obj-types char(2) dir;
+  dcl dd matqat-obj-name char(30) dir;
+  dcl dd matqat-create-options char(4) dir;
+  dcl dd * char(4) dir;
+  dcl dd matqat-space-size bin(4) dir;
+  dcl dd matqat-init-value char(1) dir;
+  dcl dd matqat-performance-class char(4) dir;
+  dcl dd * char(7) dir;
+  dcl sysptr matqat-ctx dir;
+  dcl sysptr matqat-accgrp dir;
+  dcl dd matqat-q-attr char(1) dir;
+  dcl dd matqat-cur-max-msgs bin(4) dir;
+  dcl dd matqat-cur-msg-num bin(4) dir;
+  dcl dd matqat-extension-value bin(4) dir;
+  dcl dd matqat-key-len bin(2) dir;
+  dcl dd matqat-max-msg-size bin(4) dir; /* 指被入列的message的最大长度 */
+  dcl dd * char(1) dir;
+  dcl dd matqat-max-extend-num bin(4) dir;
+  dcl dd matqat-cur-extend-num bin(4) dir;
+  dcl dd matqat-init-msg-num bin(4) dir;
+
+dcl con _MATQAT-TEMPLATE-LEN bin(4) init(128);
+
+/* eof - usrqattr.mi */

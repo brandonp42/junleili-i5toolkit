@@ -1,0 +1,466 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file qmdtl.mi
+ *
+ * display panel QMDTL
+ */
+
+entry i-main(pl-main) ext       ; 
+
+        /* save uim apph */
+        setspp .apph, alc-apph  ;
+
+        /* check alc-call-type, 3(list option), 4(general panel exit) */
+        cmpnv(b) alc-call-type, 4 / neq(handle-list-optoin) ;
+        calli general-panel-exit, *, .general-panel-exit ;
+        rtx *                   ; 
+
+handle-list-optoin:     
+
+        calli determine-target-message, *, .determine-target-message ; 
+
+        calli init-uim-vars, *, .init-uim-vars ; 
+
+        calli reload-list, *, .reload-list ; 
+
+        /* display panel: qmdtl */
+        cpyblap panel-name, "QMDTL", " " ; 
+display-panel:
+        callx .quidspp, argl-dspp, * ; 
+        cmpnv(b) uim-ec-bytes-out, 0 / eq(=+4) ; 
+        setspp .qusec, uim-ec   ; 
+        calli report-error, *, .report-error ; 
+        b farewell              ; 
+:
+        cmpnv(b) pnl-func, uim-return-quit / neq(=+2) ; 
+        b farewell              ; 
+:
+        cmpnv(b) pnl-func, uim-return-f10 / neq(end-f10) ; 
+
+        /* get RQMDTLCTL::VCTLKEYTXT */
+        setspp .var-buffer, rqmdtlctl ; 
+        cpynv var-buflen, rqmdtlctl-t-len ; 
+        cpyblap rcd-name, "RQMDTLCTL", " " ; 
+        callx .quigetv, argl-getv, * ; 
+
+        /* rqmdtlctl-vctlkeytxt: current display status */
+        cmpbla(b) rqmdtlctl-vctlkeytxt, "K" / eq(=+3) ; 
+        cpybla rqmdtlctl-vctlkeytxt, "K" ; 
+        b =+2                   ; 
+:
+        cpybla rqmdtlctl-vctlkeytxt, "T" ; 
+:
+        callx .quiputv, argl-putv, * ; 
+
+        calli reload-list, *, .reload-list ; 
+        b display-panel         ; 
+end-f10:
+
+farewell:
+        rtx *                   ; 
+
+/**
+ * @function general-panel-exit
+ *
+ * called when functions are pressed in panel QMDTL
+ */
+dcl spc p-input bas(.qui-alc)         ;
+        dcl dd gen-struct-level bin(4) dir ;
+        dcl dd * char(8) dir    ;
+        dcl dd gen-type-of-call bin(4) dir ;
+        dcl dd gen-apph char(8) dir ;
+        dcl dd gen-panel-name char(10) dir ;
+        dcl dd gen-function-key bin(4) dir ;
+        dcl dd gen-funckey-qual bin(4) dir ;
+        dcl dd gen-option-number bin(4) dir ;
+        dcl dd gen-pulld-field-name char(10) dir ;
+
+dcl insptr .general-panel-exit auto ;
+entry general-panel-exit int    ;
+
+        /* i handle only F11 */
+        cmpnv(b) gen-function-key, 11 / neq(.general-panel-exit) ;
+
+        calli determine-target-message, *, .determine-target-message ; 
+
+        /* get RQMDTLCTL.VDTLVIEW */
+        setspp .var-buffer, rqmdtlctl ; 
+        cpynv var-buflen, rqmdtlctl-t-len ; 
+        cpyblap rcd-name, "RQMDTLCTL", " " ; 
+        callx .quigetv, argl-getv, * ;
+
+        /* since i cannot see changes made to
+           rqmdtlctl-vdtlview by CHGVIEW command */
+        subn rqmdtlctl-vdtlview, 1, rqmdtlctl-vdtlview; 
+
+        /* reload-list */
+        calli reload-list, *, .reload-list ; 
+
+        b .general-panel-exit   ; 
+
+/**
+ * @function reload-list
+ *
+ * @pre rqmdtlctl-vctlkeytxt
+ * @pre .q-message
+ *
+ * routines called:     
+ *  - fill-list
+ */
+dcl insptr .reload-list auto    ; 
+entry reload-list int           ;
+brk "RLD"                          ; 
+        /* clear list LSTDETAIL */
+        setspp .var-buffer, uim-liste-lstdetail ; 
+        cpynv  var-buflen, uim-liste-lstdetail-len ; 
+        cpyblap rcd-name, "RLSTDETAIL", " ";
+        cpyblap list-name, "LSTDETAIL", " "  ;
+        callx .quiaddle, argl-addle, *;
+        callx .quidltl, argl-dltl, * ;
+
+        /* check vctlkeytxt. 'K', key, 'T', text */
+        cmpbla(b) rqmdtlctl-vctlkeytxt, 'K' / eq(show-key-data) ;
+        addspp .fill-list-buf, .q-message, q-message-t-len ;
+        addspp .fill-list-buf, .fill-list-buf, qmsg-key-len ;
+        cpynv fill-list-buflen, qmsg-text-len ;
+        b =+4                   ; 
+show-key-data:
+        /* check key length */
+        cmpnv(b) qmsg-key-len, 0 / eq(.reload-list) ; 
+        addspp .fill-list-buf, .q-message, q-message-t-len ;
+        cpynv fill-list-buflen, qmsg-key-len ;
+:
+        calli fill-list, *, .fill-list ; 
+
+        b .reload-list          ; 
+
+/**
+ * @function fill-list
+ *
+ * @pre .fill-list-buf
+ * @pre fill-list-buflen
+ * @pre rqmdtlctl-vdtlview
+ *      0, charater, 1, hexadecimal
+ */
+dcl spcptr .fill-list-buf auto  ;
+dcl dd fill-list-buflen bin(4) auto ;
+
+dcl dd bytes-per-line bin(4) auto ; 
+dcl dd bytes-remained bin(4) auto; 
+dcl dd ind-no-more char(1) auto ; 
+dcl dd column-index znd(6,0) auto ;
+dcl dd ch25 char(25) bas(*)     ; 
+dcl dd ch50 char(50) bas(*)     ;
+dcl con ch52 char(52) init("'                                                  '") ;
+dcl dd ch50-tmp char(50) auto   ; 
+dcl dd cvtnc-tmpl char(7) auto  ;
+        dcl dd * char(1) def(cvtnc-tmpl) pos(1) init(x"02") ;
+        dcl dd * bin(2)  def(cvtnc-tmpl) pos(2) init(h"0006") ;
+
+dcl insptr .fill-list auto    ; 
+entry fill-list int           ;
+
+        cpynv bytes-per-line, 50; 
+        cmpnv(b) rqmdtlctl-vdtlview, 1 / neq(=+2) ;
+        cpynv bytes-per-line, 25; 
+:
+        setspp .var-buffer, uim-liste-lstdetail ; 
+        cpynv  var-buflen, uim-liste-lstdetail-len ; 
+        cpyblap rcd-name, "RLSTDETAIL", " ";
+        cpyblap list-name, "LSTDETAIL", " "  ;
+
+        cpybla ind-no-more, "0" ; 
+        cpynv bytes-remained, fill-list-buflen ;
+        cpynv column-index,  1 ;
+loop-fill-list:
+        subn(si) bytes-remained, bytes-per-line / neg(ind-no-more), zer(ind-no-more) ;
+
+        cmpnv(b) rqmdtlctl-vdtlview, 0 / eq(deal-character-data) ;
+        /* hexadecimal data */
+        cvtnc uim-liste-lstdetail-vdtloffh, column-index, cvtnc-tmpl ; 
+        cpybla uim-liste-lstdetail-vdtldatah, ch52 ;
+        cvthc ch50-tmp, .fill-list-buf->ch25 ;
+
+        setspp .a-copy-bytes-receiver, detail-data-hex;
+        setspp .a-copy-bytes-source, ch50-tmp ;
+        cmpbla(b) ind-no-more, "1" / eq(=+3) ; 
+        cpynv a-copy-bytes-length, 50;
+        b =+3                   ; 
+:
+        addn(s) bytes-remained, 25 ; 
+        mult a-copy-bytes-length, bytes-remained, 2;
+:
+        calli copy-bytes, argl-copy-bytes, .copy-bytes;
+
+        b insert-list-entry     ; 
+deal-character-data:
+        cvtnc uim-liste-lstdetail-vdtloff, column-index, cvtnc-tmpl ;
+        cpybla uim-liste-lstdetail-vdtldata, ch52 ;
+        cpybla ch50-tmp, .fill-list-buf->ch50 ;
+
+        setspp .a-copy-bytes-receiver, detail-data;
+        setspp .a-copy-bytes-source, ch50-tmp ;
+        cmpbla(b) ind-no-more, "1" / eq(=+3) ; 
+        cpynv a-copy-bytes-length, 50;
+        b =+3                   ; 
+:
+        addn(s) bytes-remained, 50 ; 
+        cpynv a-copy-bytes-length, bytes-remained ; 
+:
+        calli copy-bytes, argl-copy-bytes, .copy-bytes;
+insert-list-entry:
+        callx .quiaddle, argl-addle, *;
+
+        addspp .fill-list-buf, .fill-list-buf, bytes-per-line ; 
+        addn(s)  column-index, bytes-per-line ; 
+
+        cmpbla(b) ind-no-more, "1" / eq(=+2) ;
+        b loop-fill-list        ; 
+end-loop-fill-list:     
+
+        b .fill-list            ; 
+
+/**
+ * @function determine-target-message
+ *
+ *  - which message is selected by user
+ *  - locate target message in PGM QMSG's storage
+ *
+ * @post .q-messages
+ * @post .q-message
+ * @post uim-liste-lstmsg-number
+ * @post q-message-entry-length
+ */
+dcl dd offset bin(4) auto       ;
+dcl dd q-message-entry-length bin(4) auto ; 
+
+dcl insptr .determine-target-message auto ; 
+entry determine-target-message int ; 
+
+        /* get selected list entry */
+        setspp .var-buffer, uim-liste-lstmsg ;
+        cpynv var-buflen, uim-liste-lstmsg-len ;
+        cpyblap rcd-name, "RLSGMSG", " " ;
+        callx .quigetv, argl-getv, * ;
+        cpynv q-message-inex, uim-liste-lstmsg-number ;
+
+        /* resolve QMSG's exported data */
+        rslvdp dtaptr-by-qmsg, by-qmsg-name, .qmsg ; 
+        setsppfp .by-qmsg, dtaptr-by-qmsg ;
+                /* .q-messages is prepared */
+
+        /* locate message entry by message index */
+        /* cal length of a q entry */
+        addn q-message-entry-length, qmsg-key-len, qmsg-text-len ;
+        addn(s) q-message-entry-length, q-message-t-len ; 
+        /* cal offset to target message entry */
+        cpynv offset, q-message-inex ; 
+        subn(s) offset, 1       ;
+        mult(s) offset, q-message-entry-length ; 
+        addn(s) offset, q-messages-t-len ;
+
+        /* set .q-message */
+        addspp .q-message, .q-messages, offset ; 
+
+        b .determine-target-message ; 
+
+/**
+ * @function init-uim-vars
+ *
+ * @pre message index number
+ */
+dcl insptr .init-uim-vars auto ; 
+entry init-uim-vars int ; 
+
+        /* init rqmdtlctl::vctlkeytxt */
+        cpybla rqmdtlctl-vctlkeytxt, "T" ; 
+        setspp .var-buffer, rqmdtlctl ; 
+        cpynv var-buflen, rqmdtlctl-t-len ; 
+        cpyblap rcd-name, "RQMDTLCTL", " " ; 
+        callx .quiputv, argl-putv, * ; 
+
+        cpynv rqmdtl-vqmsgnum, q-message-inex ; 
+        setspp .var-buffer, rqmdtl ; 
+        cpynv var-buflen, rqmdtl-t-len ; 
+        cpyblap rcd-name, "RQMDTL", " " ; 
+        callx .quiputv, argl-putv, * ; 
+
+        b .init-uim-vars        ; 
+
+/**
+ * report error
+ *
+ * @param[in]  qusec
+ * @post       send message to interactive user
+ */
+dcl insptr .report-error        ; 
+entry report-error int          ; 
+
+brk 'RTPERR'                    ; 
+
+        cpybla sndpm-msgid, ec-exid ; 
+        cpyblap sndpm-msgf, "QCPFMSG   QSYS", " " ; 
+        setspp .sendmsg-msg, ec-exdata ; 
+        setspp .sendmsg-msglen, ec-bytes-out ; 
+        calli send-msg, argl-sendmsg, .send-msg ; 
+
+        b .report-error         ; 
+
+/* constants */
+dcl con uim-return-quit bin(4) init(100) ; 
+dcl con uim-return-f10 bin(4) init(110) ; 
+/* request to exchange between key data and text data */
+
+/**
+ * @function copy-bytes
+ */
+dcl spcptr .a-copy-bytes-receiver auto;
+dcl spcptr .a-copy-bytes-source auto;
+dcl dd a-copy-bytes-length bin(4) unsgnd auto;
+dcl spcptr .a-copy-bytes-length auto init(a-copy-bytes-length);
+dcl ol argl-copy-bytes(
+  .a-copy-bytes-receiver,
+  .a-copy-bytes-source,
+  .a-copy-bytes-length
+) arg;
+
+dcl spcptr .p-copy-bytes-receiver parm;
+dcl spcptr .p-copy-bytes-source parm;
+dcl spcptr .p-copy-bytes-length parm;
+dcl dd p-copy-bytes-length bin(4) unsgnd bas(.p-copy-bytes-length);
+dcl ol pl-copy-bytes (
+  .p-copy-bytes-receiver,
+  .p-copy-bytes-source,
+  .p-copy-bytes-length
+) parm int;
+
+dcl dd copy-bytes-index bin(4) unsgnd auto;
+dcl dd copy-bytes-source-byte char(1) bas(*);
+dcl dd copy-bytes-receiver-byte char(1) bas(*);
+dcl spcptr .copy-bytes-receiver auto;
+dcl spcptr .copy-bytes-source auto;
+
+dcl insptr .copy-bytes auto;
+entry copy-bytes(pl-copy-bytes) int;
+
+  cpynv copy-bytes-index, 0;
+  setsppfp .copy-bytes-receiver, .p-copy-bytes-receiver;
+  setsppfp .copy-bytes-source, .p-copy-bytes-source;
+loop-copy-bytes:
+  addn(s) copy-bytes-index, 1;
+  cmpnv(b) copy-bytes-index, p-copy-bytes-length / hi(end-loop-copy-bytes);
+
+  cpybla
+    .copy-bytes-receiver->copy-bytes-receiver-byte,
+    .copy-bytes-source->copy-bytes-source-byte;
+
+  addspp .copy-bytes-receiver, .copy-bytes-receiver, 1;
+  addspp .copy-bytes-source, .copy-bytes-source, 1;
+  b loop-copy-bytes;
+end-loop-copy-bytes:
+
+  b .copy-bytes;
+
+/* what exported by QMSG */
+dcl dtaptr dtaptr-by-qmsg auto  ; 
+dcl dd by-qmsg-name char(32) auto init("FOR-QMDTL") ; 
+dcl spcptr .by-qmsg auto        ; 
+dcl spc by-qmsg bas(.by-qmsg)   ; 
+        dcl spcptr .q-messages dir; 
+dcl sysptr .qmsg auto init("QMSG", type(pgm)) ;
+
+/* header of q messages */
+dcl spc q-messages-t bas(.q-messages);
+  dcl dd qmsg-key-len bin(4) dir; /* zero for non-keyed queues */
+  dcl dd qmsg-text-len bin(4) dir;
+  dcl dd qmsg-messages bin(4) dir;
+dcl con q-messages-t-len bin(4) init(12);
+
+/* for operation on q entry */
+dcl spcptr .q-message auto  ; 
+dcl spc q-message-t bas(.q-message);
+  dcl dd qmsg-index znd(8,0) dir;
+  dcl dd qmsg-enqueued-time char(26) dir;
+dcl con q-message-t-len bin(4) init(34);
+/* key and text */
+dcl spcptr .qmsg-key auto;
+dcl spcptr .qmsg-text auto;
+dcl dd q-message-inex bin(4) auto ;
+
+/**
+ * uim variables
+ */
+/* control variables: RCD rqmdtlctl */
+dcl dd rqmdtlctl char(3) auto   ; 
+dcl spcptr .rqmdtlctl auto init(rqmdtlctl) ; 
+dcl spc rqmdtlctl-t bas(.rqmdtlctl) ; 
+        dcl dd rqmdtlctl-vctlkeytxt char(1) dir ;
+        dcl dd rqmdtlctl-vdtlview bin(2) dir ; 
+dcl con rqmdtlctl-t-len bin(4) init(3) ; 
+
+/* RCD:  rqmdtl */
+dcl dd rqmdtl char(8) auto      ;
+dcl spcptr .rqmdtl auto init(rqmdtl) ;
+dcl spc rqmdtl-t bas(.rqmdtl)   ;
+        dcl dd rqmdtl-vqmsgnum znd(8,0) dir ; 
+dcl con rqmdtl-t-len bin(4) init(8) ; 
+        
+/**
+ * list entry structure of list lstmsg
+ */
+dcl dd uim-liste-lstmsg char(68) auto;
+dcl spcptr .uim-liste-lstmsg auto init(uim-liste-lstmsg);
+dcl spc * bas(.uim-liste-lstmsg);
+        dcl dd uim-liste-lstmsg-option bin(2) dir;
+        dcl dd uim-liste-lstmsg-number znd(8,0) dir;
+        dcl dd uim-liste-lstmsg-time-enqueued char(26) dir;
+        dcl dd uim-liste-lstmsg-key char(32) dir;
+dcl con uim-liste-lstmsg-len bin(4) init(68);
+
+/**
+ * list entry structure of lit LSTDETAIL
+ * 
+ * 
+ */
+dcl dd uim-liste-lstdetail char(116) auto ;
+dcl spcptr .uim-liste-lstdetail auto init(uim-liste-lstdetail) ;
+dcl spc * bas(.uim-liste-lstdetail) ;
+        dcl dd uim-liste-lstdetail-vdtloff char(6) dir ; 
+        dcl dd uim-liste-lstdetail-vdtldata char(52) dir ; 
+        dcl dd uim-liste-lstdetail-vdtloffh char(6) dir ; 
+        dcl dd uim-liste-lstdetail-vdtldatah char(52) dir ; 
+dcl con uim-liste-lstdetail-len bin(4) init(116);
+dcl dd detail-data char(50)     def(uim-liste-lstdetail-vdtldata) pos(2) ; 
+dcl dd detail-data-hex char(50) def(uim-liste-lstdetail-vdtldatah) pos(2) ;
+
+/* includes */
+/include uim.mi                 ; 
+dcl ol pl-main(.qui-alc) parm ext ; 
+
+/* more includes */
+/include qusec.mi               ; 
+/include sendmsg.mi             ;
+
+/* debug */
+dcl dd d char(512) bas(*)       ; 
+
+pend                            ; 
+
+/* eof - qmdtl.mi */

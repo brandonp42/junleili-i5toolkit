@@ -1,0 +1,80 @@
+README of project i5/OS Programmer's Toolkit (i5toolkit)
+
+version 0.2.16
+date    2011-05-10
+svn revision 269
+
+Links
+ - Project home page: http://i5toolkit.sourceforge.net/
+ - Download:          http://sourceforge.net/projects/i5toolkit/files/
+
+Contents
+ - What's new
+ - Installation Guide
+
+**************************************************
+* What's new
+**************************************************
+
+******************************
+* 0.2.16
+******************************
+  - Subproject "System-builtin Headers for ILE RPG" is renamed to "System-builtin Headers and Examples for ILE HLLs". The subproject is enriched with system-builtin headers for ILE COBOL and usage examples in ILE COBOL and CL of using system-builtins (bound program access interfaces of MI instructions). Also the original system-builtin headers for ILE RPG, mih52.rpgleinc, and mih54.rpgleinc are divided into small ones by category. Please refere to System-builtin Headers and Examples for ILE HLLs for details. The page List of System-builtins lists all system-builtins currently covered by this subproject.
+ - CL command Display Panel (DSPPNL) is added to UIM Related Tools
+ - The CVTHC Program is added to Miscellaneous Tools which is handy for an OPM or ILE HLL program to convert a hexadecimal value to character format.
+ - New techtips and how-tos added to subproject Space Object Tools
+ - Binary components (save files) in directory bin of the release packaged changed:
+   - SAVF bin/emi.savf is removed
+   - SAVF bin/rpg.savf is removed
+   - SAVF bin/ifs.savf is added. IFS directories saved in it are:
+     - /usr/local/include/cobol
+     - /usr/local/include/emi
+     - /usr/local/include/rpg
+     - /usr/local/bin/i5toolkit
+
+******************************
+* 0.2.14
+******************************
+New components and utilities provided by the release include:
+ - Software Configuration Management Tools for i5/OS
+ - ILE RPG Header for User Interface Manager (UIM) APIs 
+
+******************************
+* 0.2.13
+******************************
+ - ILE RPG header for the SEPT added.
+ - More than thirty ILE RPG protoypes for i5/OS system builtins added
+   to rpg/mih52.rpgleinc and rpg/mih54.rpgleinc.
+ - Binary components (save files) in directory bin of the release packaged changed:
+   - SAVF bin/emi_inc.savf is removed.
+   - SAVF bin/emi.savf added in which IFS dir /usr/local/include/emi are saved.
+   - SAVF bin/rpg.savf added in which IFS dir /usr/local/include/rpg are saved.
+
+**************************************************
+* Installation Guide
+**************************************************
+To install i5/OS Programmer's Toolkit on your IBM i box, you need
+only to restore the precompiled components to your machine, and
+then optionally compile and run CL program INSTALL in order to
+create symbol links for MIC's QShell commands.
+
+To run CL program INSTALL, you need to compile it from source
+member I5TOOLKIT/CLSRC(INSTALL).
+
+The precompiled components are placed in *SAVFILE bin/i5toolkit.savf,
+which is saved from a V5R2 box.
+
+Command to restore library I5TOOLKIT
+ - RSTLIB SAVLIB(I5TOOLKIT) DEV(*SAVF) SAVF(LSBIN/I5TOOLKIT)
+
+Command to restore EMI includes
+ - RST DEV('/qsys.lib/some_lib.lib/ifs.file') OBJ('/usr/local/include/emi')
+   * chnage 'some_lib' to the library name where you uploaded *SAVF bin/ifs.savf to.
+   * if IFS directory /usr/local/include does not already exist, create it using
+     CL command CRTDIR or qshell command mkdir before restoring *SAVF ifs.
+
+Command to restore system-builtin headers for ILE HLLs
+ - RST DEV('/qsys.lib/some_lib.lib/ifs.file') OBJ('/usr/local/include/*')
+   * chnage 'some_lib' to the library name where you uploaded *SAVF bin/ifs.savf to.
+   * if IFS directory /usr/local/include does not already exist, create it using
+     CL command CRTDIR or qshell command mkdir before restoring *SAVF ifs.

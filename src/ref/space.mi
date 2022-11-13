@@ -1,0 +1,145 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2009, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file space.mi
+ *
+ * routines implemented here
+ *  - create-space
+ *
+ * constants declared here
+ *  - space-createion-option-1
+ *  - space-performance-class-1
+ */
+
+/**
+ * creation option 1: 00000100,00000010,00000000,00000000(b), x"40020000"
+ *  - Existence attribute:    0, temporary
+ *  - Space attribute:        0, fixed-length
+ *  - Initial context:        0, Addressability is not inserted into context
+ *  - Access group:           0 = 	Do not create as member of access group
+ *  - 4-5: reserved           00
+ *  - Public authority specified: 0, no
+ *  - Initial owner specified: 0, yes
+ *  - Reserved, 8-11:         0000
+ *  - Set public authority in operand 1: 0, no
+ *  - Initialize space:       0, initialize
+ *  - Automatically extend space:     1, yes
+ *  - Hardware storage protection level: 10, prepare to mods
+ *  - Process temporary space accounting: 0, track
+ *  - reserved, 18-20:        000
+ *  - Always enforce hardware storage protection of space: 0, no
+ *  - reserved, 22-31:        0000000000
+ */
+dcl con space-createion-option-1 char(4) init(x"40020000");
+
+/**
+ * performance class 1: 00010000,00000000,00000000,00000000, x"10000000"
+ *  - Space alignment:        0, let machine select this
+ *  - Clear the space into main memory during creation: 0, 4k only
+ *  - Spread the space object among storage devices: 0, no
+ *  - Machine chooses space alignment: 1, yes
+ *  - reserved: 0
+ *  - Main storage pool selection: 0, process default
+ *  - Transient storage pool selection: 0, default main storgae pool
+ *  - obsolete: 0
+ *  - unit number, 8-15: 0
+ *  - reserved: 16-23
+ *  - Expanded transfer size advisory: x'00', let machine determine this
+ */
+dcl con space-performance-class-1 char(4) init(x"10000000");
+
+dcl con crts-template-len bin(4) init(96);
+dcl dd crts-template char(96) auto bdry(16);
+dcl spcptr .crts-template auto init(crts-template);
+dcl spc * bas(.crts-template);
+  dcl dd crts-tmpl-tmpl-size bin(4) dir;
+  dcl dd crts-tmpl-funny-num bin(4) dir;
+  dcl dd crts-tmpl-obj-type char(2) dir;
+  dcl dd crts-tmpl-obj-name char(30) dir;
+  dcl dd crts-tmpl-creation-options char(4) dir;
+  dcl dd * char(2) dir;
+  dcl dd crts-tmpl-asp-num char(2) dir;
+  dcl dd crts-tmpl-space-size bin(4) dir;
+  dcl dd crts-tmpl-init-value char(1) dir;
+  dcl dd crts-tmpl-performance-class char(4) dir;
+  dcl dd * char(1) dir;
+  dcl dd crts-tmpl-public-auth char(2) dir;
+  dcl dd crts-tmpl-extension-offset bin(4) dir;
+  dcl sysptr crts-tmpl-context dir;
+  dcl sysptr crts-tmpl-accgrp dir;
+
+/**
+ * arguments list for caller
+ *
+ */
+dcl spcptr .crts-space auto;
+dcl spcptr .crts-space-name auto;
+dcl spcptr .crts-space-size auto;
+dcl ol argl-create-space(
+  .crts-space,
+  .crts-space-name,
+  .crts-space-size
+) arg;
+
+/**
+ * @function create-space
+ *
+ * create a temparory space whose addressibility
+ * is not inserted into context.
+ *
+ * @param[in] .p-crts-space, pointer to space system pointer
+ * @param[in] .p-crts-space-name, space name, char(30)
+ * @param[in] .p-crts-space-size, space size, bin(4)
+ *
+ * @remark for usage demo, see test/tspace.mi
+ */
+dcl spcptr .p-crts-space parm;
+dcl sysptr p-crts-space auto bas(.p-crts-space);
+dcl spcptr .p-crts-space-name parm;
+dcl dd p-crts-space-name char(30) bas(.p-crts-space-name);
+dcl spcptr .p-crts-space-size parm;
+dcl dd p-crts-space-size bin(4) bas(.p-crts-space-size);
+dcl ol pl-create-space(
+  .p-crts-space,
+  .p-crts-space-name,
+  .p-crts-space-size
+) parm int;
+
+dcl insptr .create-space auto;
+entry create-space(pl-create-space) int;
+
+  /* init template fields */
+  cpynv crts-tmpl-tmpl-size, crts-template-len;
+  cpynv crts-tmpl-funny-num, crts-template-len;
+  cpybla crts-tmpl-obj-type, x'19EF';
+  cpybla crts-tmpl-obj-name, p-crts-space-name;
+  cpybla crts-tmpl-creation-options, space-createion-option-1;
+  cpybla crts-tmpl-asp-num, x"0000"; /* use system asp */
+  cpynv crts-tmpl-space-size, p-crts-space-size;
+  cpybla crts-tmpl-init-value, x"00";
+  cpybla crts-tmpl-performance-class, space-performance-class-1;
+  cpybla crts-tmpl-public-auth, x"0000";
+  cpynv crts-tmpl-extension-offset, 0; /* do NOT specify extension template */
+
+  /* create space */
+  crts p-crts-space, .crts-template;
+
+  b .create-space;
+
+/* eof - space.mi */

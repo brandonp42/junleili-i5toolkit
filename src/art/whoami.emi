@@ -1,0 +1,141 @@
+/**
+ * This file is part of i5/OS Programmer's Toolkit.
+ *
+ * Copyright (C) 2010, 2011  Junlei Li.
+ *
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file whoami.emi
+ *
+ * MI version of who.rpgle.
+ */
+
+/* suspend ptr to caller's suspend point */
+dcl ptr susptr auto       ;
+dcl spcptr susptr-ptr auto init(susptr) ;
+dcl dd dbg-buf char(16) bas(*)          ;
+
+        /* materialize suspend point of my caller */
+        cpybrep inv-id, x'00'   ;
+        cpynv src-inv-offset, -1 ;
+        cpynv num-attr, 1        ;
+        cpynv attr-id, 24        ; /* suspend ptr */
+        cpynv rcv-length, 16     ;
+        matinvat susptr-ptr, inv-id, sel-ptr ;
+brk '1'                          ;
+        /* materialize suspend ptr */
+dcl dd proc-name char(128) auto ;
+dcl dd stmt-id(8) bin(4) auto   ;
+        cpynv bytes-in, 208     ;
+        cpynv proc-name-len-in, 128 ;
+        setspp proc-name-ptr, proc-name ;
+        cpynv num-stmt-in, 32           ;
+        setspp stmt-id-ptr, stmt-id     ;
+        matptrif susptr-d-ptr,
+          susptr,
+          x'5B280000'           ;
+brk '2'                         ;
+dcl dd msg char(64) auto        ;
+        cpyblap msg,
+          "Program",
+          " "                   ;
+        cpybla msg(13:30), pgm-name ;
+        %sendmsg(msg, 64)           ;
+
+        cpyblap msg,
+          "Library",
+          " "                   ;
+        cpybla msg(13:30), pgm-ctx ;
+        %sendmsg(msg, 64)          ;
+
+        cmpbla(b) pgm-type, x'00' / eq(see-you) ;
+
+        cpyblap msg,
+          "Module",
+          " "                   ; /* module name */
+        cpybla msg(13:30), mod-name ;
+        %sendmsg(msg, 64)          ;
+
+        cpyblap msg,
+          "Procedure",
+          " "                   ; /* procedure name */
+        cpybla msg(13:52), proc-name ;
+        %sendmsg(msg, 64)          ;
+
+dcl dd cvtnc-attr char(7) auto init(x'02000600000000') ;
+        cpyblap msg,
+          "Statement",
+          " "                   ; /* procedure name */
+        cvtnc msg(13:6), stmt-id(1), cvtnc-attr ;
+        %sendmsg(msg, 64)          ;
+
+brk 'END'                       ;
+see-you:        
+        rtx *                   ;
+
+/* suspend ptr attributes */
+dcl dd susptr-d char(208) auto bdry(16) ;
+dcl spcptr susptr-d-ptr auto init(susptr-d) ;
+dcl spc * bas(susptr-d-ptr)                 ;
+        dcl dd bytes-in bin(4) dir          ;
+        dcl dd bytes-out bin(4) dir         ;
+        dcl dd * char(7) dir                ;
+        dcl dd ptr-type char(1) dir         ;
+        dcl dd * char(1) dir                ;
+        dcl dd pgm-type char(1) dir         ;
+        dcl dd pgm-ccsid char(2) dir        ;
+        dcl dd pgm-name char(30) dir        ;
+        dcl dd pgm-ctx char(30) dir         ;
+        dcl dd * char(4) dir                ;
+        dcl dd mod-name char(30) dir        ;
+        dcl dd mod-qual char(30) dir        ;
+        dcl dd * char(4) dir                ;
+        dcl dd proc-dict-it bin(4) dir      ;
+        dcl dd proc-name-len-in bin(4) dir  ;
+        dcl dd proc-name-len-out bin(4) dir ;
+        dcl spcptr proc-name-ptr dir        ;
+        dcl dd * char(8) dir                ;
+        dcl dd num-stmt-in bin(4) dir       ;
+        dcl dd num-stmt-out bin(4) dir      ;
+        dcl spcptr stmt-id-ptr dir          ;
+
+/* invocation selection template */
+dcl dd inv-id char(48) auto bdry(16) ;
+dcl spcptr inv-id-ptr auto init(inv-id) ;
+dcl spc inv-t bas(inv-id-ptr)           ;
+        dcl dd src-inv-offset bin(4) dir ;
+        dcl dd org-inv-offset bin(4) dir ;
+        dcl dd inv-range bin(4) dir      ;
+        dcl dd * char(4) dir             ;
+        dcl ptr srv-inv-ptr dir          ;
+        dcl dd * char(16) dir            ;
+
+/* selection template for MATINVAT */
+dcl dd sel char(32) auto        ;
+dcl spcptr sel-ptr auto init(sel) ;
+dcl spc sel-t bas(sel-ptr)        ;
+        dcl dd num-attr bin(4) dir ;
+        dcl dd flag1 char(1) dir   ;
+        dcl dd * char(3) dir       ;
+        dcl dd attr-ind-offset bin(4) dir ;
+        dcl dd attr-ind-length bin(4) dir ;
+        dcl dd attr-id bin(4) dir         ;
+        dcl dd flag2 char(1) dir          ;
+        dcl dd * char(3) dir       ;
+        dcl dd rcv-offset bin(4) dir ;
+        dcl dd rcv-length bin(4) dir ;
+
+pend                            ;

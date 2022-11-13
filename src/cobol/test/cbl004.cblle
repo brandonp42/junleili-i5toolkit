@@ -1,0 +1,105 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file cbl004.cblle
+      *
+      * Test of:
+      *  - _NPMPARMLISTADDR
+      */
+       process
+           NOMONOPRC.
+
+       id division.
+       program-id. cbl004.
+
+       environment division.
+       configuration section.
+       special-names.
+           copy mih-lnktyp.
+
+      * passing operational descriptors when invoking PROC-1
+           linkage type is procedure for "PROC-1" using all described.
+
+       data division.
+       working-storage section.
+       01 msg pic x(32) value "A 32-byte character string.".
+       01 num pic s999v99 usage comp-3 value 555.66.
+
+       procedure division.
+       main-pgm.
+           call "PROC-1" using
+               msg.
+
+           call "PROC-1" using
+               msg
+               num.
+           call "PROC-1" using
+               msg
+               num
+               msg.
+           cancel "PROC-1".
+       see-you.
+           stop run.
+
+     /**
+      * procedure proc-1.
+      */
+       id division.
+       program-id. proc-1.
+
+       data division.
+       working-storage section.
+       01 plist-ptr pointer.
+
+       linkage section.
+           copy mih-pgmexec.
+
+       77 str pic x(32).
+       77 pkd pic s999v99 usage comp-3.
+
+       01 plist type npm-plist-t.
+       01 opdesc type op-desc-t.
+
+       procedure division using
+           str
+           pkd.
+
+       main-pgm.
+
+           call "_NPMPARMLISTADDR"
+               returning into plist-ptr.
+           set address of plist
+               to plist-ptr.
+           set address of opdesc
+               to op-desc-ptr of plist.
+           display "Number of parameters passed: "
+               argc of opdesc.
+
+       see-you.
+           exit program.
+       end program proc-1.
+
+      * end of PEP
+       end program cbl004.
+
+      * Output:
+      * Number of parameters passed: 000000001
+      * Number of parameters passed: 000000002
+      * Number of parameters passed: 000000003

@@ -1,0 +1,223 @@
+/**
+ * This file is part of i5/OS Programmer's Toolkit.
+ *
+ * Copyright (C) 2010, 2011  Junlei Li.
+ *
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file chgusvcp.emi
+ *
+ * VCP of CL command chgusrspc.
+ *
+ * @remark As a VCP, this program test against empty SYSOBJ parameter and empty OBJTYPE parameter.
+ *
+ * @todo Still not sure, whether the DTALEN parameter should be
+ *       reserved? The first 2 bytes of DTA already shows the length of
+ *       the DTA paramter.
+ */
+
+dcl spcptr usrspc-ptr parm         ;
+dcl spcptr spc-offset-ptr parm     ;
+dcl spcptr dta-type-ptr parm       ;
+dcl spcptr dta-ptr parm            ;
+dcl spcptr dta-len-ptr parm        ;
+dcl spcptr ptr-type-ptr parm       ;
+dcl spcptr sys-obj-ptr parm        ;
+dcl spcptr sys-obj-type-ptr parm   ;
+dcl spcptr sys-obj-spc-offset-ptr parm ;
+
+dcl ol pl-main (
+        usrspc-ptr,
+        spc-offset-ptr,
+        dta-type-ptr,
+        dta-ptr,
+        dta-len-ptr,
+        ptr-type-ptr,
+        sys-obj-ptr,
+        sys-obj-type-ptr,
+        sys-obj-spc-offset-ptr
+) parm ext                      ;
+entry i-main(pl-main) ext       ;
+
+dcl dd usrspc char(20) bas(usrspc-ptr) ;
+        dcl dd usrspc-name char(10) def(usrspc) ;
+        dcl dd usrspc-lib  char(10) def(usrspc) pos(11) ;
+
+dcl dd spc-offset bin(4) bas(spc-offset-ptr) ;
+
+dcl dd dta-type char(10) bas(dta-type-ptr) ;
+dcl dd dta char(3) bas(dta-ptr)            ;
+        dcl dd dta-parm-len bin(2) unsgnd def(dta) ;
+dcl spcptr dta-parm-val-ptr auto                   ;
+
+dcl dd dta-len bin(2) bas(dta-len-ptr) ;
+
+dcl dd ptr-type char(10) bas(ptr-type-ptr) ;
+
+dcl dd sys-obj char(20) bas(sys-obj-ptr) ;
+        dcl dd sys-obj-name char(10) def(sys-obj) ;
+        dcl dd sys-obj-lib  char(10) def(sys-obj) pos(11) ;
+
+dcl dd sys-obj-type char(10) bas(sys-obj-type-ptr) ;
+
+dcl dd sys-obj-spc-offset bin(4) bas(sys-obj-spc-offset-ptr) ;
+
+brk "ACCINPUT"                  ;
+        /* check SYSOBJ, OBJTYPE */
+dcl con c-dtatype-ptr char(10) init("*PTR") ;
+dcl con c-dtatype-scalar char(10) init("*SCALAR") ;
+
+        /* check spc-offset */
+        cmpnv(b) spc-offset, 0 / nlo(check-dtalen) ;
+        /* negative OFFSET value  */
+        cpyblap msg, "0000Negative value parameter OFFSET.", ' ' ;
+        calli report-err, *, report-err-ptr ;
+        b see-you               ;
+check-dtalen:   
+        /* for scalar object, check DTALEN */
+        cmpbla(b) dta-type, c-dtatype-scalar / neq(check-ptr-parms) ;
+        cmpnv(b) dta-len, 0 / nlo(check-ptr-parms)                  ;
+        /* negative DTALEN value */
+        cpyblap msg, "0000Negative DTALEN parameter.", ' ' ;
+        calli report-err, *, report-err-ptr ;
+        b see-you               ;
+check-ptr-parms:
+
+        /* for pointer data */
+        cmpbla(b) dta-type, c-dtatype-ptr / neq(input-check) ;
+
+        cmpbla(b) sys-obj-name, "          " / neq(check-sysobj) ;
+        /* empty SYSOBJ parm */
+        cpyblap msg, "0000Empty SYSOBJ parameter.", ' ' ;
+        calli report-err, *, report-err-ptr ;
+        b see-you                                   ;
+check-sysobj:   
+        cmpbla(b) sys-obj-type, "          " / neq(check-spp-offset) ;
+        /* empty OBJTYPE parm */
+        cpyblap msg, "0000Empty OBJTYPE parameter.", ' ' ;
+        calli report-err, *, report-err-ptr ;
+        b see-you                                   ;
+
+check-spp-offset:       
+dcl con c-ptrtype-spp char(10) init("*SPP") ;
+        cmpbla(b) ptr-type, c-ptrtype-spp / neq(input-check) ;
+        cmpnv(b) sys-obj-spc-offset, 0 / nlo(input-check)     ;
+        /* negative SPCOFFSET value */
+        cpyblap msg, "0000Negative value parameter SPCOFFSET.", ' ' ;
+        calli report-err, *, report-err-ptr ;
+        b see-you               ;
+
+input-check: 
+brk "CHKINPUT"                  ;
+        /* any more parameter to check? ... */
+see-you:        
+        rtx *                   ;
+
+/* globals */
+dcl dd msg char(128) auto       ;
+dcl dd len bin(4) auto          ;
+dcl spc pco-t baspco            ;
+        dcl spcptr sept-ptr dir ;
+dcl sysptr sept(7000) bas(sept-ptr) ;
+
+dcl insptr report-err-ptr auto  ;
+entry report-err int            ;
+
+        setspp mh-msgdta-ptr, msg        ;
+        cpybla mh-msgid, "CPD0006" ;
+        cpyblap mh-msgtype, "*DIAG", " " ;
+        triml mh-msgdta-len, msg, ' '    ;
+        calli send-msg, *, send-msg-ptr  ;
+
+        cpybla mh-msgid, "CPF0002" ;
+        cpyblap mh-msgtype, "*ESCAPE", " " ;
+        calli send-msg, *, send-msg-ptr  ;
+
+        b report-err-ptr        ;
+
+/**
+ * Internal entry pointer -- send-msg
+ *
+ * @pre mh-msgid
+ * @pre mh-msgtype
+ * @pre mh-msgf [optional]
+ * @pre mh-msgdta-ptr
+ * @pre mh-msgdta-len
+ * @pre declaration of SYP array sept
+ */
+dcl insptr send-msg-ptr auto    ;
+entry send-msg int              ;
+
+dcl dd mh-msgid char(7) auto    ;
+dcl spcptr mh-msgid-ptr auto init(mh-msgid) ;
+
+dcl dd mh-msgf char(20) auto init("QCPFMSG   QSYS") ;
+dcl spcptr mh-msgf-ptr auto init(mh-msgf)           ;
+
+dcl spcptr mh-msgdta-ptr auto   ;
+
+dcl dd mh-msgdta-len bin(4) auto ;
+dcl spcptr mh-msgdta-len-ptr auto init(mh-msgdta-len) ;
+
+dcl dd mh-msgtype char(10) auto ;
+dcl spcptr mh-msgtype-ptr auto init(mh-msgtype) ;
+
+dcl dd mh-callstke char(10) auto init("*") ;
+dcl spcptr mh-callstke-ptr auto init(mh-callstke) ;
+
+dcl dd mh-callstk-cnt bin(4) auto init(1) ;
+dcl spcptr mh-callstk-cnt-ptr auto init(mh-callstk-cnt) ;
+
+dcl dd mh-msgkey char(4) auto   ;
+dcl spcptr mh-msgkey-ptr auto init(mh-msgkey) ;
+
+dcl dd mh-ec char(32) auto      ;
+dcl spcptr mh-ec-ptr auto init(mh-ec) ;
+dcl spc mh-ec-t bas(mh-ec-ptr)        ;
+        dcl dd mh-ec-bytes-in bin(4) dir ;
+        dcl dd mh-ec-bytes-out bin(4) dir ;
+        dcl dd mh-ec-exid char(7) dir     ;
+        dcl dd * char(1) dir              ;
+        dcl dd mh-ec-exdta char(16) dir    ;
+
+/* index of QMHSNDPM in SEPT is h'10AD' */
+dcl ol al-qmhsndpm (
+        mh-msgid-ptr,
+        mh-msgf-ptr,
+        mh-msgdta-ptr,
+        mh-msgdta-len-ptr,
+        mh-msgtype-ptr,
+        mh-callstke-ptr,
+        mh-callstk-cnt-ptr,
+        mh-msgkey-ptr,
+        mh-ec-ptr
+) arg                           ;
+
+        cpynv mh-ec-bytes-in, 32 ;
+        callx sept(h'10AD'), al-qmhsndpm, * ;
+
+        cmpnv(b) mh-ec-bytes-out, 0 / eq(end-send-msg) ;
+dcl dd send-msg-err char(64) auto init(
+        "send-msg() failed with MSGID"
+)                               ;
+        cpybla send-msg-err(30 : 7), mh-ec-exid ;
+        %sendmsg(send-msg-err, 36)              ;
+
+end-send-msg:   
+        b send-msg-ptr          ;
+/* end -- send-msg */
+
+pend                            ;

@@ -1,0 +1,236 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file qcmn.mi
+ *
+ * 这里是q tool所需的声明信息
+ *
+ * constants declared here:
+ *  - _USRQ
+ *  - _DTAQ
+ *
+ * structures declared here:
+ *  - dtaq-attr-t      structure of data queue attributes
+ *  - ddmq-attr-t      structure of DDM data queue attributes
+ *  - usrq-attr-t      structure of user q attributes
+ *
+ * progtotypes declared here:
+ *  - QMHQRDQD
+ *
+ */
+
+dcl con _USRQ char(10) init("*USRQ");
+dcl con _DTAQ char(10) init("*DTAQ");
+dcl con _DDMQ_EATTR char(10) init("DDMDTAQUE");
+dcl con _CTXTYPE char(2) init(x'0401');
+dcl con _DTAQTYPE char(2) init(x'0A01');
+dcl con _USRQTYPE char(2) init(x'0A02');
+
+/**
+ * prototype of QMHQRDQD()
+ */
+dcl spcptr .qmhqrdqd-receiver auto;
+dcl dd qmhqrdqd-receiver-len bin(4) auto;
+dcl spcptr .qmhqrdqd-receiver-len auto init(qmhqrdqd-receiver-len);
+dcl dd qmhqrdqd-format char(8) auto init("RDQD0100");
+dcl spcptr .qmhqrdqd-format auto init(qmhqrdqd-format);
+dcl dd qmhqrdqd-q-lib char(20) auto;
+dcl spcptr .qmhqrdqd-q-lib auto init(qmhqrdqd-q-lib);
+dcl ol argl-qmhqrdqd(
+  .qmhqrdqd-receiver,
+  .qmhqrdqd-receiver-len,
+  .qmhqrdqd-format,
+  .qmhqrdqd-q-lib
+) arg;
+/* septs(0:7000), 0C89 */
+dcl sysptr .qmhqrdqd auto init("QMHQRDQD", type(pgm));
+
+/**
+ * common q attributes structure, corresponding to
+ * UIM VARRCD RCOMMON
+ */
+dcl dd common-q-attrs char(74) auto;
+dcl spcptr .common-q-attrs auto init(common-q-attrs);
+dcl spc * bas(.common-q-attrs);
+  dcl dd common-q-attr-vqname char(10) dir;
+  dcl dd common-q-attr-vqlib char(10) dir;
+  dcl dd common-q-attr-vqobjtype char(10) dir;
+  dcl dd common-q-attr-vqobjasp bin(2) dir;
+  dcl dd common-q-attr-vextattr char(10) dir;
+  dcl dd common-q-attr-vowner char(10) dir;
+  dcl dd common-q-attr-vdomain char(10) dir;
+  /* the following fields are for qmsg.mi */
+  dcl dd common-q-attr-vqkeylen bin(4) dir;
+  dcl dd common-q-attr-vqtxtlen bin(4) dir;
+  dcl dd common-q-attr-vqmsgs bin(4) dir; /* number of messages currently on q */
+dcl con common-q-attrs-len bin(4) init(62);
+dcl con common-q-attrs-len-long bin(4) init(74);
+
+/* data queue attributes */
+dcl con RDQD0100-LEN bin(4) init(108);
+dcl spcptr .dtaq-attr auto;
+dcl spc dtaq-attr-t bas(.dtaq-attr);
+  dcl dd dtaq-attr-bytes-in bin(4) dir;
+  dcl dd dtaq-attr-bytes-out bin(4) dir;
+  dcl dd dtaq-attr-msg-len bin(4) dir;
+  dcl dd dtaq-attr-key-len bin(4) dir;
+  dcl dd dtaq-attr-sequence char(1) dir; /* fifo, lilo, keyed */
+  dcl dd dtaq-attr-inclue-sender-id char(1) dir;
+  dcl dd dtaq-attr-force-indicator char(1) dir;
+    /* whether or not q is forced to auxiliary storage ... */
+  dcl dd dtaq-attr-text char(50) dir;
+  dcl dd dtaq-attr-type char(1) dir; /* 0: *std; 1: *ddm */
+  dcl dd dtaq-attr-auto-reclaim char(1) dir;
+  dcl dd * char(1) dir;
+  dcl dd dtaq-attr-msg-num bin(4) dir;
+  dcl dd dtaq-attr-entries-alloced bin(4) dir;
+  dcl dd dtaq-attr-q-name char(10) dir;
+  dcl dd dtaq-attr-lib-name char(10) dir;
+  dcl dd dtaq-attr-max-msg-num bin(4) dir;
+  dcl dd dtaq-attr-init-msg-num bin(4) dir;
+
+dcl con RCD-DTAQ-LEN bin(4) init(113);
+dcl spcptr .rdtaq auto;
+dcl spc * bas(.rdtaq);
+  dcl dd rdtaq-msg-len bin(4) dir;
+  dcl dd rdtaq-key-len bin(4) dir;
+  /* F=FIFO, K=Keyed, L=LIFO */
+  dcl dd rdtaq-sequence char(5) dir;
+  /* Y=*yes, N=*no */
+  dcl dd rdtaq-inclue-sender-id char(4) dir;
+  /* Y=*yes, N=*no */
+  dcl dd rdtaq-force-indicator char(4) dir;
+  dcl dd rdtaq-text char(50) dir;
+  dcl dd rdtaq-type char(1) dir;
+  /* 1=*yes, 0=*no */
+  dcl dd rdtaq-auto-reclaim char(4) dir;
+  dcl dd * char(1) dir;
+  dcl dd rdtaq-msg-num bin(4) dir;
+  dcl dd rdtaq-entries-alloced bin(4) dir;
+  dcl dd rdtaq-q-name char(10) dir;
+  dcl dd rdtaq-lib-name char(10) dir;
+  dcl dd rdtaq-max-msg-num bin(4) dir;
+  dcl dd rdtaq-init-msg-num bin(4) dir;
+
+/* ddm q attriutes: 这的其实是Qmh_Qrdqd_RDQD0200_t, 回头把QMHQRDQD.h整理出来 */
+dcl con RDQD0200-LEN bin(4) init(90);
+dcl spcptr .ddmq-attr auto;
+dcl spc ddmq-attr-t bas(.ddmq-attr);
+  dcl dd ddmq-attr-bytes-in bin(4) dir;
+  dcl dd ddmq-attr-bytes-out bin(4) dir;
+  dcl dd ddmq-attr-appc-devd char(10) dir;
+  dcl dd ddmq-attr-mode char(8) dir;
+  dcl dd ddmq-attr-remote-loc-name char(8) dir;
+  dcl dd ddmq-attr-local-loc-name char(8) dir;
+  dcl dd ddmq-attr-remote-net-id char(8) dir;
+  dcl dd ddmq-attr-remote-q-name char(10) dir;
+  dcl dd ddmq-attr-remote-lib-name char(10) dir;
+  dcl dd ddmq-attr-return-q-name char(10) dir;
+  dcl dd ddmq-attr-return-q-lib char(10) dir;
+
+dcl con _RCD-DDMQ-LEN bin(4) init(62);
+dcl spcptr .rddmq auto;
+dcl spc rddmq-t bas(.rddmq);
+  dcl dd rddmq-appc-devd char(10) dir;
+  dcl dd rddmq-mode char(8) dir;
+  dcl dd rddmq-remote-loc-name char(8) dir;
+  dcl dd rddmq-local-loc-name char(8) dir;
+  dcl dd rddmq-remote-net-id char(8) dir;
+  dcl dd rddmq-remote-q-name char(10) dir;
+  dcl dd rddmq-remote-lib-name char(10) dir;
+
+/**
+ * structure of UIM VARRCD rusrq
+ *
+ * _RUSRQ-LEN给个虚数吧，不数了
+ */
+dcl con _RUSRQ-LEN bin(4) init(384);
+dcl spcptr .rusrq auto;
+dcl spc * bas(.rusrq);
+  /* matqat-create-options */
+  /* bit0, Existence attributes: 0=Temporary, 1=Permanent */
+  dcl dd rusrq-existence-attr char(10) dir;
+  /* bit1, Space attribute: 0=Fixed-length, 1=Variable-length */
+  dcl dd rusrq-space-attr char(20) dir;
+  /* bit2, Initial context:
+       0=Addressability not in context,
+       1=Addressability in context */
+  dcl dd rusrq-init-context char(30) dir;
+  /* bit3, Access group: 0=Not a member of access group, 1=Member of access group */
+  /* 这个AG属性回头准备把它去了 */
+  dcl dd rusrq-access-group char(30) dir;
+  /* bit13, Initialize space: *yes, *no */
+  dcl dd rusrq-initialize-space char(4) dir;
+
+  dcl dd rusrq-space-size bin(4) dir;
+  /* 用 X'nn' 方式显示吧 */
+  dcl dd rusrq-space-init-value char(5) dir;
+
+  /* performance class */
+  /* bit0, Space alignment: 0, 1 */
+  /* help */
+  dcl dd rusrq-space-alignment char(1) dir;
+  /* bit3, Machine chooses space alignment: *yes, *no */
+  /* help */
+  dcl dd rusrq-machine-decide-alignment char(4) dir;
+  /* bit5, Main storage pool selection: 0=Process default, Machine default */
+  /* help */
+  dcl dd rusrq-msp char(20) dir;
+  /* bit7, Block transfer on implicit access state modification: 0, 1 */
+  /* help */
+  dcl dd rusrq-storage-transfer char(1) dir;
+
+  /* context name */
+  dcl dd rusrq-context-name char(30) dir;
+  /* if accgrp is not NULL, ... */
+  dcl dd rusrq-accgrp-name char(30) dir;
+
+  /* Queue attributes */
+  /* bit0, Message content: 0=Contains scalar data only, 1=Contains pointers and scalar data  */
+  dcl dd rusrq-msg-content char(35) dir;
+  /* bit1,2, Queue type: 00=Keyed, 01=LIFO, 02=FIFO */
+  dcl dd rusrq-q-type char(5) dir;
+  /* bit3, Queue overflow action: 0=Signal exception, 1=Extend queue */
+  dcl dd rusrq-q-overflow-action char(20) dir;
+  /* bit4, Choose maximum number of extends:
+       0=Machine/Machine chooses maximum number of extends,
+       1=User/User specifies maximum number of extends
+       */
+  dcl dd rusrq-choose-max-extends char(10) dir;
+  /* bit5, Reclaim storage: 0, 1*/
+  /* help */
+  dcl dd rusrq-reclaim-storage char(1) dir;
+  /* Current maximum number of messages */
+  dcl dd rusrq-cur-max-msgs bin(4) dir;
+  /* Current number of messages enqueued */
+  dcl dd rusrq-cur-msgs-enqed bin(4) dir;
+  /* Extension value */
+  dcl dd rusrq-extendsion-value bin(4) dir;
+  /* Key length */
+  dcl dd rusrq-key-length bin(4) dir;
+  /* Maximum size of message to be enqueued */
+  dcl dd rusrq-max-msg-length bin(4) dir;
+  /* Maximum number of extends */
+  dcl dd rusrq-max-extends bin(4) dir;
+  /* Current number of extends */
+  dcl dd rusrq-cur-extends bin(4) dir;
+  /* Initial number of messages */
+  dcl dd rusrq-init-msgs bin(4) dir;
+
+/* eof - qcmn.mi */

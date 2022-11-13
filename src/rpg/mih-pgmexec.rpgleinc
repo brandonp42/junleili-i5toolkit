@@ -1,0 +1,660 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-pgmexec.rpgleinc
+      *
+      * Program execution instructions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_pgmexec)
+      /define i5toolkit_rpg_mih_pgmexec
+
+     /* bound program activation definition template */
+     d actbpgm_dfn_t   ds            32    qualified
+     d     agp_mark                  10u 0
+     d     act_mark                  10u 0
+     d                                7a
+     d     indicator                  1a
+     d                               16a
+
+     /**
+      * @BIF _ACTBPGM (Activate Bound Program (ACTBPGM))
+      */
+     d actbpgm         pr                  extproc('_ACTBPGM')
+     d     act_dfn                         likeds(actbpgm_dfn_t)
+     d     pgm                         *
+
+     /**
+      * @BIF _MATACTEX (Materialize Activation Export (MATACTEX))
+      */
+     d matactex        pr                  extproc('_MATACTEX')
+     d     act_mark                  10u 0 value
+      * 1=by export ID, 2=by name
+     d     ind_type                  10u 0 value
+      * export ID, start from 1
+     d     number                    10u 0 value
+     d     name                        *   value
+      * returned procedure pointer
+     d     proc_ptr                    *   procptr
+      * 0=item not found
+      * 1=procedure export
+      * 2=data export
+      * 3=inaccessible data export
+     d     ext_type                  10u 0
+
+     /**
+      * @BIF _ACTPG (Activate Program (ACTPG))
+      */
+     d actpg           pr                  extproc('_ACTPG')
+     d     ssf                         *
+     d     pgm                         *
+
+      /if defined(*V5R4M0)
+     /**
+      * @BIF _CALLPGMV (Call Program with Variable Length Argument List (CALLPGMV))
+      *
+      * call program with variable length argument list
+      */
+     d callpgmv        pr                  extproc('_CALLPGMV')
+     d     pgm_ptr                     *
+     d     argv                        *   dim(1) options(*varsize)
+     d     argc                      10u 0 value
+      /endif
+
+     /**
+      * @BIF _DEACTPG1 (Deactivate Program (DEACTPG))
+      */
+     d deactpg1        pr                  extproc('_DEACTPG1')
+     d     pgm                         *
+
+     /**
+      * @BIF _DEACTPG2 (Deactivate Program (DEACTPG))
+      *
+      * @remark _DEACTPG2 deactivate the activation entry of the
+      *         calling program itself.
+      */
+     d deactpg2        pr                  extproc('_DEACTPG2')
+
+     /**
+      * @BIF _INVP (Invocation Pointer (INVP))
+      */
+     d invp            pr              *   extproc('_INVP')
+      * relative invocation number; now must be 0
+     d     relative_invocation_number...
+     d                               10u 0 value
+
+     /* basic attribute of a activation group */
+     d agp_basic_attr_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d                                8a
+     d     root_pgm                    *
+     d                               16a
+      * Storage address recycling key
+     d     stg_addr_rcc_key...
+     d                                 *
+     d     agp_name                  30a
+     d                                2a
+     d     agp_mark                   4a
+     d                                4a
+     d     heap_cnt                  10u 0
+     d     act_cnt                   10u 0
+     d     stat_atg_size...
+     d                               10u 0
+     d                                4a
+     d     agp_attr                   1a
+      * Process access group (PAG) membership advisory attributes
+     d     pag_adv                    1a
+     d                                6a
+     d     long_agp_mark...
+     d                                8a
+
+     /* list of heap ids of a activation group */
+     d agp_heap_id_list_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d                                8a
+     d     heap_id                   10i 0 dim(1)
+
+     /* list of program activation entries */
+     d agp_acte_list_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d                                8a
+     d     act_ent                    4a   dim(1)
+
+     /**
+      * @BIF _MATAGPAT (Materialize Activation Group Attributes (MATAGPAT))
+      */
+     d matagpat        pr                  extproc('_MATAGPAT')
+     d     receiver                    *   value
+     d     agp_mark                   4a
+     d     attr_sel                   1a
+
+     /* basic activation attributes */
+     d act_basic_attr_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d                                8a
+     d     pgm                         *
+     d     act_mark                  10u 0
+     d     agp_mark                  10u 0
+     d     inv_cnt                   10u 0
+     d     ssf_cnt                   10u 0
+     d     pgm_type                   1a
+     d     act_attr                   1a
+     d     tgt_agp                    1a
+     d                                1a
+      * dependent activation count
+     d     dep_act_cnt...
+     d                               10u 0
+     d     long_act_mark...
+     d                                8a
+     d     long_agp_mark...
+     d                                8a
+
+     /* SSF list entry */
+     d ssf_liste_t...
+     d                 ds                  qualified
+     d     ssf_ptr                     *
+     d     ssf_size                  10u 0
+     d                               12a
+
+     /* SSF list of an program activation entry */
+     d act_ssf_list_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d                                8a
+     d     ssf_ent                         likeds(ssf_liste_t)
+     d                                     dim(1)
+
+     /* dependent activation entries of an program activation entry */
+     d act_dep_acte_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d                                8a
+     d     dep_act                    4a   dim(1)
+
+     /**
+      * @BIF _MATACTAT (Materialize Activation Attributes (MATACTAT))
+      */
+     d matactat        pr                  extproc('_MATACTAT')
+     d     receiver                    *   value
+     d     act_mark                  10u 0
+     d     attr_sel                   1a
+
+     /**
+      * @BIF _MODASA (Modify Automatic Storage Allocation (MODASA))
+      *
+      * @remark Note that unlike MI instruction MODASA, builtin
+      *         _MODASA cannot be used to truncate ASF. Passing a
+      *         negative value to _MODASA will raise a Scalar Value
+      *         Invalid exception (3203)
+      */
+     d modasa          pr              *   extproc('_MODASA')
+     d     mod_size                  10u 0 value
+
+     /**
+      * @BIF _NPMPARMLISTADDR (NPM Procedure Parameter List Address (NPM_PARMLIST_ADDR))
+      *
+      * @return space pointer to a npm_plist_t structure
+      * @example test/t012.rpgle
+      */
+     d npm_plist       pr              *   extproc('_NPMPARMLISTADDR')
+
+     d npm_plist_t     ds                  qualified based(dummy_ptr)
+     d     parm_desc_...
+     d       list                      *
+     d     mch_wrk_...
+     d       ara                     16a
+      *
+      * <var>args</var> is a variable length field used to pass
+      * argument values to the current invocation. Even though the
+      * actual mechanism used by the machine to pass argument values
+      * is not visible at the Machine Interface, this field is large
+      * enough to accommodate all passed argument values, with each
+      * argument being aligned on its natural boundary. At most 400
+      * arguments may be passed.
+      *
+      * The rules for natural alignment are shown like the
+      * following. For packed decimal arguments, the length in bytes
+      * is derived from the number of digits, numberofDigits, using
+      * the following formula: ((numberofDigits/2) + 1). For zoned
+      * decimal separate leading sign and zoned decimal separate
+      * trailing sign arguments, the byte length is one greater than
+      * the length in digits.
+      *
+      * Length in Bytes         Alignment
+      * ---------------------   --------------
+      * length = 1              byte
+      * length = 2              halfword
+      * length = 3,4            word
+      * length = 5,6,7,8        doubleword
+      * other lengths           quadword
+      *
+     d     argvs                  32767a
+
+     d parm_desc_...
+     d       list_t    ds                  qualified based(dummy_ptr)
+     d     argc                      10i 0
+
+     /**
+      * MATINVE, materialize invocation entry.
+      *
+      * @todo MCH4227!
+      * The reason code is 8 and the operation code of the current instruction is X'00000061'.
+      * When opcode is hex 61??
+      *
+      * @remark 觉得这事还是得问 IBM!
+      */
+     d*matinve         pr                  extproc('_MATINVE')
+     d*    receiver                        likeds(matinve_dummy_t)
+     d*    option                    10u 0 value
+
+     d*matinve_dummy_t...
+     d*                ds                  qualified
+
+     /* invocation identification structure */
+     d invocation_id_t...
+     d                 ds                  qualified
+     d     src_inv_offset...
+     d                               10i 0
+     d     org_inv_offset...
+     d                               10i 0
+     d     inv_range                 10i 0
+     d                                4a
+     d     inv_ptr                     *
+     d                               16a
+
+     /**
+      * @BIF _MATINVAT2 (Materialize Invocation Attributes (MATINVAT))
+      */
+     d matinvat2       pr                  extproc('_MATINVAT2')
+     d     receiver                        likeds(matinvat_tmpl_t)
+     d     invocation_id...
+     d                                     likeds(invocation_id_t)
+     d     selection                       likeds(matinvat_selection_t)
+
+     /* Materialization template of MATINVAT. */
+     d matinvat_tmpl_t...
+     d                 ds                  qualified
+
+     /**
+      * @BIF _MATINVAT (Materialize Invocation Attributes (MATINVAT))
+      */
+     d matinvat        pr                  extproc('_MATINVAT1')
+     d     receiver                        likeds(matinvat_tmpl_t)
+     d     selection                       likeds(matinvat_selection_t)
+
+     /* attribute selection template for MATINVAT */
+     d matinvat_selection_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     num_attr                  10i 0
+     d     flag1                      1a
+     d                                3a
+     d     ind_offset                10i 0
+     d     ind_length                10i 0
+     d     attr_id                   10i 0
+     d     flag2                      1a
+     d                                3a
+     d     rcv_offset                10i 0
+     d     rcv_length                10i 0
+
+     /* length of DS matinvat_selection_t */
+     d matinvat_selection_length...
+     d                 c                   32
+
+     /* receiver template when materializing ASF pointer; option 2 */
+     d matinvat_asf_receiver_t...
+     d                 ds                  qualified
+     d     asf_ptr                     *
+
+     /* Materialization template of MATINVAT when a pointer is returned. */
+     d matinvat_ptr_t...
+     d                 ds                  qualified
+     d     ptr                         *
+
+     /* receiver template when materializing AG mark; option 14 */
+     d matinvat_agp_mark_t...
+     d                 ds            16    qualified
+     d     agp_mark                  10u 0
+
+     /* activation template for RINZSTAT */
+     d rinzstat_tmpl_t...
+     d                 ds                  qualified
+     d     pgm                         *
+     d     agp_mark                  10u 0
+
+     /* activation template for RINZSTAT */
+     d rinzstat_tmpl2_t...
+     d                 ds                  qualified
+     d     pgm                         *
+     d     agp_mark                  20u 0
+     d                                8a
+
+     /**
+      * @BIF _RINZSTAT (Reinitialize Static Storage (RINZSTAT))
+      */
+     d rinzstat        pr                  extproc('_RINZSTAT')
+     d     activation_tmpl...
+     d                                     likeds(rinzstat_tmpl_t)
+
+     /**
+      * @BIF _RINZSTAT2 (Reinitialize Static Storage (RINZSTAT))
+      */
+     d rinzstat2       pr                  extproc('_RINZSTAT2')
+     d     activation_tmpl...
+     d                                     likeds(rinzstat_tmpl2_t)
+
+     /**
+      * @BIF _OPM_PARM_CNT (OPM Parameter Count (OPM_PARM_CNT))
+      * @todo can't get compiled (Mar. 2011).
+      */
+     d opm_parm_cnt    pr            10u 0 extproc('_OPM_PARM_CNT')
+
+     /**
+      * @BIF _OPM_PARM_ADDR (OPM Parameter Address (OPM_PARM_ADDR))
+      * @todo can't get compiled (Mar. 2011).
+      */
+     d opm_parm_addr   pr              *   extproc('_OPM_PARM_ADDR')
+     d     ind                       10u 0 value
+
+     /* Materialization template for MATINVS */
+     d matinvs_tmpl_t  ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     entries                   10i 0
+      *
+      * Fields annotated with a plus sign (+) are not
+      * materailized when working with a process rather other the
+      * current process.
+      *
+      * (+)
+     d     thd_marker_cnt...
+     d                               10i 0
+      * offset = 16
+      *
+      * Call stack (invocation) entries in array of char(128)
+      *
+
+     /* Minimal length of matinvs_tmpl_t. */
+     d min_matinvs_tmpl_length...
+     d                 c                   16
+
+     /* Invocation entries materialized by MATINVS */
+     d invocation_entry_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d                               32a
+     d     pgm                         *
+     d     inv_num                    5i 0
+      *
+      * Invocation mechanism.
+      *
+      * hex 01 = Call external
+      * hex 02 = Transfer control
+      * hex 03 = Event handler
+      * hex 04 = External exception handler (for non-bound program)
+      * hex 05 = Initial program in process problem state
+      * hex 06 = Initial program in process initiation state
+      * hex 07 = Initial program in process initiation state
+      * hex 08 = Invocation exit (for non-bound program)
+      * hex 09 = Return or return/XCTL trap handler
+      * hex 0A = Call program
+      * hex 0B = Cancel handler (bound program only)
+      * hex 0C = Exception handler (bound program only)
+      * hex 0D = Call bound procedure/call with procedure pointer
+      * hex 0E = Process Default Exception Handler
+      *
+     d     inv_method                 1a
+      *
+      * Invocation type.
+      *
+      * hex 01 = Non-Bound Program
+      * hex 02 = Bound Program Entry Procedure (PEP)
+      * hex 03 = Bound Program Procedure
+      *
+     d     inv_type                   1a
+      * (+)
+     d     inv_mark                  10i 0
+     d     inst_id                   10i 0
+      * (+)
+     d     agp_mark                  10i 0
+     d     suspend_ptr...
+     d                                 *
+     d                               48a
+
+     /* Length of DS invocation_entry_t */
+     d invocation_entry_length...
+     d                 c                   128
+
+     /**
+      * @BIF _MATINVS1 (Materialize Invocation Stack (MATINVS))
+      *
+      * @remark _MATINVS1 accept a PCS ptr as its second operand and
+      *          meterialize the call stack of the initial thread of
+      *          another process
+      */
+     d matinvs1        pr                  extproc('_MATINVS1')
+     d     receiver                        likeds(matinvs_tmpl_t)
+     d     pcs                         *
+
+     /**
+      * @BIF _MATINVS2 (Materialize Invocation Stack (MATINVS))
+      *
+      * @remark _MATINVS2 materialize the call stack of current thread.
+      */
+     d matinvs2        pr                  extproc('_MATINVS2')
+     d     receiver                        likeds(matinvs_tmpl_t)
+
+     /**
+      * Selection template for MATINV.
+      */
+     d matinv_selection_t...
+     d                 ds                  qualified
+      *
+      * Control information.
+      * Bit 0 (+).
+      *   Template extension.
+      *   0 = Template extension is not present.
+      *   1 = Template extension is present.
+      *
+      * Bits 1-15.
+      *   Invocation number
+      *
+     d     inv_num                    5i 0
+     d     offset_parms...
+     d                               10i 0
+     d     parm_odv_num...
+     d                                5u 0
+     d     offset_exception_descs...
+     d                               10i 0
+     d     excpd_odv_num...
+     d                                5u 0
+      *
+      * template extension
+      *
+     d     offset_mchspcs...
+     d                               10i 0
+     d     mchspc_num...
+     d                                5u 0
+     d                                8a
+
+     /* Materialization template for MATINV */
+     d matinv_tmpl_t   ds
+
+     /**
+      * Materialization template for MATINV when target
+      * invocation is for a bound program procedure.
+      */
+     d matinv_npm_tmpl_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+      *
+      * Object ID
+      *
+     d     obj_type                   2a
+     d     obj_name                  30a
+     d     trace_spec                 2a
+
+     /* Length of matinv_npm_tmpl_t. */
+     d matinv_npm_tmpl_length...
+     d                 c                   42
+
+     /**
+      * Materialization template for MATINV when target
+      * invocation is for a non-bound program procedure.
+      */
+     d matinv_opm_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+      *
+      * Object ID
+      *
+     d     obj_type                   2a
+     d     obj_name                  30a
+     d     trace_spec                 2a
+      *
+      * Fields only for non-bound program invocations.
+      *
+     d     inst_num                   5u 0
+     d     offset_parm_data...
+     d                               10i 0
+     d     offset_excd_data...
+     d                               10i 0
+     d     offset_mchspc_data...
+     d                               10i 0
+      *
+      * Array of space pointer machine objects (
+      * matinv_mchspc_t).
+      *
+      * Array of SPCPTRs of parameters.
+      *
+      * Array of exception descriptions (matinv_expd_t).
+      *
+
+     /* Minimal length of matinv_opm_tmpl_t. */
+     d min_matinv_opm_tmpl_length...
+     d                 c                   56
+
+     /* matinv_mchspc_t */
+     d matinv_mchspc_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d                               15a
+      *
+      * Pointer value indicator.
+      *   00 = Addressability value is not valid.
+      *   01 = Addressability value is valid.
+      *
+     d     ptr_ind                    1a
+     d     mchspc_ptr                  *
+
+     /**
+      * Exception description materialized by MATINV
+      */
+     d matinv_expd_t   ds                  qualified
+     d                                     based(dummy_ptr)
+      *
+      * Control flags.
+      * Bits 0-2, Exception handling action
+      *   000 = Ignore occurrence of exception and continue processing.
+      *   001 = Disabled exception description.
+      *   002 = Continue search for an exception description by
+      *         resignaling the exception to the immediately preceding
+      *         invocation.
+      *   003 = Defer handling.
+      *   004 = Pass control to the specified exception handler.
+      *
+      * Bits 3-15, reserved (binary 0).
+      *
+     d     control_flag...
+     d                                2a
+     d     cmp_value_len...
+     d                                5i 0
+     d     cmp_value                 32a
+
+     /**
+      * @BIF _MATINV (Materialize Invocation (MATINV))
+      */
+     d matinv          pr                  extproc('_MATINV')
+     d     receiver                        likeds(matinv_tmpl_t)
+     d     selection                       likeds(matinv_selection_t)
+
+     /**
+      * Search criterion structure for FNDRINVN.
+      */
+     d fndrinvn_criterion_t...
+     d                 ds                  qualified
+     d                                8a
+     d     search_type...
+     d                               10i 0
+     d     option                     1a
+     d                                3a
+     d     search_arg                16a
+
+     /**
+      * Search range structure for FNCRINVN.
+      */
+     d fndrinvn_search_range_t...
+     d                 ds                  qualified
+     d     start_inv_offset...
+     d                               10i 0
+     d                               10i 0
+     d     inv_range                 10i 0
+     d                                4a
+     d     start_invp                  *
+     d                               16a
+
+     /**
+      * @BIF _FNDRINVN1 (Find Relative Invocation Number (FNDRINVN))
+      *
+      * @remark _FNDRINVN1 does NOT accept search-range operand.
+      */
+     d fndrinvn1       pr                  extproc('_FNDRINVN1')
+     d     relative_inv_num...
+     d                               10i 0
+     d*    range                           likeds(fndrinvn_search_range_t)
+     d     criterion                       likeds(fndrinvn_criterion_t)
+
+     /**
+      * @BIF _FNDRINVN2 (Find Relative Invocation Number (FNDRINVN))
+      *
+      * @remark _FNDRINVN2 accept search-range operand as its second operand
+      */
+     d fndrinvn2       pr                  extproc('_FNDRINVN2')
+     d     relative_inv_num...
+     d                               10i 0
+     d     range                           likeds(fndrinvn_search_range_t)
+     d     criterion                       likeds(fndrinvn_criterion_t)
+
+     /* end -- program execution */
+      /endif

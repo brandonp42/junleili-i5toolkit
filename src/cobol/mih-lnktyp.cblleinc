@@ -1,0 +1,125 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-lnktyp.cblleinc
+      *
+      * Linkage type clauses for all system builtins are place here.
+      *
+      * @attention Make sure to copy this header in the SPECIAL-NAMES
+      *            paragraph of your COBOL program.
+      */
+
+      *A   B
+
+      * Compuation instructions.
+           linkage type is sys for
+               "_CMPSWP1"
+               "_CMPSWP2"
+               "_CMPSWP4"
+               "_CMPSWP8"
+               "_CPRDATA"
+               "_DCPDATA"
+               "_TSTBTS"
+               "_CLRBTS"
+               "_SETBTS"
+               "_CVTEFN"
+               "_CPYECLAP"
+               "_LBCPYNV"
+               "_LBCPYNVR"
+               "_ACOS"
+               "_ANDCSTR"
+               "_ANDSTR"
+               "_ASIN"
+               "_ATAN"
+               "_ATANH"
+               "__strlen"
+               "__strcmp"
+               "_STRNCMPNULL"
+               "_CMPTOPAD"
+               "_COMSTR"
+               "_COS"
+               "_COSH"
+               "_COT"
+               "_CPYBYTES"
+               "_CPYBO"
+               "__strcpy"
+               "_STRNCPYNULL"
+               "_STRNCPYNULLPAD"
+               "_EEXP"
+               "_FINDBYTE"
+               "_MEMCHR"
+               "_STRCHRNULL"
+               "_LN"
+               "__memcmp"
+               "__memcpy"
+               "_MEMMOVE"
+               "_MPYADD"
+               "_MPYSUB"
+               "_ORSTR"
+               "_POWER"
+               "_PROPB"
+               "__memset"
+               "_RETCA"
+               "_SETCA"
+               "_SCANX"
+               "_SIN"
+               "_SINH"
+               "_TAN"
+               "_TANH"
+               "_TESTRPL"
+               "_TESTSUBSET"
+               "_XLATEB"
+               "_XLATEB1"
+               "_XORSTR"
+               .
+
+      * Date/Time/Timestamp instructions.
+           linkage type is sys for "_CTD"
+                                   "_CDD"
+                                   "_CTSD".
+
+      * Pointer/name resolution instructions.
+           linkage type is sys for "_CMPPTRA"
+                                   "_CMPPTRT"
+                                   "_MATPTRL"
+                                   "_RSLVSP2"
+                                   "_RSLVSP4"
+                                   "_SETSPPFP".
+
+      * Data pointer related instructions
+           linkage type is sys for "_SETDP"
+                                   "_SETDPADR".
+
+      * Space Management Instructions.
+           linkage type is sys for "_CRTS"
+                                   "_DESS"
+                                   "_MATS"
+                                   "_MODS1"
+                                   "_MODS2".
+
+      * Machine Interface support instructions.
+           linkage type is sys for "_GENUUID".
+
+      * Program Management instrucions.
+           linkage type is sys for "_MATPGMNM".
+
+      * Program execution instructions.
+           linkage type is sys for "_NPMPARMLISTADDR"
+                                   "_MODASA".

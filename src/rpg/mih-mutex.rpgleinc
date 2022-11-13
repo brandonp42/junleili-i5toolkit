@@ -1,0 +1,393 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-mutex.rpgleinc
+      *
+      * Mutex management instrucions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_mutex)
+      /define i5toolkit_rpg_mih_mutex
+
+     d mutex_t         ds                  qualified
+      * synchronization pointer
+     d     syn_ptr                     *
+     d     name                      16a
+
+     /* CRTMTX template */
+     d crtmtx_option_t...
+     d                 ds                  qualified
+     d                                1a
+     d     name_opt                   1a
+     d     keep_valid_opt...
+     d                                1a
+     d     recursive_opt...
+     d                                1a
+     d                               28a
+
+     /**
+      * @BIF _CRTMTX (Create Pointer-Based Mutex (CRTMTX))
+      *
+      * @return 0 if the mutex is created; otherwise an error number.
+      */
+     d crtmtx          pr            10i 0 extproc('_CRTMTX')
+     d     mtx                             likeds(mutex_t)
+     d     crt_opt                     *   value
+
+     /**
+      * @BIF _DESMTX (Destroy Pointer-Based Mutex (DESMTX))
+      *
+      * @return 0 if the mutex is created; otherwise an error number.
+      */
+     d desmtx          pr            10i 0 extproc('_DESMTX')
+     d     mtx                             likeds(mutex_t)
+     d     des_opt                     *   value
+
+     /* LOCKMTX template */
+     d lockmtx_tmpl_t...
+     d                 ds                  qualified
+     /* hex 00 = wait infinitely
+      * hex 01 = wait for the mutex for the specified amount of
+      *          time. If the mutex still cannot be obtained, the
+      *          EAGAIN error number is returned.
+      * hex 02 = return immmediately with an EBUSY error number.
+      */
+     d     timeout_opt...
+     d                                1a
+     /*
+      * bit 1, wait time-out format
+      *   0 = time-out is specified in seconds/microseconds
+      *   1 = time-out is a 8-byte system clock value
+      *
+      * bit 2, MPL control during wait
+      *   0 = remain in the current MPL set
+      *   1 = do not remain in the current MPL set
+      *
+      * bit 3, asynchronous signals processing option
+      *   0 = do not allow asynchronous signal processing during mutex wait
+      *   1 = allow asynchronous signal processing during mutex wait
+      *
+      * bit 4, wait type
+      *   0 = normal wait
+      *   1 = restrict wait
+      *
+      * @remark The wait type option is used by kernel-mode programs
+      *         or procedures to specify what type of wait to
+      *         perform. The wait type field is ignored when the
+      *         thread execution mode is not kernel-mode.
+      */
+     d     lock_opt                   1a
+     d                                6a
+     d     timeout                    8a
+
+     /**
+      * @BIF _LOCKMTX (Lock Pointer-Based Mutex (LOCKMTX))
+      */
+     d lockmtx         pr            10i 0 extproc('_LOCKMTX')
+     d     mtx                             likeds(mutex_t)
+     d     request                     *   value
+
+     d MATPRMTX_OPT_RETURN_MTX_REPLICAS...
+     d                 c                   x'80000000'
+     d MATPRMTX_OPT_MAT_MULT_THD...
+     d                 c                   x'40000000'
+     d MATPRMTX_OPT_RETURN_EXT_MTX_INFO...
+     d                 c                   x'20000000'
+     d MATPRMTX_OPT_MAT_ONLY_WAITERS...
+     d                 c                   x'08000000'
+
+     /**
+      * Materialization template for MATPRMTX.
+      *
+      * @remark For matprmtx_entry_1_t and matprmtx_entry_2_t
+      */
+     d matprmtx_tmpl_a_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+      * Number of mutex lock entries
+     d     num_entries...
+     d                               10i 0
+     d                                4a
+      * materialized entries
+
+     /**
+      * Materialization template for MATPRMTX.
+      *
+      * @remark For matprmtx_entry_3_t and matprmtx_entry_4_t
+      */
+     d matprmtx_tmpl_b_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+      * Number of threads in process
+     d     threads                   10u 0
+      * Number of thread mutex descriptors
+     d     descs                     10u 0
+      * materialized entries
+
+     /**
+      * Entries returned by MATPRMTX when:
+      *  - materialize threads option is set to materialize only specified thread
+      *  - mutex attributes option is set to do not return additional mutex attributes
+      */
+     d matprmtx_entry_1_t...
+     d                 ds                  qualified
+     d     mtx_ptr                     *
+      *
+      * Mutex state being described
+      *   Hex 00 = The mutex is held by the thread
+      *   Hex 01 = The thread is waiting to acquire the mutex
+      *
+     d     mtx_sts                    1a
+     d                               15a
+
+     /**
+      * Entries returned by MATPRMTX when:
+      *  - materialize threads option is set to materialize only specified thread
+      *  - mutex attributes option is set to return additional mutex attributes
+      */
+     d matprmtx_entry_2_t...
+     d                 ds                  qualified
+     d     mtx_ptr                     *
+     d     mtx_sts                    1a
+     d                               15a
+     d     mtx_name                  16a
+      * Holder process ID
+     d     holder_prc_id...
+     d                               30a
+     d                                2a
+      * Mutex holder thread ID
+     d     holder_thd_id...
+     d                                8a
+      * Mutex holder unique thread value
+     d     holder_thd_unique_val...
+     d                                8a
+     d     waiters                   10i 0
+     d                               12a
+
+     /**
+      * Entries returned by MATPRMTX when:
+      *  - materialize threads option is set to materialize multiple
+      *    threads in specified thread's process
+      *  - mutex attributes option is set to do not return additional
+      *    mutex attributes
+      */
+     d matprmtx_entry_3_t...
+     d                 ds                  qualified
+      * Identified thread ID
+     d     thd_id                     8a
+      * Number of descriptors for identified thread
+     d     descs                     10u 0
+      * Descriptor entry number for identified thread
+     d     desc_num                  10u 0
+     d     mtx                         *
+      *
+      * Mutex state being described
+      *  Hex 00 = The mutex is held by the thread
+      *  Hex 01 = The thread is waiting to acquire the mutex
+      *
+     d     mtx_sts                    1a
+     d                               15a
+
+     /**
+      * Entries returned by MATPRMTX when:
+      *  - materialize threads option is set to materialize multiple
+      *    threads in specified thread's process
+      *  - mutex attributes option is set to return additional
+      *    mutex attributes
+      */
+     d matprmtx_entry_4_t...
+     d                 ds                  qualified
+      * Identified thread ID
+     d     thd_id                     8a
+      * Number of descriptors for identified thread
+     d     descs                     10u 0
+      * Descriptor entry number for identified thread
+     d     desc_num                  10u 0
+     d     mtx                         *
+      *
+      * Mutex state being described
+      *  Hex 00 = The mutex is held by the thread
+      *  Hex 01 = The thread is waiting to acquire the mutex
+      *
+     d     mtx_sts                    1a
+     d                               15a
+     d     mtx_name                  16a
+      * Holder process ID
+     d     holder_prc_id...
+     d                               30a
+     d                                2a
+      * Mutex holder thread ID
+     d     holder_thd_id...
+     d                                8a
+      * Mutex holder unique thread value
+     d     holder_thd_unique_val...
+     d                                8a
+     d     waiters                   10i 0
+     d                               12a
+
+     d matprmtx_tmpl_t...
+     d                 ds                  qualified
+
+     /**
+      * @BIF _MATPRMTX (Materialize Process Mutex (MATPRMTX))
+      */
+     d matprmtx        pr                  extproc('_MATPRMTX')
+     d     receiver                        likeds(matprmtx_tmpl_t)
+     d     pcs                         *
+     d     opt                       10u 0
+
+     /**
+      * @BIF _UNLKMTX (Unlock Pointer-Based Mutex (UNLKMTX))
+      */
+     d unlkmtx         pr            10i 0 extproc('_UNLKMTX')
+     d     mtx                             likeds(mutex_t)
+
+     /**
+      * @BIF _MATMTX (Materialize Mutex (MATMTX))
+      */
+     d matmtx          pr                  extproc('_MATMTX')
+     d     reciever                    *   value
+     d     mtx                             likeds(mutex_t)
+     d     opt                         *   value
+
+     /* basic mutex attribute template */
+     d mutex_basic_attr_t...
+     d                 ds            80    qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d                                4a
+     d     num_waiters...
+     d                               10i 0
+     d     name                      16a
+     d     owner_process_id...
+     d                               30a
+     d                               18a
+
+     /* basic mutex attribute template */
+     d mutex_basic_attr2_t...
+     d                 ds            80    qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d                                4a
+     d     num_waiters...
+     d                               10i 0
+     d     name                      16a
+     d     owner_process_id...
+     d                               30a
+     d                                2a
+     d     owner_thread_id...
+     d                                8a
+     d     owner_thread_unique_value...
+     d                                8a
+
+     /* basic mutex attribute template */
+     d mutex_basic_attr3_t...
+     d                 ds           240    qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d                                4a
+     d     num_waiters...
+     d                               10i 0
+     d     name                      16a
+     d     owner_process_id...
+     d                               30a
+     d                                2a
+     d     owner_thread_id...
+     d                                8a
+     d     owner_thread_unique_value...
+     d                                8a
+     d     last_locker_process_id...
+     d                               30a
+     d                                2a
+     d     last_locker_thread_id...
+     d                                8a
+     d     last_locker_thread_unique_value...
+     d                                8a
+     d     last_unlocker_process_id...
+     d                               30a
+     d                                2a
+     d     last_unlocker_thread_id...
+     d                                8a
+     d     last_unlocker_thread_unique_value...
+     d                                8a
+      * 00 = recursive attempls to lock this mutex will not
+      *      be permitted
+      * 01 = recursive attempls to lock this mutex will be permitted
+      *      by the same thread has already locked the MTX
+     d     recursive_flag...
+     d                                1a
+     d     keep_valid_flag...
+     d                                1a
+      * 00 = holding thread has not terminated
+      * 01 = holding thread has terminated
+     d     pending_flag...
+     d                                1a
+     d                               13a
+     d     lock_count                20u 0
+      * first 8 characters of the name of the program module
+      * that created the mutex
+     d     creator                    8a
+     d     original_mutex...
+     d                                 *
+     d                               16a
+
+     /* mutex waiter structure */
+     d mutex_waiter_t  ds            48    qualified
+     d     process_id                30a
+     d                               18a
+
+     /* mutex waiter structure */
+     d mutex_waiter2_t...
+     d                 ds            48    qualified
+     d     process_id                30a
+     d                                2a
+     d     thread_id                  8a
+     d     thread_unique_value...
+     d                                8a
+
+     /* standard materialization template of MATMTX */
+     d matmtx_std_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     basic_attr                      likeds(mutex_basic_attr_t)
+     d     waiters                         likeds(mutex_waiter_t)
+     d                                     dim(1024)
+
+     /* format 0 extended materialization template of MATMTX */
+     d matmtx_ext0_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     basic_attr                      likeds(mutex_basic_attr2_t)
+     d     waiters                         likeds(mutex_waiter2_t)
+     d                                     dim(1024)
+
+     /* format 1 extended materialization template of MATMTX */
+     d matmtx_ext1_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     basic_attr                      likeds(mutex_basic_attr3_t)
+     d     waiters                         likeds(mutex_waiter2_t)
+     d                                     dim(1024)
+
+      /endif

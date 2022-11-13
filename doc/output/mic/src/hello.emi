@@ -1,0 +1,29 @@
+/**
+ * @file hello.mi
+ *
+ * 'Hello world' of mic
+ *
+ * call program WORLD
+ */
+
+entry hello-main ext            ;
+
+dcl sysptr pgm-world auto init("WORLD", type(pgm)) ;
+dcl dd msg char(32) auto                           ;
+dcl dd len bin(4) auto                             ;
+dcl spcptr msg-ptr auto init(msg)                  ;
+dcl ol argl-world(msg-ptr) arg                     ;
+
+brk 'INIT'                             ;
+        cpyblap msg, 'Hello, ', ' '    ;
+        addspp msg-ptr, msg-ptr, 7     ;
+        callx pgm-world, argl-world, * ;
+
+brk 'SEND_MSG'                  ;
+        triml len, msg, ' '     ;
+        %sendmsg(msg, len)      ;
+
+brk 'END'                       ;
+        rtx *                   ;
+pend;
+/* eof - hello.mi */

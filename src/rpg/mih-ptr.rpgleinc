@@ -1,0 +1,478 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-ptr.rpgleinc
+      *
+      * Pointer/Name resolution instructions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_ptr)
+      /define i5toolkit_rpg_mih_ptr
+
+     /**
+      * @BIF _CMPPTRA (Compare Pointer for Object Addressability (CMPPTRA))
+      */
+     d cmpptra         pr            10i 0 extproc('_CMPPTRA')
+     d     ptr_op1                     *   value
+     d     ptr_op2                     *   value
+
+     /**
+      * @BIF _CMPPTRA (Compare Pointer for Object Addressability (CMPPTRA))
+      *
+      * @remark When @var ptr_op1 and @var ptr_op2 are pointers other
+      *         than space pointers, use this prototype instead of
+      *         cmpptra(). When pointer data objects other than space
+      *         poniters are passed by value, the RPG compiler does
+      *         NOT passed them correctly. The same compromise is used
+      *         on the CMPPTRT, SETSPFP, TESTPTR
+      */
+     d rpg_cmpptra     pr            10i 0 extproc('_CMPPTRA')
+     d     ptr_op1                     *   value procptr
+     d     ptr_op2                     *   value procptr
+
+     /**
+      * @BIF _CMPPTRT (Compare Pointer Type (CMPPTRT))
+      *
+      * @remark Use this prototype when @var ptr is a space pointer.
+      */
+     d cmpptrt         pr            10i 0 extproc('_CMPPTRT')
+     d     ptr_type                   1a   value
+     d     ptr                         *   value
+
+     /**
+      * @BIF _CMPPTRT (Compare Pointer Type (CMPPTRT))
+      *
+      * @remark Use this prototype when @var ptr is NOT a space pointer!
+      */
+     d rpg_cmpptrt     pr            10i 0 extproc('_CMPPTRT')
+     d     ptr_type                   1a   value
+     d     ptr                         *   value procptr
+
+     /**
+      * @BIF _CPYBWP (Copy Bytes with Pointers (CPYBWP))
+      */
+     d cpybwp          pr                  extproc('_CPYBWP')
+     d     receiver                    *   value
+     d     source                      *   value
+     d     length                    10u 0 value
+
+     /* Materialization template for MATPTR */
+     d matptr_tmpl_t   ds                  qualified
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ptr_type                   1a                                        returned pointer type
+
+     /* length of SYSPTR information */
+     d matptr_sysptr_info_length...
+     d                 c                   80
+
+     /* Materialization template for MATPTR when materializing a SYSPTR */
+     d matptr_sysptr_info_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ptr_type                   1a                                        returned pointer type
+     d     ctx_type                   2a                                        context type
+     d     ctx_name                  30a                                        context name
+     d     obj_type                   2a                                        object type
+     d     obj_name                  30a                                        object name
+     d     ptr_auth                   2a                                        PTR authorization
+     d     ptr_target                 2a                                        PTR target info
+
+     /* length of SPCPTR information */
+     d matptr_spcptr_info_length...
+     d                 c                   96
+
+     /* SPCPTR info structure */
+     d matptr_spcptr_info_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ptr_type                   1a                                        returned pointer type
+     d     ctx_type                   2a                                        context type
+     d     ctx_name                  30a                                        context name
+     d     obj_type                   2a                                        object type
+     d     obj_name                  30a                                        object name
+     d     offset                    10i 0                                      offset into space
+     d     ptr_target                 2a                                        PTR target info
+     d                                1a                                        reserved
+     d     ext_offset                 8a                                        teraspace offest
+
+     d matptr_dtaptr_info_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ptr_type                   1a                                        returned pointer type
+     d     dta_type                   1a                                        scalar type
+     d     dta_length                 5u 0                                      scalar length
+     d                                4a                                        reserved
+     d     ctx_type                   2a
+     d     ctx_name                  30a
+     d     obj_type                   2a
+     d     obj_name                  30a
+     d     offset                    10i 0
+     /* DTAPTR attributes */
+     d matptr_dtaptr_info_length...
+     d                 c                   84
+
+     /* PROCPTR info structure */
+     d matptr_procptr_info_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ptr_type                   1a                                        returned pointer type
+     d     ptr_status                 1a                                        pointer status
+     d                                6a                                        reserved
+     d     mod_num                   10u 0                                      module number
+     d     proc_num                  10u 0                                      procedure number
+     d     act_mark                  10u 0                                      activation mark
+     d     ag_mark                   10u 0                                      activation group mark
+     d     pgm                         *                                        containing program
+     d     process                     *                                        containing process
+     d     act_mark2                  8a                                        8-bytes activation mark
+     d     ag_mark2                   8a                                        8-bytes activation group mark
+     /* length of PROCPTR information */
+     d matptr_procptr_info_length...
+     d                 c                   80
+
+     /* label pointer attributes */
+     d matptr_lblptr_info_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ptr_type                   1a                                        returned pointer type
+     d     ptr_status                 1a                                        pointer status
+     d                                6a                                        reserved
+     d     mod_num                   10u 0                                      module number
+     d     proc_num                  10u 0                                      procedure number
+     d     num_stmt                  10u 0                                      number of stmt IDs
+     d     int_id                     4a                                        internal ID
+     d     pgm                         *                                        containing program
+     d     stmts                     10u 0 dim(1)                               statement IDs
+     d min_lblptr_info_len...
+     d                 c                   52
+
+     /* synchronization pointer attributes */
+     d matptr_synptr_info_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ptr_type                   1a                                        returned pointer type
+     d     ptr_status                 1a                                        pointer status
+     d     syn_obj_type...
+     d                                2a                                        synchronization object type
+     d                                1a
+     d min_synptr_info_len...
+     d                 c                   13
+
+     /* suspend pointer attributes */
+     d matptr_suspend_info_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ptr_type                   1a                                        returned pointer type
+     d     ptr_status                 1a                                        pointer status
+     d                                6a
+     d     module_num                10u 0                                      module number
+     d     proc_num                  10u 0                                      procecure number
+     d     num_stmts                 10u 0                                      number of statement IDs
+     d     internal_id...
+     d                                4a                                        internal identifier
+     d     containing_pgm...
+     d                                 *                                        containing program
+      * array of statement IDs, of type Ubin(4).
+
+     d min_suspend_info_len...
+     d                 c                   48
+
+     /**
+      * @BIF _MATPTR (Materialize Pointer (MATPTR))
+      */
+     d matptr          pr                  extproc('_MATPTR')
+     d     receiver                        likeds(matptr_tmpl_t)
+     d     ptr                         *
+
+     /**
+      * Instruction template of MATPTRL.
+      *
+      * @remark 8-byte bitmap can be used to test 1024 bytes storage.
+      *         To test larger range of storage, increase the length
+      *         of bitmap.
+      */
+     d matptrl_tmpl_t  ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10u 0
+     d     bytes_out                 10u 0
+     d     bitmap                     8a
+
+     /**
+      * @BIF _MATPTRL (Materialize Pointer Locations (MATPTRL))
+      */
+     d matptrl         pr                  extproc('_MATPTRL')
+     d     receiver                        likeds(matptrl_tmpl_t)
+     d     source                      *   value
+     d     length                    10i 0
+
+     /* Materialization template for MATPTRIF. */
+     d matptrif_tmpl_t...
+     d                 ds                  qualified
+
+     /**
+      * Materialization template for MATPTRIF when materializing a
+      * system pointer or a space pointer.
+      */
+     d matptrif_sypspp_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d                                7a
+      *
+      * Pointer type.
+      * hex 01 = System pointer
+      * hex 02 = Space pointer
+      * hex 03 = Suspend pointer
+      *
+     d     ptr_type                   1a
+      * ASP number
+     d     asp_num                    5u 0
+
+     /**
+      * Materialization template for MATPTRIF when materializing a
+      * suspend pointer.
+      */
+     d matptrif_susptr_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d                                7a
+      *
+      * Pointer type.
+      * hex 01 = System pointer
+      * hex 02 = Space pointer
+      * hex 03 = Suspend pointer
+      *
+     d     ptr_type                   1a
+      *
+      * Pointer description. matptrif_susptr_desc_t for a suspend
+      * pointer or matptrif_sypspp_desc_t for a system pointer or a
+      * space pointer.
+      *
+     d                                1a
+      *
+      * hex 00 = Non-bound program
+      * hex 01 = Bound program
+      * hex 02 = Bound service program
+      * hex 04 = Java program
+      *
+     d     pgm_type                   1a
+     d     pgm_ccsid                  5u 0
+     d     pgm_name                  30a
+     d     pgm_ctx                   30a
+     d                                4a
+     d     mod_name                  30a
+      * module qualification
+     d     mod_qual                  30a
+     d                                4a
+     d     proc_dict_id...
+     d                               10i 0
+      * this field is for input
+     d     proc_name_length_in...    
+     d                               10i 0
+     d     proc_name_length_out...    
+     d                               10i 0
+      * this field is for input
+     d     proc_name_ptr...
+     d                                 *
+     d                                8a
+      * this field is for input
+     d     stmt_ids_in...
+     d                               10i 0
+     d     stmt_ids_out...    
+     d                               10i 0
+      * this field is for input
+     d     stmt_ids_ptr...
+     d                                 *
+
+     /**
+      * @BIF _MATPTRIF (Materialize Pointer Information (MATPTRIF))
+      *
+      * MATPTRIF can be used to retrieve ASP number of a system pointer
+      * or space pointer. Addtionally, it can return detailed attributes of
+      * a suspend pointer.
+      */
+     d matptrif        pr                  extproc('_MATPTRIF')
+     d     receiver                        likeds(matptrif_tmpl_t)
+     d     ptr                         *
+     d     selection                  4a
+
+     /**
+      * @BIF _RSLVDP1 (Resolve Data Pointer (RSLVDP))
+      */
+     d rslvdp1         pr                  extproc('_RSLVDP1')
+     d     dta_ptr                     *
+
+     /**
+      * @BIF _RSLVDP2 (Resolve Data Pointer (RSLVDP))
+      */
+     d rslvdp2         pr                  extproc('_RSLVDP2')
+     d     dta_ptr                     *
+     d     obj_name                  32a
+
+     /**
+      * @BIF _RSLVDP3 (Resolve Data Pointer (RSLVDP))
+      */
+     d rslvdp3         pr                  extproc('_RSLVDP3')
+     d     dta_ptr                     *
+     d     obj_name                  32a
+     d     pgm_ptr                     *
+
+     /**
+      * Basic instruction template of RSLVSP, which is of length 34 bytes.
+      */
+     d rslvsp_tmpl     ds                  qualified
+     d     obj_type                   2a
+     d     obj_name                  30a
+      * required authorization
+     d     auth                       2a   inz(x'0000')
+
+     /**
+      * The extended version of instruction template of RSLVSP, of length 128 bytes.
+      *
+      * @remark To indicate the existence of the extended template,
+      *         set the bit 15 of field auth in the basic instruction
+      *         template.
+      */
+     d rslvsp_tmpl_ex  ds                  qualified
+     d     obj_type                   2a
+     d     obj_name                  30a
+      * required authorization
+     d     auth                       2a   inz(x'0000')
+      * start of the extended template
+      *
+      * version of the extended template, must by hex 00 (at least at V5R4)
+     d     tmpl_ver                   1a
+      *
+      * Search method
+      *  hex 00 = Search the thread's name space
+      *  hex 01 = Search only for objects residing on the specified independent ASP
+      *  hex 02 = Search only for objects residing on the ASP group containing the specified independent ASP
+      *  hex 03 = Search only the ASP group of the name space
+      *
+     d     search_method...
+     d                                1a
+      *
+      * Options
+      *  Bit 0. Ignore object specification and authorization fields.
+      *   0 = Use these values
+      *   1 = Ignore these values
+      *  Bit 1. Do not signal object not found exception (2201, aka. MCH3401)
+      *   0 = Signal object not found  (hex 2201) exception if the object is not found
+      *   1 = Do not signal object not found  (hex 2201) exception if the object is not found.
+      *
+     d     opt                        1a
+     d                                7a
+      * Independent ASP number to search
+     d     asp_num                    2a
+      * ASP number of context containing resolved object
+     d     asp_num_rtn...
+     d                                2a
+      * Context containing the resolved object
+     d     ctx_rtn                     *
+     d                               64a
+
+     /**
+      * @BIF _RSLVSP2 (Resolve System Pointer (RSLVSP))
+      */
+     d rslvsp2         pr                  extproc('_RSLVSP2')
+     d     obj                         *
+     d     opt                       34a
+
+     /**
+      * @BIF _RSLVSP4 (Resolve System Pointer (RSLVSP))
+      */
+     d rslvsp4         pr                  extproc('_RSLVSP4')
+     d     obj                         *
+     d     opt                       34a
+     d     ctx                         *
+
+      /if defined(*V5R4M0)
+     /**
+      * @BIF _RETTSADR (Retrieve Teraspace Address From Space Pointer (RETTSADR))
+      *
+      * @remark instruction may be specified in a program template
+      *         only when the (bound) program is to be created as
+      *         teraspace capable. So to use _RETTSADR in ILE RPG you
+      *         need to have a 7.1 machine. For an ILE C example,
+      *         refer to test/t084.c
+      */
+     d rettsadr        pr             8a   extproc('_RETTSADR')
+     d     spc_ptr                     *   value
+      /endif
+
+     /**
+      * @BIF _TESTPTR (Test Pointer (TESTPTR))
+      *
+      * @remark Use testptr instead of rpg_testptr when @var is a space pointer.
+      */
+     d testptr         pr            10i 0 extproc('_TESTPTR')
+     d     ptr                         *   value
+     d     type                       1a   value
+
+     /**
+      * @BIF _TESTPTR (Test Pointer (TESTPTR))
+      *
+      * @remark Use rpg_testptr instead of testptr when @var is a procedure pointer.
+      */
+     d rpg_testptr     pr            10i 0 extproc('_TESTPTR')
+     d     ptr                         *   value procptr
+     d     type                       1a   value
+
+     /**
+      * @BIF _SETSPPFP (Set Space Pointer from Pointer (SETSPPFP))
+      * @attention this prototype does NOT work with a SYSPTR
+      *            unless src_ptr is declared as a procptr?!
+      * @remark When pointer data objects other than space
+      *         poniters are passed by value, the RPG compiler does
+      *         NOT passed them correctly. A PROCPTR keyword is needed
+      *         for the input source-pointer operand.
+      */
+     d setsppfp        pr              *   extproc('_SETSPPFP')
+     d     src_ptr                     *   value procptr
+
+     /**
+      * @BIF _SETSPFP (Set System Pointer from Pointer (SETSPFP))
+      *
+      * @remark Use this prototype when @var src_ptr is a space pointer!
+      */
+     d setspfp         pr              *   extproc('_SETSPFP')
+     d     src_ptr                     *   value
+
+     /**
+      * @BIF _SETSPFP (Set System Pointer from Pointer (SETSPFP))
+      *
+      * @remark Use this prototype when @var src_ptr is NOT a space pointer!
+      */
+     d rpg_setspfp     pr              *   extproc('_SETSPFP')
+     d     src_ptr                     *   value procptr
+
+      /endif

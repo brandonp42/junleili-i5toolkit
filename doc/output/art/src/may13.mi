@@ -1,0 +1,104 @@
+/**
+ * @file may13.mi
+ *
+ * 和may12.mi一样，只是操作usrq
+ */
+
+entry * ext                        ; 
+        
+dcl dd q-entry char(64) auto bdry(16) ; 
+dcl spcptr eptr auto                ; 
+dcl spc e-t bas(eptr)           ; 
+        dcl dd words char(16) dir ;
+        dcl spcptr p1 dir       ;
+        dcl sysptr p2 dir       ;
+
+dcl sysptr q auto init("Q102", ctx("LSBIN"), type(q, 02))        ; 
+dcl dd msg-prefix char(4) auto  ;
+        dcl dd msg-len bin(4) def(msg-prefix) init(64) ; 
+
+dcl dd buf char(32) auto        ;
+dcl spcptr buf-ptr auto init(buf) ;
+
+        cpynv ec-bytes-in, USECLEN ;
+        callx sept(h"150D"), al-quscrtuq, * ; 
+brk "1"                         ; 
+enqueue:
+        setspp eptr, q-entry    ;
+        cpyblap words, x"83819540C96F400E57D14A6949BA0F6F", " "  ;
+        cpyblap buf, "123abc", " " ; 
+        setsppfp p1, buf-ptr    ; 
+        enq q, msg-prefix, eptr ; 
+
+dequeue:        
+dcl dd deq-entry char(64) auto bdry(16) ;
+dcl spcptr deq-entry-ptr auto init(deq-entry) ; 
+        
+dcl dd deq-prefix char(21) auto        ;
+dcl spcptr .deq-prefix auto init(deq-prefix) ;
+dcl spc deq-prefix-t bas(.deq-prefix) ;
+        dcl dd time-enqueued char(8) dir ;
+        dcl dd timeout-value char(8) dir ;
+        dcl dd size-dequeued bin(4) dir ;
+        dcl dd access-state char(1) dir ; 
+
+        cpybla access-state, x"30" ; /* 00110000 */
+        setspp eptr, deq-entry  ;
+        deq deq-prefix, deq-entry-ptr, q ; 
+        /* check dequeue pointers */
+        /* 现在:        p1->dbg='123abc                          '
+           很好，pointer is okey!
+         */
+dcl dd dbg char(32) bas(*)        ; 
+brk "2"                         ; 
+
+        rtx *                   ; 
+
+dcl spcptr sept-ptr baspco                ;
+dcl sysptr sept(0:7000) bas(sept-ptr); 
+
+dcl dd q-name char(20) auto init("Q102      LSBIN") ; 
+dcl spcptr .q-name auto init(q-name);
+dcl dd ext-attr char(10) auto init("UUQQ") ; 
+dcl spcptr .ext-attr auto init(ext-attr);
+dcl dd q-type char(1) auto init("F") ; 
+dcl spcptr .q-type auto init(q-type);
+dcl dd key-len bin(4) auto init(0) ; 
+dcl spcptr .key-len auto init(key-len);
+dcl dd entry-len bin(4) auto init(64) ; 
+dcl spcptr .entry-len auto init(entry-len);
+dcl dd init-msgs bin(4) auto init(17) ; 
+dcl spcptr .init-msgs auto init(init-msgs);
+dcl dd extend-msgs bin(4) auto init(31) ; 
+dcl spcptr .extend-msgs auto init(extend-msgs);
+dcl dd public-auth char(10) auto init("*EXCLUDE") ; 
+dcl spcptr .public-auth auto init(public-auth);
+dcl dd text char(50) auto init("i can contain pointers") ; 
+dcl spcptr .text auto init(text);
+dcl dd yes char(10) auto init("*YES") ; 
+dcl spcptr .replace auto init(yes);
+dcl dd domain char(10) auto init("*USER") ; 
+dcl spcptr .domain auto init(domain);
+dcl spcptr .pointers auto init(yes); 
+
+%include qusec.mi               ; 
+
+dcl ol al-quscrtuq(
+        .q-name,
+        .ext-attr,
+        .q-type,
+        .key-len,
+        .entry-len,
+        .init-msgs,
+        .extend-msgs,
+        .public-auth,
+        .text,
+        .replace,
+        .qusec,
+        .domain,
+        .pointers
+) arg min(13) ; /* 150D */
+
+pend                            ; 
+
+/* eof - may13.mi */

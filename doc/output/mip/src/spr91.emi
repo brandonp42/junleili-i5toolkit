@@ -1,0 +1,14 @@
+/**
+ * @file spr91.emi
+ */
+
+dcl dd buf char(32) auto          ;
+dcl dd p pkd(7,0) def(buf) pos(1) init(p'5')  ;
+dcl dd q pkd(7,0) auto init(p'5')  ;
+
+        subn(s) q, 5            ;
+brk 'B'                         ;
+        div(s) p, q             ;
+brk 'A'                         ;
+        rtx *                   ;
+pend                            ;

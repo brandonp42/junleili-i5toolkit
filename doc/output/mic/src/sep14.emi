@@ -1,0 +1,30 @@
+/* *
+ * @file sep14.emi
+ *
+ */
+
+entry * ext                     ;
+
+dcl dd fd bin(4) auto           ;
+dcl dd path-name char(64) auto  ;
+dcl dd file-mode bin(4) auto init(h'180') ;
+
+        cpyblap path-name, '/home/ljl/923', x'00' ;
+        cpynv fd, %stmf-creat(path-name, file-mode) ;
+brk 'CRT'                       ;
+
+dcl dd str char(8) auto init('morning!') ;
+dcl dd written bin(4) auto               ;
+
+        cpynv written, %stmf-write(fd, str, 8) ;
+        cpybla str, 'MoRnInG!'                 ;
+        %stmf-write(fd, str, 8) ;
+
+brk 'WRT'                       ;
+dcl dd rtn bin(4) auto          ;
+        cpynv rtn, %stmf-close(fd) ;
+
+brk 'CLS'                       ;
+        rtx *                   ;
+
+pend                            ;

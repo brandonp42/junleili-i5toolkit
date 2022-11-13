@@ -1,0 +1,75 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /* *
+      * @file cbl005.cblle
+      *
+      * Test of:
+      *  - _MODASA
+      *  - _MATPGMNM
+      */
+       process
+           NOMONOPRC.
+
+       id division.
+       program-id. cbl005.
+
+       environment division.
+       configuration section.
+       special-names.
+           copy mih-lnktyp.
+
+       data division.
+       working-storage section.
+       01 ptr pointer.
+       01 asf-size pic 9(9) usage comp-4.
+       01 zer constant as x"00".
+
+       linkage section.
+           copy mih-pgmexec.
+           copy mih-pgmmng.
+
+       01 pgm-info type matpgmnm-t.
+
+       procedure division.
+
+       main-pgm.
+           move 80 to asf-size.
+           call "_MODASA" using
+               by value asf-size
+               returning into ptr.
+           call "_PROPB" using
+               by value ptr
+               by value zer
+               by value asf-size.
+
+           set address of pgm-info to ptr.
+           move 80 to bytes-in of pgm-info.
+           call "_MATPGMNM" using
+               by reference pgm-info.
+           display "i'm "
+                   function trimr (context-name of pgm-info)
+                   "/"
+                   program-name of pgm-info.
+
+       see-you.
+           stop run.
+
+      * output
+      * i'm LSBIN/CBL005

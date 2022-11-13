@@ -1,0 +1,915 @@
+.* This file is part of i5/OS Programmer's Toolkit.
+.* 
+.* Copyright (C) 2010, 2011  Junlei Li (李君磊).
+.* 
+.* i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* (at your option) any later version.
+.* 
+.* i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.* 
+.* You should have received a copy of the GNU General Public License
+.* along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+
+.*
+.* @file dspqat.pnlgrp
+.*
+.*
+
+:pnlgrp.
+
+:copyr.(C)Copyright 2009, 2011 Junlei Li &colon.p
+
+.* my help info
+:import name='*'
+        pnlgrp='i5toolkit/dspqathlp'
+        .
+
+.*
+.* classes
+.*
+.*
+.* charater types
+.*
+:class name=o32
+       basetype='igc 32'
+       .
+:eclass.
+:class name=a1
+       basetype='char 1'
+       .
+:eclass.
+:class name=a4
+       basetype='char 4'
+       .
+:eclass.
+:class name=a5
+       basetype='char 5'
+       .
+:eclass.
+:class name=a8
+       basetype='char 8'
+       .
+:eclass.
+:class name=a10
+       basetype='char 10'
+       .
+:eclass.
+:class name=a20
+       basetype='char 20'
+       .
+:eclass.
+:class name=a30
+       basetype='char 30'
+       .
+:eclass.
+:class name=a35
+       basetype='char 35'
+       .
+:eclass.
+:class name=a50
+       basetype='char 50'
+       .
+:eclass.
+
+.*
+.* integer types
+.*
+:class  name=bin2
+        basetype='bin 15'
+        .
+:eclass.
+:class  name=bin4
+        basetype='bin 31'
+        .
+:eclass.
+
+.*
+.* decimal types
+.*
+
+.*
+.* variables
+.*
+:var name=vtitle
+     class=o32
+     .
+
+.* rcommon
+:var name=vqname
+     class=a10
+     .
+:var name=vqlib
+     class=a10
+     .
+:var name=vqobjtype
+     class=a10
+     .
+:var name=vobjasp
+     class=bin2
+     .
+:var name=vextattr
+     class=a10
+     .
+:var name=vowner
+     class=a10
+     .
+:var name=vdomain
+     class=a10
+     .
+
+:var name=vexstattr
+     class=a10
+     .
+:var name=vspcattr
+     class=a20
+     .
+:var name=vinitctx
+     class=a30
+     .
+:var name=vaccgrpmbr
+     class=a30
+     .
+:var name=vinitspc
+     class=a4
+     .
+
+:var name=vspcsize
+     class=bin4
+     .
+:var name=vspcinitv
+     class=a5
+     .
+:var name=vspcalgn
+     class=a1
+     .
+:var name=vmchalgn
+     class=a4
+     .
+:var name=vmspslt
+     class=a20
+     .
+:var name=vstgtfr
+     class=a1
+     .
+
+:var name=vctxnam
+     class=a30
+     .
+:var name=vaccgrp
+     class=a30
+     .
+
+.* q attrs
+:var name=vmsgcnt
+     class=a35
+     .
+:var name=vqtype
+     class=a5
+     .
+:var name=vqovrflw
+     class=a20
+     .
+:var name=vchsmaxext
+     class=a10
+     .
+:var name=vrclstg
+     class=a1
+     .
+
+.* other usrq vars
+:var name=vcurmaxmsg
+     class=bin4
+     .
+:var name=vcurmsg
+     class=bin4
+     .
+:var name=vextval
+     class=bin4
+     .
+:var name=vkeylen
+     class=bin4
+     .
+:var name=vmaxmsglen
+     class=bin4
+     .
+:var name=vmaxext
+     class=bin4
+     .
+:var name=vcurext
+     class=bin4
+     .
+:var name=vinitmsg
+     class=bin4
+     .
+
+.* for ddmq
+:var name=vrappcdev
+     class=a10
+     .
+:var name=vrmode
+     class=a8
+     .
+:var name=vrrmtloc
+     class=a8
+     .
+:var name=vrlocloc
+     class=a8
+     .
+:var name=vrrmtnet
+     class=a8
+     .
+:var name=vrrmtnam
+     class=a10
+     .
+:var name=vrrmtlib
+     class=a10
+     .
+
+.* for dtaq
+:var name=vdmsglen
+     class=bin4
+     .
+:var name=vdkeylen
+     class=bin4
+     .
+:var name=vdsq
+     class=a5
+     .
+:var name=vdincsndid
+     class=a4
+     .
+:var name=vdforce
+     class=a4
+     .
+:var name=vdtext
+     class=a50
+     .
+:var name=vdtype
+     class=a1
+     .
+:var name=vdautorcl
+     class=a4
+     .
+:var name=vdrsvd
+     class=a1
+     .
+:var name=vdmsgnum
+     class=bin4
+     .
+:var name=vdentalc
+     class=bin4
+     .
+:var name=vdqname
+     class=a10
+     .
+:var name=vdqlib
+     class=a10
+     .
+:var name=vdmaxmsg
+     class=bin4
+     .
+:var name=vdinitmsg
+     class=bin4
+     .
+
+.*
+.* varrcds
+.*
+:varrcd name=rtitle
+        vars='vtitle'
+        .
+:varrcd name=rcommon
+        vars='vqname vqlib vqobjtype vobjasp vextattr vowner vdomain'
+        .
+:varrcd name=rusrq
+        vars='vexstattr vspcattr vinitctx vaccgrpmbr vinitspc'
+        vars='vspcsize vspcinitv'
+        vars='vspcalgn vmchalgn vmspslt vstgtfr'
+        vars='vctxnam vaccgrp'
+        vars='vmsgcnt vqtype vqovrflw vchsmaxext vrclstg'
+        vars='vcurmaxmsg vcurmsg vextval vkeylen vmaxmsglen vmaxext vcurext vinitmsg'
+        .
+:varrcd name=rddmq
+        vars='vrappcdev vrmode vrrmtloc vrlocloc vrrmtnet vrrmtnam vrrmtlib'
+        .
+:varrcd name=rdtaq
+        vars='vdmsglen vdkeylen vdsq vdincsndid vdforce vdtext vdtype'
+        vars='vdautorcl vdrsvd vdmsgnum vdentalc vdqname vdqlib vdmaxmsg vdinitmsg'
+        .
+
+.*
+.* menu bars
+.*
+:mbar   name=mbmain
+.*        help='help/mbar'
+        .
+:mbarc  help='help/mbar'
+        .Function
+:pdfld.
+:pdfldc option=2
+        help='help/pdfldc/about'
+        actfor=panel
+        action='dsphelp help/abt *libl/dspqathlp'
+        .About ...
+:pdaccel.F1
+:pdfldc option=90
+        help='help/pdfldc/exit'
+        actfor=panel
+        action='exit noset'
+        .Exit ...
+:pdaccel.F3
+:epdfld.
+:embarc.
+
+:embar.
+
+.*
+.* key lists
+.*
+:keyl   name=klistmain.
+:keyi   key=f1
+        help='help/key/f1'
+        action=help
+        varupd=no
+        .
+:keyi   key=f3
+        help='help/key/f3'
+        action='exit noset'
+        varupd=yes
+        .F3=Exit
+:keyi   key=f12
+        help='help/key/f12'
+        action='cancel set'
+        varupd=yes
+        .F12=Cancel
+:keyi   key=enter
+        help='help/key/enter'
+        action=enter
+        .
+:keyi   key=pageup
+        help='help/key/pageup'
+        action=pageup
+        .
+:keyi   key=pagedown
+        help='help/key/pagedown'
+        action=pagedown
+        .
+:ekeyl.
+
+.* .im usrqattr
+.* This file is part of i5/OS Programmer's Toolkit.
+.* 
+.* Copyright (C) 2010, 2011  Junlei Li (李君磊).
+.* 
+.* i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* (at your option) any later version.
+.* 
+.* i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.* 
+.* You should have received a copy of the GNU General Public License
+.* along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+
+.*
+.* @file usrqattr.pnl
+.*
+
+:panel  name=usrqattr
+        title=vtitle
+.* 真想不明白UIM按啥规则拼PANEL的HELP信息
+        help='help/abt'
+        keyl=klistmain
+.*        mbar=mbmain
+        enter='return 100'
+        .
+
+.* common data items
+:data    depth=5
+         scroll=no
+         layout=2
+         botsep=space
+         compact
+         .
+:datacol width=22.
+:datacol width='*'.
+
+:datagrp grpsep=qindent
+         compact
+         .
+:datai var=vqname
+       help='common/object'
+       usage=out
+       .Queue
+:datai var=vqlib
+       help='common/object'
+       usage=out
+       .Library
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai   var=vobjasp
+         help='common/objasp'
+         usage=out
+         .Object ASP number
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai   var=vqobjtype
+         help='common/objtype'
+         usage=out
+         .Type
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vextattr
+       help='common/extattr'
+       usage=out
+       .Attribute
+:datai var=vowner
+       help='common/owner'
+       usage=out
+       .Owner
+:datai var=vdomain
+       help='common/objdmn'
+       usage=out
+       .Object Domain
+:edatagrp.
+:edata.
+
+.* q specific data items
+:data    depth='*'
+         scroll=yes
+         layout=1
+         botsep=space
+         compact
+         .
+
+:datacol width=30.
+:datacol width=40.
+:datacol width='*'.
+
+.* object creation options
+:datagrp grpsep=indent
+         compact
+         .Object creation options
+:datai   var=vexstattr
+         help='usrq/exstattr'
+         usage=out
+         .Existence attributes
+:datai   var=vspcattr
+         help='usrq/spcattr'
+         usage=out
+         .Space attribute
+:datai   var=vinitctx
+         help='usrq/initctx'
+         usage=out
+         .Initial context
+:datai   var=vaccgrpmbr
+         help='usrq/accgrpmbr'
+         usage=out
+         .Access group
+:datai   var=vinitspc
+         help='usrq/initspc'
+         usage=out
+         .Initialize space
+:edatagrp.
+
+:datagrp grpsep=indent
+         compact
+         .
+:datai var=vspcsize
+       help='usrq/spcsize'
+       usage=out
+       .Size of space
+:datai var=vspcinitv
+       help='usrq/spcinitv'
+       usage=out
+       .Initial value of space
+:edatagrp.
+
+.* performance class
+:datagrp grpsep=indent
+         compact
+         .Performance class
+:datai var=vspcalgn
+       help='usrq/spcalgn'
+       usage=out
+       .Space alignment
+:datai var=vmchalgn
+       help='usrq/mchalgn'
+       usage=out
+       .Machine chooses space alignment
+:datai var=vmspslt
+      help='usrq/mspslt'
+      usage=out
+      .Main storage pool selection
+:datai var=vstgtfr
+      help='usrq/stgtfr'
+      usage=out
+      .Block transfer
+
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vctxnam
+      help='usrq/ctxnam'
+      usage=out
+      .Context name
+:datai var=vaccgrp
+      help='usrq/accgrp'
+      usage=out
+      .Access group
+:edatagrp.
+
+.* q attr
+:datagrp grpsep=indent
+         compact
+         .Queue attributes
+
+:datai var=vmsgcnt
+      help='usrq/msgcnt'
+      usage=out
+      .Message content
+:datai var=vqtype
+      help='usrq/qtype'
+      usage=out
+      .Queue type
+:datai var=vqovrflw
+      help='usrq/qovrflw'
+      usage=out
+      .Queue overflow action
+:datai var=vchsmaxext
+      help='usrq/chsmaxext'
+      usage=out
+      .Choose maximum number of extends
+:datai var=vrclstg
+      help='usrq/rclstg'
+      usage=out
+      .Reclaim storage
+
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vcurmaxmsg
+       help='usrq/curmaxmsg'
+       usage=out
+       .Current maximum number of messages
+:datai var=vcurmsg
+       help='usrq/curmsg'
+       usage=out
+       .Current number of messages enqueued
+:datai var=vextval
+       help='usrq/extval'
+       usage=out
+       .Extension value
+:datai var=vkeylen
+       help='usrq/keylen'
+       usage=out
+       .Key length
+:datai var=vmaxmsglen
+       help='usrq/maxmsglen'
+       usage=out
+       .Maximum size of message to be enqueued
+:datai var=vmaxext
+       help='usrq/maxext'
+       usage=out
+       .Maximum number of extends
+:datai var=vcurext
+       help='usrq/curext'
+       usage=out
+       .Current number of extends
+:datai var=vinitmsg
+       help='usrq/initmsg'
+       usage=out
+       .Initial number of messages
+
+:edatagrp.
+
+:edata.
+
+:epanel.
+
+.* eof - usrqattr.pnl
+
+
+.* .im ddmqattr
+.* This file is part of i5/OS Programmer's Toolkit.
+.* 
+.* Copyright (C) 2010, 2011  Junlei Li (李君磊).
+.* 
+.* i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* (at your option) any later version.
+.* 
+.* i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.* 
+.* You should have received a copy of the GNU General Public License
+.* along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+
+.*
+.* @file ddmqattr.pnl
+.*
+
+:panel  name=ddmqattr
+        title=vtitle
+        help='help/abt'
+        keyl=klistmain
+.*        mbar=mbmain
+        enter='return 100'
+        .
+
+.* common data items
+:data    depth=5
+         scroll=no
+         layout=2
+         botsep=space
+         compact
+         .
+:datacol width=22.
+:datacol width='*'.
+
+:datagrp grpsep=qindent
+         compact
+         .
+:datai var=vqname
+       help='common/object'
+       usage=out
+       .Queue
+:datai   var=vqlib
+         help='common/object'
+         usage=out
+         .Library
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai   var=vobjasp
+         help='common/objasp'
+         usage=out
+         .Object ASP number
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai   var=vqobjtype
+         help='common/objtype'
+         usage=out
+         .Type
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vextattr
+       help='common/extattr'
+       usage=out
+       .Attribute
+:datai var=vowner
+       help='common/owner'
+       usage=out
+       .Owner
+:datai var=vdomain
+       help='common/objdmn'
+       usage=out
+       .Object Domain
+:edatagrp.
+:edata.
+
+.* q specific data items
+:data    depth='*'
+         scroll=yes
+         layout=1
+         botsep=space
+         compact
+         .
+
+:datacol width=30.
+:datacol width=40.
+:datacol width='*'.
+
+:datagrp grpsep=indent
+         compact
+         .Object creation options
+
+:datai   var=vrappcdev
+         help='ddmq/appcdev'
+         usage=out
+         .APPC device description
+:datai   var=vrmode
+         help='ddmq/mode'
+         usage=out
+         .Mode
+:datai   var=vrrmtloc
+         help='ddmq/rmtloc'
+         usage=out
+         .Remote location name
+:datai   var=vrlocloc
+         help='ddmq/locloc'
+         usage=out
+         .Local location name
+:datai   var=vrrmtnet
+         help='ddmq/rmtnet'
+         usage=out
+         .Remote network identifier
+:datai   var=vrrmtnam
+         help='ddmq/rmtnam'
+         usage=out
+         .Remote data queue name
+:datai   var=vrrmtlib
+         help='ddmq/rmtlib'
+         usage=out
+         .Remote data queue library name
+
+:edatagrp.
+
+:edata.
+
+:epanel.
+
+.* eof - ddmqattr.pnl
+
+.* .im dtaqattr
+.* This file is part of i5/OS Programmer's Toolkit.
+.* 
+.* Copyright (C) 2010, 2011  Junlei Li (李君磊).
+.* 
+.* i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* (at your option) any later version.
+.* 
+.* i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.* 
+.* You should have received a copy of the GNU General Public License
+.* along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+
+.*
+.* @file dtaqattr.pnl
+.*
+
+:panel  name=dtaqattr
+        title=vtitle
+        help='help/abt'
+        keyl=klistmain
+.*        mbar=mbmain
+        enter='return 100'
+        .
+
+.* common data items
+:data    depth=5
+         scroll=no
+         layout=2
+         botsep=space
+         compact
+         .
+:datacol width=22.
+:datacol width='*'.
+
+:datagrp grpsep=qindent
+         compact
+         .
+:datai var=vqname
+       help='common/object'
+       usage=out
+       .Queue
+:datai   var=vqlib
+         help='common/object'
+         usage=out
+         .Library
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai   var=vobjasp
+         help='common/objasp'
+         usage=out
+         .Object ASP number
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai   var=vqobjtype
+         help='common/objtype'
+         usage=out
+         .Type
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vextattr
+       help='common/extattr'
+       usage=out
+       .Attribute
+:datai var=vowner
+       help='common/owner'
+       usage=out
+       .Owner
+:datai var=vdomain
+       help='common/objdmn'
+       usage=out
+       .Object Domain
+:edatagrp.
+:edata.
+
+.* q specific data items
+:data    depth='*'
+         scroll=yes
+         layout=1
+         botsep=space
+         compact
+         .
+
+:datacol width=30.
+:datacol width=20.
+:datacol width='*'.
+
+:datagrp grpsep=indent
+         compact
+         .Data Queue Attributes
+
+:datai   var=vdmsglen
+         help='dtaq/msglen'
+         usage=out
+         .Message length
+:datai   var=vdkeylen
+         help='dtaq/keylen'
+         usage=out
+         .Key length
+:datai   var=vdsq
+         help='dtaq/sq'
+         usage=out
+         .Sequence
+:datai   var=vdincsndid
+         help='dtaq/incsndid'
+         usage=out
+         .Include sender ID
+:datai   var=vdforce
+         help='dtaq/force'
+         usage=out
+         .Force to auxiliary storage
+:datai   var=vdtext
+         help='dtaq/text'
+         usage=out
+         .Text description
+:datai   var=vdautorcl
+         help='dtaq/autorcl'
+         usage=out
+         .Automatic Reclaim
+:datai   var=vdmsgnum
+         help='dtaq/msgnum'
+         usage=out
+         .Current number of messages
+:datai   var=vdentalc
+         help='dtaq/entalc'
+         usage=out
+         .Number of messages allocated
+:datai   var=vdmaxmsg
+         help='dtaq/maxmsg'
+         usage=out
+         .Maximum number of entries allowed
+:datai   var=vdinitmsg
+         help='dtaq/initmsg'
+         usage=out
+         .Initial number of messages
+
+:edatagrp.
+
+:edata.
+
+:epanel.
+
+.* eof - dtaqattr.pnl
+
+:epnlgrp.
+.* eof - dspqat.pnlgrp

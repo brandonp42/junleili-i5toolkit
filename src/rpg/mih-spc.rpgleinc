@@ -1,0 +1,321 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-spc.rpgleinc
+      *
+      * Space management instructions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_spc)
+      /define i5toolkit_rpg_mih_spc
+
+     /**
+      * CRTS template
+      *
+      * @remark The obj_type field (MI object type/subtype) must be
+      *         hex 19EF when the CRTS instruction is issued from a
+      *         user state program at security level 40 or above.
+      */
+     d crts_tmpl_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     obj_type                   2a
+     d     obj_name                  30a
+     /*
+      * create option, char(4)
+      * bit 0, existence attribute, 0=temporary, 1=permanent
+      * bit 1, length attribute, 0=fixed-length, 1=variable-length
+      * bit 2, Initial context,
+      *        0=Addressability is not inserted into context
+      *        1=Addressability is inserted into context
+      * bit 3, access group,
+      *        0=Do not create as member of access group
+      *        1=Create as member of access group
+      * bit 4-5, reserved(binary 0)
+      * bit 6, public authority specified, 0=no, 1=yes
+      *        for a temporary space object, default pub-auth is *ALL;
+      *        for a permanent space object, default pub-auth is *NONE.
+      * bit 7, initial owner specified, 0=no, 1=yes
+      *        a temporary space object does not have an owner
+      * bit 8-11, reserved(binary 0)
+      * bit 12, set public authority in operand 1, 0=no, 1=yes
+      * bit 13, initialize space, 0=yes, 1=no
+      * bit 14, automatically expand space, 0=no, 1=yes
+      * bit 15-16, hardware storage protetion level
+      *        00=reference and modify allowed for user state programs
+      *        01=only reference allowed for user state programs
+      *        10=invalid(yield template value invalid exception, hex 3801)
+      *        11=no reference or modify allowed for user state programs
+      * bit 17, process temporary space accounting
+      *        0=the temporary space will be tracked to the creating process
+      *        1=the temporary space will not be tracked to the creating process
+      * bit 18-20, reserved(binary 0)
+      * bit 21, always enforce hardware storage protection of space
+      *        0=enforce hardware storage protection of this space
+      *          only when hardware storage protection is being enforced
+      *          for all storage.
+      *        1=always enforce hardware storage protection of this space.
+      * bit 22-31, reserved(binary 0)
+      */
+     d     crt_opt                    4a
+     d                                2a
+      * to specify the system ASP, use x'0000'
+     d     asp_num                    2a
+     d     spc_size                  10i 0
+     d     init_val                   1a
+     /*
+      * performance class
+      *
+      * bit 0, space alignment; ignored if bit 3 is set to 1
+      *   0=The space associated with the object is allocated to allow
+      *     proper alignment of pointers at 16-byte alignments within the
+      *     space. If the size of space field is zero, this value must be
+      *     specified.
+      *   1=The space associated with the object is allocated to allow proper
+      *     alignment of pointers at 16-byte alignments within the space as
+      *     well as to allow proper alignment of input/output buffers at
+      *     512-byte alignments within the space.
+      * bit 1, clear(or bring?) the space into main memory during creating
+      *   0=Only a minimum amount (up to 4K) of the space will be in main
+      *     storage upon completion of the instruction.
+      *   1=Most of the space, with some limits enforced by the machine, will
+      *     be in main storage upon completion of the instruction.
+      * bit 2, Spread the space object among storage devices, 0=no, 1=yes
+      * bit 3, Machine chooses space alignment
+      *   0=the space alignment indicated by bit 0 is performed
+      *   1=The machine will choose the space alignment most beneficial to
+      *     performance, which may reduce maximum space capacity. When
+      *     this value is specified, the space alignment field is
+      *     ignored, but the alignment chosen will be a multiple of
+      *     512. The maximum capacity for a space object for which the
+      *     machine has chosen the alignment is returned by option Hex
+      *     0003 of MATMDATA. The maximum space capacity for a
+      *     particular space object is returned by MATS.
+      * bit 4, Reserved (binary 0)
+      * bit 5, Main storage pool selection,
+      *   0=Process default main storage pool is used for object.
+      *   1=Machine default main storage pool is used for object.
+      * bit 6, Transient storage pool selection,
+      *   0=Default main storage pool (process default or machine
+      *     default as specified for main storage pool selection) is
+      *     used for object.
+      *   1=transient storage pool is used for object.
+      * bit 7, Obsolete, This field is no longer used and will be ignored.
+      * bit 8-15, Unit number
+      * bit 16-23, reserved (binary 0)
+      * bit 24-31, expanded transfer size advisory. specifies the
+      *            desired number of pages to be transferred between
+      *            main store and auxiliary storage for implicit
+      *            access state changes. This value is only an
+      *            advisory; the machine may use a value of its choice
+      *            for performing access state changes under some
+      *            circumstances. For example, the machine may limit
+      *            the transfer size to a smaller value than is
+      *            specified. A value of zero is an explicit
+      *            indication that the machine should use the machine
+      *            default storage transfer size for this object.
+      */
+     d     perf_cls                   4a
+     d                                1a
+     d     pub_auth                   2a
+      * offset to template extension
+     d     ext_offset                10i 0
+      * context
+     d     ctx                         *
+      * access group
+     d     acc_grp                     *
+
+     /* Instruction template of CRTS with extension */
+     d crts_tmpl_ex_t...
+     d                 ds                  qualified
+     d     base                            likeds(crts_tmpl_t)
+     d     usrprf                      *
+     d     max_spc_size_needed...
+     d                               10i 0
+      * hex 0000, domain is choosed by the machine
+      * hex 0001, user domain
+      * hex 8000, system domain
+     d     domain                     2a
+     d                               42a
+
+     /**
+      * @BIF _CRTS (Create Space (CRTS))
+      *
+      * @example test/t165.rpgle
+      */
+     d crts            pr                  extproc('_CRTS')
+     d     spcobj                      *
+     d     crt_tmpl                        likeds(crts_tmpl_t)
+
+     /**
+      * @BIF _DESS (Destroy Space (DESS))
+      *
+      * @example test/t165.rpgle
+      */
+     d dess            pr                  extproc('_DESS')
+     d     spcobj                      *
+
+     /* Materialization template for MATS */
+     d mats_tmpl_t     ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     obj                       32a
+     d     obj_type                   2a   overlay(obj)
+     d     obj_name                  30a   overlay(obj:3)
+      *
+      * Object creation options
+      *
+      * Bit 0, existence attribute.
+      *   0 = Temporary
+      *   1 = Permanent
+      * Bit 1, space attribute
+      *   0 = Fixed-length
+      *   1 = Variable-length
+      * Bit 2, Context
+      *   0 = Addressability not in context
+      *   1 = Addressability in context
+      * Bit 3, Access group
+      *   0 = Not member of access group
+      *   1 = Member of access group
+      * Bits 4-12, Reserved (binary 0)
+      * Bit 14, Automatically extend space
+      *   0 = No
+      *   1 = Yes
+      * Bits 15-16, Hardware storage protection level
+      *   00 = Reference and modify allowed for user state programs
+      *   01 = Only reference allowed for user state programs
+      *   10 = Invalid (undefined)
+      *   11 = No reference or modify allowed for user state programs
+      * Bits 17-20, Reserved (binary 0)
+      * Bit 21, Always enforce hardware storage protection of this space
+      *   0 = Enforce hardware storage protection of this space only
+      *       when hardware storage protection is enforced for all
+      *       storage.
+      *   1 = Enforce hardware storage protection of this space at all times.
+      * Bits 22-31, Reserved (binary 0)
+      *
+     d     crt_option                 4a
+     d                                2a
+     d     asp_num                    5u 0
+     d     spc_size                  10i 0
+     d     init_val                   1a
+      *
+      * Performance class
+      *
+      * Bit 0, Space alignment
+      *   0 = The space associated with the object is allocated to
+      *       allow proper alignment of pointers at 16-byte alignments
+      *       within the space.
+      *   1 = The space associated with the object is allocated to
+      *       allow proper alignment of pointers at 16-byte alignments
+      *       within the space as well as to allow proper alignment of
+      *       input/output buffers at 512-byte alignments within the
+      *       space.
+      *       @remark Ignore the value of this field when the machine
+      *       chooses space alignment field has a value of 1.
+      * Bit 1, Reserved (binary 0)
+      * Bit 2, Spread the space object
+      *   0 = The space object may be on one storage device.
+      *   1 = The space object may be spread across multiple storage devices.
+      * Bit 3, Machine chooses space alignment
+      *   0 = The space alignment indicated by the space alignment field is in effect.
+      *   1 = The machine chose the space alignment most beneficial to
+      *       performance, which may have reduced maximum space
+      *       capacity. The alignment chosen is a multiple of
+      *       512. Check the maximum size of space field value. Ignore
+      *       the value of the space alignment field.
+      * Bit 4, Reserved (binary 0)
+      * Bit 5, Main storage pool selection
+      *   0 = Process default main storage pool is used for object.
+      *   1 = Machine default main storage pool is used for object.
+      * Bit 6, Transient storage pool selection
+      *   0 = Default main storage pool (process default or machine
+      *       default as specified for main storage pool selection) is
+      *       used for object.
+      *   1 = Transient storage pool is used for object.
+      * Bit 7, Obsolete
+      * Bits 8-15, Unit number
+      * Bits 16-23, Reserved (binary 0)
+      * Bits 24-31, Expanded transfer size advisory
+      *
+     d     perf_cls                   4a
+     d     unit_num                   1a   overlay(perf_cls:2)
+     d     expanded_transfer_size_advisory...
+     d                                1a   overlay(perf_cls:4)
+     d                                7a
+      * context
+     d     ctx                         *
+      * access group
+     d     ag                          *
+     d                               16a
+     d     max_spc_size...
+     d                               10i 0
+
+     /**
+      * @BIF _MATS (Materialize Space Attributes (MATS))
+      */
+     d mats            pr                  extproc('_MATS')
+     d     tmpl                            likeds(mats_tmpl_t)
+     d     spc                         *
+
+     /**
+      * @BIF _MODS1 (Modify Space Attributes (MODS))
+      */
+     d mods1           pr                  extproc('_MODS1')
+     d     spc                         *
+     d     spc_size                  10u 0
+
+     /* Modification template for MODS */
+     d mods_tmpl_t     ds                  qualified
+     d     selection                  4a
+     d     attr                       4a
+      *
+      * Maximum size of secondary associated space
+      *
+      * @remark This field is ignored when create secondary associated
+      * space is 0.
+      *
+     d     max_2nd_spc_size...
+     d                               10i 0
+     d     spc_size                  10i 0
+     d     init_val                   1a
+     d     perf_cls                   4a
+     d                                1a
+      *
+      * Secondary associated space number
+      *
+      * @remark If the thread execution state is user state, this
+      * field must be 0. Otherwise an invalid space modification (hex
+      * 3602) exception is signaled. This restriction applies at all
+      * system security levels.
+      *
+     d     num_2nd_spc...
+     d                                5u 0
+     d                                4a
+
+     /**
+      * @BIF _MODS2 (Modify Space Attributes (MODS))
+      */
+     d mods2           pr                  extproc('_MODS2')
+     d     spc                         *
+     d     tmpl                            likeds(mods_tmpl_t)
+
+      /endif

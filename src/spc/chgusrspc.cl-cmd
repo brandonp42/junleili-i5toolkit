@@ -1,0 +1,88 @@
+/* This file is part of i5/OS Programmer's Toolkit. */
+/*  */
+/* Copyright (C) 2010, 2011  Junlei Li. */
+/*  */
+/* i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify */
+/* it under the terms of the GNU General Public License as published by */
+/* the Free Software Foundation, either version 3 of the License, or */
+/* (at your option) any later version. */
+/*  */
+/* i5/OS Programmer's Toolkit is distributed in the hope that it will be useful, */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
+/* GNU General Public License for more details. */
+/*  */
+/* You should have received a copy of the GNU General Public License */
+/* along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>. */
+
+             /*                                                      */
+             /* @file chgusrspc.cl-cmd                               */
+             /*                                                      */
+             /* Change data in a USRSPC object.                      */
+             /*                                                      */
+
+             CMD        PROMPT('Change User Space')
+             PARM       KWD(USRSPC) TYPE(OBJLIB) MIN(1) PROMPT('User +
+                          space')
+             PARM       KWD(OFFSET) TYPE(*INT4) DFT(0) +
+                          PROMPT('Offset into space')
+             PARM       KWD(DTATYPE) TYPE(*CHAR) LEN(10) RSTD(*YES) +
+                          DFT(*SCALAR) VALUES(*SCALAR *PTR) +
+                          PROMPT('Data type')
+
+             /* IF DTATYPE == *SCALAR */
+             PARM       KWD(DTA) TYPE(*CHAR) LEN(5000) DFT('') +
+                          VARY(*YES *INT2) CASE(*MIXED) +
+                          PMTCTL(SCALAR) INLPMTLEN(50) PROMPT('Data')
+             PARM       KWD(DTALEN) TYPE(*INT2) DFT(*CALC) +
+                          SPCVAL((*CALC 0)) PMTCTL(SCALAR) +
+                          PROMPT('Data length')
+
+             /* IF DTATYPE == *PTR    */
+             PARM       KWD(PTRTYPE) TYPE(*CHAR) LEN(10) RSTD(*YES) +
+                          DFT(*SYP) VALUES(*SYP *SPP) +
+                          PMTCTL(POINTER) PROMPT('Pointer type')
+             PARM       KWD(SYSOBJ) TYPE(OBJLIB) PMTCTL(POINTER) +
+                          PROMPT('System object')
+
+             PARM       KWD(OBJTYPE) TYPE(*CHAR) LEN(10) RSTD(*YES) +
+                          VALUES('*ALRTBL' '*AUTL' '*BNDDIR' +
+                          '*CFGL' '*CHTFMT' '*CLD' '*CLS' '*CMD' +
+                          '*CNNL' '*COSD' '*CRG' '*CRQD' '*CSI' +
+                          '*CSPMAP' '*CSPTBL' '*CTLD' '*DEVD' +
+                          '*DOC' '*DTAARA' '*DTADCT' '*DTAQ' +
+                          '*EDTD' '*EXITRG' '*FCT' '*FILE' '*FLR' +
+                          '*FNTTBL' '*FNTRSC' '*FORMDF' '*FTR' +
+                          '*GSS' '*IGCDCT' '*IGCSRT' '*IGCTBL' +
+                          '*IMGCLG' '*IPXD' '*JOBD' '*JOBQ' +
+                          '*JOBSCD' '*JRN' '*JRNRCV' '*LIB' '*LIND' +
+                          '*LOCALE' '*MEDDFN' '*MENU' '*MODD' +
+                          '*MODULE' '*MSGF' '*MSGQ' '*MGTCOL' +
+                          '*M36' '*M36CFG' '*NODL' '*NODGRP' +
+                          '*NTBD' '*NWID' '*NWSCFG' '*NWSD' '*OUTQ' +
+                          '*OVL' '*PAGDFN' '*PAGSEG' '*PDFMAP' +
+                          '*PDG' '*PGM' '*PNLGRP' '*PRDAVL' +
+                          '*PRDDFN' '*PRDLOD' '*PSFCFG' '*QMFORM' +
+                          '*QMQRY' '*QRYDFN' '*RCT' '*S36' '*SBSD' +
+                          '*SCHIDX' '*SPADCT' '*SQLPKG' '*SQLUDT' +
+                          '*SRVPGM' '*SVRSTG' '*SSND' '*TBL' +
+                          '*TIMZON' '*USRIDX' '*USRPRF' '*USRQ' +
+                          '*USRSPC' '*VLDL' '*WSCST') +
+                          PMTCTL(POINTER) PROMPT('Object type')
+
+             /* IF DTATYPE == *PTR && PTRTYPE == *SPP */
+             PARM       KWD(SPPOFFSET) TYPE(*INT4) DFT(0) +
+                          PMTCTL(SPCPTR) PROMPT('Offset value of +
+                          space pointer')
+
+ OBJLIB:     QUAL       TYPE(*NAME) LEN(10) MIN(1) /* Object name */
+             QUAL       TYPE(*NAME) LEN(10) DFT(*LIBL) +
+                          SPCVAL((*LIBL)) PROMPT('Library') /* +
+                          Library name */
+
+ SCALAR:     PMTCTL     CTL(DTATYPE) COND((*EQ '*SCALAR'))
+ POINTER:    PMTCTL     CTL(DTATYPE) COND((*EQ '*PTR'))
+ SPCPTR:     PMTCTL     CTL(DTATYPE) COND((*EQ '*PTR'))
+             PMTCTL     CTL(PTRTYPE) COND((*EQ '*SPP')) LGLREL(*AND)
+
+/* EOF */

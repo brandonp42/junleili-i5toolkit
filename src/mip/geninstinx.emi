@@ -1,0 +1,94 @@
+/**
+ * @file geninstinx.emi
+ *
+ * Load index UPROCT## from space object QPROCT.
+ *
+ * @pre an empty index object (key length = 2)
+ * @pre the security level of your machine is currently under 40
+ *
+ * CALL PGM(QUSCRTUI)
+ *      PARM('UPROCT54  I5TOOLKIT'
+ *           'PROCTUI' 'F' X'0000000C'
+ *           '1'
+ *           X'00000002'
+ *           '0'
+ *           '0'
+ *           '*USE'
+ *           'Op-code/instruction-name mappings')
+ */
+
+dcl spcptr inx-name-ptr parm    ;
+dcl dd p-inx-name char(10) bas(inx-name-ptr) ;
+dcl spcptr spc-name-ptr parm                 ;
+dcl dd p-spc-name char(10) bas(spc-name-ptr) ;
+dcl spcptr spc-type-ptr parm                 ;
+dcl dd p-spc-type char(2) bas(spc-type-ptr)  ;
+
+dcl ol pl-main (
+        inx-name-ptr,
+        spc-name-ptr,
+        spc-type-ptr
+) parm ext                      ;
+
+entry *(pl-main) ext            ;
+
+/* resolve space qproct */
+        cpybrep r-tmpl, x'00'   ;
+        cpybla r-tmpl(1:2), p-spc-type    ; /* 19DA, 1934 */
+        cpyblap r-tmpl(3:30), p-spc-name, ' ' ;
+        rslvsp spc-ct, r-tmpl, *, * ;
+
+/* resolve index uproct */
+        cpybla r-tmpl(1:2), x'0E0A' ;
+        cpybla r-tmpl(3:30), p-inx-name ;
+        rslvsp inx-ct, r-tmpl, *, *     ;
+
+dcl spcptr pos auto             ;
+dcl spc ct-entry-t bas(pos)     ;
+        dcl dd inst-name char(8) dir ;
+        dcl dd op-code char(2) dir   ;  /* CHAR */
+        dcl dd inst-flags char(3) dir ;
+        dcl dd req-parms char(2) dir  ; /* CHAR */
+        dcl dd inst-end char(2) dir   ;
+
+        setsppfp pos, spc-ct    ;
+        addspp pos, pos, CT-START-OFFSET ;
+
+/* walk through QPROCT */
+dcl dd first-dword char(4) bas(pos) ;
+dcl dd inx-ent char(12) auto        ;
+dcl spcptr inx-ent-ptr auto init(inx-ent) ;
+
+dcl dd ins-opt char(10) auto     ;
+        dcl dd ins-rule char(2) def(ins-opt) init(x'0002') ;
+        dcl dd arg-len bin(2) unsgnd def(ins-opt) pos(3) init(12) ;
+        dcl dd * bin(2) def(ins-opt) pos(5) init(0) ;
+        dcl dd ins-cnt bin(2) def(ins-opt) pos(7) init(1) ;
+        dcl dd * bin(2) def(ins-opt) pos(9) init(0) ;
+dcl spcptr ins-opt-ptr auto init(ins-opt)                          ;
+
+loop:
+        cmpbla(b) first-dword, x'00000000' / eq(see-you) ;
+/* write a new entry into inx-ct (op-code, inst-name, and req-parms) */
+        cpybla inx-ent(1:2), op-code ;
+        cpybla inx-ent(3:8), inst-name ;
+        cpybla inx-ent(11:2), req-parms ;
+brk "WRTINX"                    ;
+        insinxen inx-ct, inx-ent-ptr, ins-opt-ptr ;
+
+        addspp pos, pos, CT-ENTRY-LENGTH ;
+        b loop                  ;
+brk 'END'                       ;
+see-you:        
+        rtx *                   ;
+
+dcl con dft-qproct-name char(30) init("UPROCT54") ; /* QPROCT */
+dcl con dft-inx-name char(30) init("UPROCT54")    ;
+dcl con CT-START-OFFSET bin(4) init(h'0466') ;
+dcl con CT-ENTRY-LENGTH bin(2) init(17)      ;
+
+dcl dd r-tmpl char(34) auto     ;
+dcl sysptr spc-ct auto          ;
+dcl sysptr inx-ct auto          ;
+
+pend                            ;

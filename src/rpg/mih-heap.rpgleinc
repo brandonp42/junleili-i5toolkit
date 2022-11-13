@@ -1,0 +1,121 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-heap.rpgleinc
+      *
+      * Heap management instructions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_heap)
+      /define i5toolkit_rpg_mih_heap
+
+     /**
+      * @bif _ALCHSS (Allocate Activation Group-Based Heap Space Storage (ALCHSS))
+      */
+     d alchss          pr              *   extproc('_ALCHSS')
+     d     heap_id                   10i 0 value
+     d     size                      10i 0 value
+
+     /**
+      * @BIF _FREHSS (Free Activation Group-Based Heap Space Storage (FREHSS))
+      */
+     d frehss          pr                  extproc('_FREHSS')
+     d     ptr                         *   value
+
+     /* CRTHS template */
+     d crths_tmpl_len  c                   96
+     d crths_tmpl_t    ds            96    qualified
+     d                                     based(dummy_ptr)
+     d                                8a
+     d     max_alloc                 10u 0
+     d     min_bdry                  10u 0
+     d     crt_size                  10u 0
+     d     ext_size                  10u 0
+     d     domain                     5i 0
+     d     crt_option                 6a
+     d                               64a
+
+     /**
+      * @BIF _CRTHS (Create Activation Group-Based Heap Space (CRTHS))
+      */
+     d crths           pr                  extproc('_CRTHS')
+     d     heap_id                   10i 0
+     d     crt_tmpl                        likeds(crths_tmpl_t)
+
+     /**
+      * @BIF _MATHSAT (Materialize Activation Group-Based Heap Space Attributes (MATHSAT))
+      */
+     d mathsat         pr                  extproc('_MATHSAT')
+     d     tmpl                        *   value
+     d     head_id_tmpl...
+     d                                 *   value
+     d     selection                  1a
+
+     /* MATHSAT template */
+     d mathsat_tmpl_len...
+     d                 c                   128
+     d mathsat_tmpl_t  ds           128    qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     max_alloc                 10u 0
+     d     min_bdry                  10u 0
+     d     crt_size                  10u 0
+     d     ext_size                  10u 0
+     d     domain                     5i 0
+     d     crt_option                 6a
+     d                               64a
+     d     cur_out_alc...
+     d                               10u 0
+     d     num_realc                 10u 0
+     d     num_free                  10u 0
+     d     num_alc                   10u 0
+     d     max_out_alc...
+     d                               10u 0
+     d     stg_unit_size...
+     d                               10u 0
+     d     num_marks                 10u 0
+     d     num_ext                   10u 0
+
+     /* MATHSAT's heap id template */
+     d heap_id_t       ds            16    qualified
+     d    agp_mark                   10u 0
+     d    heap_id                    10u 0
+
+     /**
+      * @BIF _SETHSSMK (Set Activation Group-Based Heap Space Storage Mark (SETHSSMK))
+      */
+     d sethssmk        pr                  extproc('_SETHSSMK')
+     d     mark                        *
+     d     heap_id                   10i 0
+
+     /**
+      * @BIF _FREHSSMK (Free Activation Group-Based Heap Space Storage From Mark (FREHSSMK))
+      */
+     d frehssmk        pr                  extproc('_FREHSSMK')
+     d     mark                        *
+
+     /**
+      * @BIF _DESHS (Destroy Activation Group-Based Heap Space (DESHS))
+      */
+     d deshs           pr                  extproc('_DESHS')
+     d     heap_id                   10i 0
+
+      /endif

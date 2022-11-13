@@ -1,0 +1,118 @@
+/**
+ * This file is part of i5/OS Programmer's Toolkit.
+ *
+ * Copyright (C) 2010, 2011  Junlei Li.
+ *
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file dsppnl.emi
+ */
+
+dcl spcptr pnlgrp-name-ptr parm ;
+dcl spcptr panel-name-ptr parm  ;
+dcl ol pl-main(
+        pnlgrp-name-ptr,
+        panel-name-ptr
+) parm ext                      ;
+entry i-main(pl-main) ext       ;
+
+        /* ... ... */
+        cpynv uim-ec-bytes-in, 16                 ;
+        setsppfp uim-pnlgrp-name-ptr, pnlgrp-name-ptr ;
+        callx sept(sept-quiopnda), al-quiopnda, * ;
+
+        setsppfp uim-panel-name-ptr, panel-name-ptr ;
+        callx sept(sept-quidspp), al-quidspp, * ;
+
+        callx sept(sept-quicloa), al-quicloa, * ;
+brk 'END'                       ;
+        rtx *                   ;
+
+/* UIM APIs */
+dcl dd uim-apph char(8) auto    ;
+dcl spcptr uim-apph-ptr auto init(uim-apph) ;
+dcl dd uim-pnlgrp-name char(20) auto        ;
+dcl spcptr uim-pnlgrp-name-ptr auto init(
+        uim-pnlgrp-name
+)                               ;
+dcl dd uim-app-scope bin(4) auto init(-1) ; /* calling program is the scope for the application */
+dcl spcptr uim-app-scope-ptr auto init(
+	uim-app-scope
+)                               ;
+dcl dd uim-interace bin(4) auto init(0) ;
+dcl spcptr uim-interace-ptr auto init(
+        uim-interace
+)                               ;
+dcl dd uim-full-screen-help char(1) auto init('Y') ;
+dcl spcptr uim-full-screen-help-ptr auto init(
+        uim-full-screen-help
+)                               ;
+dcl dd uim-ec char(16) auto     ;
+dcl spcptr uim-ec-ptr auto init(uim-ec)    ;
+dcl spc uim-ec-t bas(uim-ec-ptr)           ;
+        dcl dd uim-ec-bytes-in bin(4) dir  ;
+        dcl dd uim-ec-bytes-out bin(4) dir ;
+        dcl dd uim-ex-exid char(7) dir     ;
+
+/* QUIOPNDA: h'12F7' */
+dcl ol al-quiopnda(
+        uim-apph-ptr,
+        uim-pnlgrp-name-ptr,
+        uim-app-scope-ptr,
+        uim-interace-ptr,
+        uim-full-screen-help-ptr,
+        uim-ec-ptr
+) arg                           ;
+dcl con sept-quiopnda bin(2) init(h'12F7') ;
+
+dcl dd uim-close-opt char(1) auto init('M') ;
+dcl spcptr uim-close-opt-ptr auto init(
+        uim-close-opt
+)                               ;
+
+/* QUIOCLOA: h'12F1' */
+dcl ol al-quicloa(
+        uim-apph-ptr,
+        uim-close-opt-ptr,
+        uim-ec-ptr
+) arg                           ;
+dcl con sept-quicloa bin(2) init(h'12F1') ;
+
+dcl dd uim-func-req bin(4) auto ;
+dcl spcptr uim-func-req-ptr auto init(uim-func-req) ;
+dcl dd uim-panel-name char(10) auto                 ;
+dcl spcptr uim-panel-name-ptr auto init(
+        uim-panel-name
+)                               ;
+dcl dd uim-redisplay-opt char(1) auto init('N') ;
+dcl spcptr uim-redisplay-opt-ptr auto init(
+        uim-redisplay-opt
+)                               ;
+/* QUIDSPP: h'12F3' */
+dcl ol al-quidspp (
+        uim-apph-ptr,
+        uim-func-req-ptr,
+        uim-panel-name-ptr,
+        uim-redisplay-opt-ptr,
+        uim-ec-ptr
+) arg                           ;
+dcl con sept-quidspp bin(2) init(h'12F3') ;
+
+dcl spc pco-t baspco            ;
+        dcl spcptr sept-ptr dir ;
+dcl sysptr sept(7000) bas(sept-ptr) ;
+
+pend                            ;

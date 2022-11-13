@@ -1,0 +1,6 @@
+                R REC
+                  A              8A         COLHDG('CHAR(8)')
+                  PKD            5P 0       COLHDG('PKD(5,0)')
+                  ZND            5S 0       COLHDG('ZND(5,0)')
+                  BIN4           9B 0       COLHDG('BIN(4)')
+                  FLT4           9F 0       COLHDG('FLT(4)')

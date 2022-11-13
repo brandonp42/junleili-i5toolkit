@@ -1,0 +1,26 @@
+7       3       4       21      UIM-CLOA Close UIM Application
+        CPYBLA @0007-#1, :1  ;
+        CPYBLA @0007-#2, :2  ;
+        SETSPP .@0007-#3, :3 ;
+        CALLI @0007, *, .@0007       ;
+/* builtin %uim-cloa */ DCL INSPTR .@0007 AUTO            ;
+DCL DD @0007-#1 CHAR(8) AUTO      ;
+DCL DD @0007-#2 CHAR(1) AUTO      ;
+DCL SPCPTR .@0007-#3 AUTO         ;
+ENTRY @0007 INT                   ;
+
+DCL SPCPTR .@0007-APPH AUTO INIT(@0007-#1) ;
+DCL SPCPTR .@0007-CLOSE-OPTION AUTO INIT(@0007-#2) ;
+
+DCL OL @0007-AL-CLOA (
+  .@0007-APPH,
+  .@0007-CLOSE-OPTION,
+  .@0007-#3
+) ARG MIN(3);
+
+DCL SPCPTR @0007-SEPT-PTR BASPCO                   ;
+/* 12F0 */ DCL SYSPTR @0007-QUICLOA BAS(@0007-SEPT-PTR) POS(77569) ;
+
+        CALLX @0007-QUICLOA, @0007-AL-CLOA, * ;
+BRK '@0007-RTN'                             ;
+        B .@0007                  ;

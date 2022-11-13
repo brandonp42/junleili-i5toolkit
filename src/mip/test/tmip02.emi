@@ -1,0 +1,157 @@
+/**
+ * This file is part of i5/OS Programmer's Toolkit.
+ *
+ * Copyright (C) 2010, 2011  Junlei Li.
+ *
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file tmip02.emi
+ *
+ * Test of SPC objects: symtbl-hash-t, and symtbl-base-t.
+ */
+
+entry *(pl-main) ext            ;
+
+dcl spcptr .pgm-name parm          ;
+dcl spcptr .pgm-type parm          ;
+dcl ol pl-main(
+        .pgm-name,
+        .pgm-type
+) parm ext ;
+
+dcl dd pgm-name char(10) bas(.pgm-name) ;
+dcl dd pgm-type char(2) bas(.pgm-type)  ;
+
+dcl dd rt char(34) auto         ;
+dcl sysptr pgm auto             ;
+        cpybrep rt, x'00'       ;
+        cpybla  rt(1:2), pgm-type ;
+        cpyblap rt(3:30),
+          pgm-name, ' ' ;
+        rslvsp  pgm, rt, *, *   ;
+brk '1'                         ;
+
+dcl spcptr p auto               ;
+dcl dd len bin(4) auto          ;
+        modasa p, 8             ;
+        cpynv p->matpg?bytes-in, 8 ;
+        matpg p, pgm               ;
+
+        cpynv len, p->matpg?bytes-out ;
+        modasa p, -8                  ;
+        modasa p, len                 ;
+        cpynv p->matpg?bytes-in, len  ;
+        matpg  p, pgm                 ;
+brk '2'                               ;
+
+	calli dsp-header, *, dsp-header-ptr ;
+
+dcl dd inx bin(2) auto          ;
+dcl spcptr symtbl-start auto    ;
+dcl spcptr hash auto            ;
+dcl spcptr sym auto             ;
+
+        addspp symtbl-start, p, p->matpg?symtbl-off ;
+        addspp hash, p, p->matpg?symtbl-off         ;
+        cpynv inx, 1            ;
+loop-sym:
+        cmpnv(b) inx, hash->symtbl-hash?num-buckets / hi(end-loop-sym);
+
+        /* skip invalid BUCKET */
+        cmpnv(b) hash->symtbl-hash?buckets(inx), -1 / eq(next-bucket) ;
+
+        addspp sym, symtbl-start, hash->symtbl-hash?buckets(inx) ;
+        calli dsp-symbol, *, dsp-symbol-ptr ;
+
+is-end-of-chain:        
+        /* is the end of chain? */
+        cmpnv(b) sym->symtbl-base?next-entry-offset, -1 / eq(next-bucket) ;
+        addspp sym, symtbl-start, sym->symtbl-base?next-entry-offset ;
+        calli dsp-symbol, *, dsp-symbol-ptr ;
+        b is-end-of-chain                   ; /* try to locate next entry in the current chain */
+next-bucket:       
+
+brk "WHERE"                     ;
+        addn(s) inx, 1          ;
+        b loop-sym              ;
+end-loop-sym:   
+
+brk 'END'                       ;
+        neg(s) len              ;
+        modasa p, len           ;
+        rtx *                   ;
+
+/**
+ * display a symbol table entry
+ *
+ * @pre SPPPTR sym
+ */
+dcl insptr dsp-symbol-ptr auto  ;
+entry dsp-symbol int            ;
+
+dcl dd msg char(64) auto        ;
+        dcl dd fld-odt znd(8,0) def(msg) pos(1) ;
+        dcl dd fld-inst znd(8,0) def(msg) pos(11) ;
+        dcl dd fld-sym-name char(16) def(msg) pos(21) ;
+        dcl dd fld-sym-org char(20) def(msg) pos(37)  ;
+dcl spcptr fld-sym-name-ptr auto  ;
+dcl spcptr symbol-name-ptr auto   ;
+dcl dd symbol-len bin(2) auto     ;
+        dcl dd symbol-len-lo char(1) def(symbol-len) pos(2) ;
+
+        cpybrep msg, ' '        ;
+        /* symbol name */
+        cpybrep fld-sym-name, ' ' ;
+        setspp fld-sym-name-ptr, fld-sym-name      ;
+        setspp symbol-name-ptr, sym->symtbl-base?name ;
+        cpybla symbol-len-lo, sym->symtbl-base?len    ;
+        %memcpy(fld-sym-name-ptr,
+                symbol-name-ptr,
+                symbol-len) ;
+        /* ODT number or MI instruction number */
+        tstbts(b) sym->symtbl-base?flag, 0 / zer(=+3) ;
+        cpynv fld-odt, sym->symtbl-base?num           ; /* flag bit 0 = 1, ODT number */
+        b =+2                                         ;
+:
+        cpynv fld-inst, sym->symtbl-base?num ;          /* flag bit 0 = 0, MI instruction */
+:
+        /* Symbol origin */
+        tstbts(b) sym->symtbl-base?flag, 1 / zer(=+3) ;
+        cpybla fld-sym-org, "Source program"          ; /* flag bit 1 = 1. source program */
+        b =+2                                         ;
+:
+        cpybla fld-sym-org, "Compiler generated" ; /* flag bit 1 = 0. compiler generated */
+:       
+        %sendmsg(msg , 64)      ;
+
+        b dsp-symbol-ptr        ;
+
+dcl insptr dsp-header-ptr auto  ;
+entry dsp-header int            ;
+
+        cpyblap msg, "HLL Symbol Table", " " ;
+        %sendmsg(msg , 64)      ;
+        cpyblap msg, pgm-name, " " ;
+        cvthc   msg(11:4), pgm-type ;
+        %sendmsg(msg , 64)      ;
+        cpyblap msg, "ODT Ref   MI Inst   Symbol Name     Symbol Org",
+          " "                   ;
+        %sendmsg(msg , 64)      ;
+
+        b dsp-header-ptr        ;
+
+/include mip-h.emi              ;
+pend                            ;

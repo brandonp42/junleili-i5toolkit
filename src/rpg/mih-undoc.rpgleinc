@@ -1,0 +1,59 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-undoc.rpgleinc
+      *
+      * Undocumented system builtins.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_undoc)
+      /define i5toolkit_rpg_mih_undoc
+
+     /* jump buffer structure used by __setjmp, and libc procedure longjmp() */
+     d jmp_buf_t       ds                  qualified
+     d     inv_ptr                     *
+     d     lbl_ptr                     *
+     d     num                       10i 0
+
+     /**
+      * @BIF __setjmp
+      */
+     d setjmp          pr            10i 0 extproc('__setjmp')
+     d     jmpbuf                          likeds(jmp_buf_t)
+
+     /**
+      * @BIF __setjmp2
+      */
+     d setjmp2         pr                  extproc('__setjmp2')
+     d     lbl_ptr                     *
+
+     /**
+      * @BIF _SYSEPT
+      * returns a space pointer to the SEPT
+      */
+     d sysept          pr              *   extproc('_SYSEPT')
+
+     /**
+      * @BIF _QTEMPPTR
+      * returna a system pointer to current process' QTEMP
+      */
+     d qtempptr        pr              *   extproc('_QTEMPPTR')
+
+      /endif

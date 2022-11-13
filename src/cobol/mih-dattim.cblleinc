@@ -1,0 +1,395 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-comp.cblleinc
+      *
+      * Date/Time/Timestamp instructions.
+      *
+      * @remark To use TYPEDEFs declared here, include this file
+      *         in the working-storage or linkage sections of
+      *         your ILE COBOL program.
+      */
+
+      *A   B
+
+     /**
+      * Era table entry. An era table entry is of length 48 bytes.
+      */
+       01 era-table-entry-t is typedef.
+          05 origin-date pic 9(9) usage comp-4.
+          05 era-name    pic x(32).
+          05 filler      pic x(12).
+
+     /**
+      * Era table.
+      *
+      * An era table 
+      */
+       01 era-base-t is typedef.
+          05 entries pic 9(9) usage comp-4.
+      * era table entries
+
+     /**
+      * SAA era table.
+      *
+      * The SAA era table has one entry. The SAA origin date is
+      * January 1, 0001, Gregorian for the start of the time line. The
+      * internal format would be 1721426. The SAA name is AD, anno
+      * Domini.
+      *
+      * @remark The SAA era table is of length 50 bytes.
+      */
+       01 saa-era-t is typedef.
+          05 entries pic 9(4) usage comp-4 value 1.
+          05 erae.
+             10 origin-date pic 9(9) usage comp-4 value 1721426.
+             10 era-name    pic x(32) value "AD".
+             10 filler      pic x(12) value all x"00".
+
+     /* SAA era table with value hex 00 */
+       01 empty-saa-era-t is typedef.
+          05 entries pic 9(4) usage comp-4 value 0.
+          05 erae.
+             10 origin-date pic 9(9) usage comp-4 value 0.
+             10 era-name    pic x(32) value all x"00".
+             10 filler      pic x(12) value all x"00".
+
+     /**
+      * Calendar table entry. The length of a calendar table entry is 16.
+      */
+       01 calendar-table-entry-t is typedef.
+          05 effective-date pic 9(9) usage comp-4.
+          05 calendar-type  pic 9(4) usage comp-4.
+          05 filler         pic x(10).
+
+     /**
+      * Calendar table.
+      */
+       01 calendar-base-t is typedef.
+          05 entries pic 9(4) usage comp-4.
+      * calendar table entries
+
+     /**
+      * SAA calendar table.
+      *
+      * The calendar table is a list of elements that state what
+      * calendar type/algorithm should be used across the time
+      * line. The start of usage of a particular calendar is specified
+      * by the effective date. The effective date is specified using
+      * the internal format. This first table element represents the
+      * beginning of the time line. The end of usage of a particular
+      * calendar is terminated by the next table element. The last
+      * table element calendar must be null to indicate the end of the
+      * time line. The maximum number of table entries allowed is 256.
+      *
+      * The SAA calendar table has 2 entries. The first entry has a
+      * calendar type of Gregorian. The effective date is January 1,
+      * 0001, Gregorian for the start of the time line. The internal
+      * format would be 1721426. The second entry has a calendar type
+      * of null. The effective date is January 1, 10000, Gregorian for
+      * the end of the time line. The internal format would be
+      * 5373485.
+      *
+      * Multiple calendar table entries are only valid with DDATs
+      * specifying the internal date format code. The rest of format
+      * codes can only have two entries in the calendar table. The
+      * second entry must have a NULL calendar type.
+      *
+      * @remark The length of an SAA calendar table is 34 bytes.
+      * @remark It's convenient to initialize a saa-calendar-t DS with
+      *         constant saa-calendar-value
+      */
+       01 saa-calendar-t is typedef.
+          05 entries pic 9(4) usage comp-4 value 2.
+          05 entry-1.
+             10 effective-date pic 9(9) usage comp-4 value 1721426.
+             10 calendar-type  pic 9(4) usage comp-4 value 1.
+             10 filler         pic x(10) value all x"00".
+          05 entry-2.
+             10 effective-date pic 9(9) usage comp-4 value 5373485.
+             10 calendar-type  pic 9(4) usage comp-4 value 0.
+             10 filler         pic x(10) value all x"00".
+
+     /* SAA calendar table of value hex 00 */
+       01 empty-saa-calendar-t is typedef.
+          05 entries pic 9(4) usage comp-4 value 0.
+          05 entry-1.
+             10 effective-date pic 9(9) usage comp-4 value 0.
+             10 calendar-type  pic 9(4) usage comp-4 value 0.
+             10 filler         pic x(10) value all x"00".
+          05 entry-2.
+             10 effective-date pic 9(9) usage comp-4 value 0.
+             10 calendar-type  pic 9(4) usage comp-4 value 0.
+             10 filler         pic x(10) value all x"00".
+
+     /**
+      * DDAT template. (Data Definitional Attribute Template)
+      *
+      * @remark please refer to IBM's documentation on DDAT for details.
+      * @todo   link (e.g. .../MINDTCON.htm#HDRDDAT)
+      *
+      * @remark The DDAT structure declared following uses the SAA
+      *         era table and the SAA calendar table. Length of ddat-t
+      *         is 116.
+      */
+       01 ddat-t is typedef.
+          05 filler      pic 9(4) usage comp-4.
+          05 fmt-code    pic 9(4) usage comp-4.
+          05 date-sep    pic x.
+          05 time-sep    pic x.
+          05 hour-timzon pic 9(4) usage comp-4.
+          05 min-timzon  pic 9(4) usage comp-4.
+          05 month-def   pic 9(4) usage comp-4.
+          05 year-def    pic 9(4) usage comp-4.
+          05 cur-century pic 9(9) usage comp-4.
+          05 century-div pic 9(9) usage comp-4.
+          05 cal-off     pic 9(9) usage comp-4.
+          05 filler      pic x(6).
+          05 era-table   type saa-era-t.
+          05 cal-tbl     type saa-calendar-t.
+
+     /* Value of time duration DDAT is x"00000015". */
+       01 time-duration-ddat-value is typedef.
+          05 filler      pic 9(4) usage comp-4 value 0.
+          05 fmt-code    pic 9(4) usage comp-4 value 21.
+          05 date-sep    pic x value x"00".
+          05 time-sep    pic x value x"00".
+          05 hour-timzon pic 9(4) usage comp-4 value 0.
+          05 min-timzon  pic 9(4) usage comp-4 value 0.
+          05 month-def   pic 9(4) usage comp-4 value 0.
+          05 year-def    pic 9(4) usage comp-4 value 0.
+          05 cur-century pic 9(9) usage comp-4 value 0.
+          05 century-div pic 9(9) usage comp-4 value 0.
+          05 cal-off     pic 9(9) usage comp-4 value 0.
+          05 filler      pic x(6) value all x"00".
+          05 era-table   type empty-saa-era-t.
+          05 cal-tbl     type empty-saa-calendar-t.
+
+     /**
+      * Value of date duration DDAT.
+      *
+      * @remark A date duration value should be represented by a
+      *         packed (8,0) numeric.
+      */
+       01 date-duration-ddat-value is typedef.
+          05 filler      pic 9(4) usage comp-4 value 0.
+          05 fmt-code    pic 9(4) usage comp-4 value 20.
+          05 date-sep    pic x value x"00".
+          05 time-sep    pic x value x"00".
+          05 hour-timzon pic 9(4) usage comp-4 value 0.
+          05 min-timzon  pic 9(4) usage comp-4 value 0.
+          05 month-def   pic 9(4) usage comp-4 value 0.
+          05 year-def    pic 9(4) usage comp-4 value 0.
+          05 cur-century pic 9(9) usage comp-4 value 0.
+          05 century-div pic 9(9) usage comp-4 value 0.
+          05 cal-off     pic 9(9) usage comp-4 value 0.
+          05 filler      pic x(6) value all x"00".
+          05 era-table   type empty-saa-era-t.
+          05 cal-tbl     type empty-saa-calendar-t.
+
+     /**
+      * Value of timestamp duration DDAT.
+      *
+      * @remark A timestamp duration value should be represented by a
+      *         packed (20,6) numeric.
+      */
+       01 timestamp-duration-ddat-value is typedef.
+          05 filler      pic 9(4) usage comp-4 value 0.
+          05 fmt-code    pic 9(4) usage comp-4 value 22.
+          05 date-sep    pic x value x"00".
+          05 time-sep    pic x value x"00".
+          05 hour-timzon pic 9(4) usage comp-4 value 0.
+          05 min-timzon  pic 9(4) usage comp-4 value 0.
+          05 month-def   pic 9(4) usage comp-4 value 0.
+          05 year-def    pic 9(4) usage comp-4 value 0.
+          05 cur-century pic 9(9) usage comp-4 value 0.
+          05 century-div pic 9(9) usage comp-4 value 0.
+          05 cal-off     pic 9(9) usage comp-4 value 0.
+          05 filler      pic x(6) value all x"00".
+          05 era-table   type empty-saa-era-t.
+          05 cal-tbl     type empty-saa-calendar-t.
+
+     /* DDAT of ISO time is x"0000000400000018003C". */
+       01 iso-time-ddat-value is typedef.
+          05 filler      pic 9(4) usage comp-4 value 0.
+          05 fmt-code    pic 9(4) usage comp-4 value 4.
+          05 date-sep    pic x value x"00".
+          05 time-sep    pic x value x"00".
+          05 hour-timzon pic 9(4) usage comp-4 value 24.
+          05 min-timzon  pic 9(4) usage comp-4 value 60.
+          05 month-def   pic 9(4) usage comp-4 value 0.
+          05 year-def    pic 9(4) usage comp-4 value 0.
+          05 cur-century pic 9(9) usage comp-4 value 0.
+          05 century-div pic 9(9) usage comp-4 value 0.
+          05 cal-off     pic 9(9) usage comp-4 value 0.
+          05 filler      pic x(6) value all x"00".
+          05 era-table   type empty-saa-era-t.
+          05 cal-tbl     type empty-saa-calendar-t.
+
+     /* DDAT of ISO date */
+       01 iso-date-ddat-value is typedef.
+          05 filler      pic 9(4) usage comp-4 value 0.
+          05 fmt-code    pic 9(4) usage comp-4 value 3.
+          05 date-sep    pic x value x"00".
+          05 time-sep    pic x value x"00".
+          05 hour-timzon pic 9(4) usage comp-4 value 0.
+          05 min-timzon  pic 9(4) usage comp-4 value 0.
+          05 month-def   pic 9(4) usage comp-4 value 0.
+          05 year-def    pic 9(4) usage comp-4 value 0.
+          05 cur-century pic 9(9) usage comp-4 value 0.
+          05 century-div pic 9(9) usage comp-4 value 0.
+          05 cal-off     pic 9(9) usage comp-4 value 82.
+          05 filler      pic x(6) value all x"00".
+          05 era-table   type saa-era-t.
+          05 cal-tbl     type saa-calendar-t.
+
+     /* DDAT of system internal date */
+       01 internal-date-ddat-value is typedef.
+          05 filler      pic 9(4) usage comp-4 value 0.
+          05 fmt-code    pic 9(4) usage comp-4 value 10.
+          05 date-sep    pic x value x"00".
+          05 time-sep    pic x value x"00".
+          05 hour-timzon pic 9(4) usage comp-4 value 0.
+          05 min-timzon  pic 9(4) usage comp-4 value 0.
+          05 month-def   pic 9(4) usage comp-4 value 0.
+          05 year-def    pic 9(4) usage comp-4 value 0.
+          05 cur-century pic 9(9) usage comp-4 value 0.
+          05 century-div pic 9(9) usage comp-4 value 0.
+          05 cal-off     pic 9(9) usage comp-4 value 82.
+          05 filler      pic x(6) value all x"00".
+          05 era-table   type saa-era-t.
+          05 cal-tbl     type saa-calendar-t.
+
+     /* DDAT of SAA timestamp */
+       01 saa-timestamp-ddat-value is typedef.
+          05 filler      pic 9(4) usage comp-4 value 0.
+          05 fmt-code    pic 9(4) usage comp-4 value 9.
+          05 date-sep    pic x value x"00".
+          05 time-sep    pic x value x"00".
+          05 hour-timzon pic 9(4) usage comp-4 value 24.
+          05 min-timzon  pic 9(4) usage comp-4 value 60.
+          05 month-def   pic 9(4) usage comp-4 value 0.
+          05 year-def    pic 9(4) usage comp-4 value 0.
+          05 cur-century pic 9(9) usage comp-4 value 0.
+          05 century-div pic 9(9) usage comp-4 value 0.
+          05 cal-off     pic 9(9) usage comp-4 value 82.
+          05 filler      pic x(6) value all x"00".
+          05 era-table   type saa-era-t.
+          05 cal-tbl     type saa-calendar-t.
+
+     /* DDAT of system internal timestamp */
+       01 internal-timestamp-ddat-value is typedef.
+          05 filler      pic 9(4) usage comp-4 value 0.
+          05 fmt-code    pic 9(4) usage comp-4 value 12.
+          05 date-sep    pic x value x"00".
+          05 time-sep    pic x value x"00".
+          05 hour-timzon pic 9(4) usage comp-4 value 24.
+          05 min-timzon  pic 9(4) usage comp-4 value 60.
+          05 month-def   pic 9(4) usage comp-4 value 0.
+          05 year-def    pic 9(4) usage comp-4 value 0.
+          05 cur-century pic 9(9) usage comp-4 value 0.
+          05 century-div pic 9(9) usage comp-4 value 0.
+          05 cal-off     pic 9(9) usage comp-4 value 82.
+          05 filler      pic x(6) value all x"00".
+          05 era-table   type saa-era-t.
+          05 cal-tbl     type saa-calendar-t.
+
+     /* DDAT of system clock */
+       01 system-clock-ddat-value is typedef.
+          05 filler      pic 9(4) usage comp-4 value 0.
+          05 fmt-code    pic 9(4) usage comp-4 value 28.
+          05 date-sep    pic x value x"00".
+          05 time-sep    pic x value x"00".
+          05 hour-timzon pic 9(4) usage comp-4 value 24.
+          05 min-timzon  pic 9(4) usage comp-4 value 60.
+          05 month-def   pic 9(4) usage comp-4 value 0.
+          05 year-def    pic 9(4) usage comp-4 value 0.
+          05 cur-century pic 9(9) usage comp-4 value 0.
+          05 century-div pic 9(9) usage comp-4 value 0.
+          05 cal-off     pic 9(9) usage comp-4 value 82.
+          05 filler      pic x(6) value all x"00".
+          05 era-table   type saa-era-t.
+          05 cal-tbl     type saa-calendar-t.
+
+     /**
+      * Instruction template of compute date/time/timestamp duration
+      * (CDD, CTD, CTSD).
+      *
+      * @remark Length of compute-dattim-t is 298.
+      */
+       01 compute-dattim-t is typedef.
+          05 tmpl-size pic 9(9) usage comp-4.
+      * number of DDAT specified for operand 1 (duration)
+          05 op1-ddat-num pic 9(4) usage comp-4.
+      * DDAT number for operand 2 (end date/time/timestamp)
+          05 op2-ddat-num pic 9(4) usage comp-4.
+      * DDAT number for operand 3 (begin date/time/timestamp)
+          05 op3-ddat-num pic 9(4) usage comp-4.
+      * reserved (binary 0)
+          05 filler pic x(2) value x"0000".
+      * length of operand 2
+          05 op2-len      pic 9(4) usage comp-4.
+      * length of operand 3
+          05 op3-len      pic 9(4) usage comp-4.
+      * reserved (binary 0)
+          05 filler pic x(26) value all x"00".
+      * start of DDAT list
+      * length of DDAT list
+          05 ddat-list-len pic 9(9) usage comp-4.
+          05 ddats         pic 9(4) usage comp-4.
+          05 filler        pic x(10) value all x"00".
+          05 off-ddat1     pic 9(9) usage comp-4.
+          05 off-ddat2     pic 9(9) usage comp-4.
+          05 ddat1         type ddat-t.
+          05 ddat2         type ddat-t.
+
+     /**
+      * @BIF _CTD (Compute Time Duration (CTD))
+      *
+      * @example test/cbl007.cblle
+      */
+      *    call "_CTD" using
+      *         by reference packed-time-duration
+      *         by reference end-time
+      *         by reference begin-time
+      *         by reference compute-instruction-template.
+
+     /**
+      * @BIF _CDD (Compute Date Duration (CDD))
+      *
+      * @example 
+      */
+      *    call "_CDD" using
+      *         by reference packed-date-duration
+      *         by reference end-date
+      *         by reference begin-date
+      *         by reference compute-instruction-template.
+
+     /**
+      * @BIF _CTSD (Compute Timestamp Duration (CTSD))
+      *
+      * @example test/cbl008.cblle
+      */
+      *    call "_CTSD" using
+      *         by reference packed-timestamp-duration
+      *         by reference end-timestamp
+      *         by reference begin-timestamp
+      *         by reference compute-instruction-template.
+

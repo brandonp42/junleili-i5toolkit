@@ -1,0 +1,10 @@
+     E                    ARR         3  5 2A            ARR(3) PKD(5,2)
+     C                     Z-ADD1         WHR     20       ARRAY INDEX
+     C                     Z-ADD19.69     ARR,1
+     C                     Z-ADD19.60     ARR,2
+     C                     Z-ADD19.65     ARR,3
+     C                     SORTAARR
+     C           ARR,2     LOKUPARR,WHR              91    HIGHER
+     C   91      'INDEX'   DSPLY          WHR
+     C  N91      ':-('     DSPLY          ARR,2
+     C                     SETON                     LR

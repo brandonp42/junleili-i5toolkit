@@ -1,0 +1,14 @@
+******************************
+* 一  8月 31 14:17:28 CST 2009
+******************************
+原则:
+ - 所有要上传的东西放在 output dir 下
+ - Doxyfile/settings 用于生成 mainpage; .xx 用于生成各 sub-project 的
+ - gen.sh 生成所有的
+ - feature doc/output doc/dotfiles doc/image src目录下有相同结构: q mic art(article)
+
+上传内容布局:
+ - index.html
+ - dir q
+ - dir mic
+

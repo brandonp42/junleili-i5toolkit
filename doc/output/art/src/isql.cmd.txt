@@ -1,0 +1,7 @@
+/* @FILE ISQL.CMD */
+
+             CMD        PROMPT('Run SQL statement')
+             PARM       KWD(SQL) TYPE(*CHAR) LEN(256) INLPMTLEN(50) +
+                          PROMPT('SQL statement')
+
+/* EOF */

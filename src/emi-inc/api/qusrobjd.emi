@@ -1,0 +1,154 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+ * @file qusrobjd.emi
+ *
+ * @ref QSYSINC/H(QUSROBJD)
+ * prototypes declared here:
+ *  - QUSROBJD
+ *
+ * structures declared here:
+ *  - emi-qusrobjd-objd0100-tqus-objd0100-t
+ *  - emi-qusrobjd-objd0100-tqus-objd0200-t
+ *  - 
+ *
+ * contants declared here:
+ *  - emi-qusrobjd-objd0100-len
+ *  - emi-qusrobjd-objd0200-len
+ *  - 
+ *
+ * @todo 3 other structures :p
+ */
+
+/ifndef __emi_qusrobjd_h__      ;
+/define __emi_qusrobjd_h__      ;
+
+/**
+ * usage:
+ *  - allocate receiver buffer, structure OBJD0100, 0200, ...
+ *  - cpynv qusrobjd-buflen, emi-qusrobjd-objd0N00-len
+ *  - cpybla emi-qusrobjd-format-name
+ *    - OBJD0100
+ *    - OBJD0200
+ *    - ...
+ *  - cpybla qusrobjd-object-lib
+ *  - cpybla qusrobjd-object-type
+ *  - allocate and set qusrobjd-ec, and Qus_EC_t::Bytes_Provided
+ *  - set emi-qusrobjd-objd0n00-bytes-in
+ *  - setallen ??
+ */
+dcl spcptr .emi-qusrobjd-receiver auto;
+dcl dd emi-qusrobjd-buflen bin(4) auto;
+dcl spcptr .emi-qusrobjd-buflen auto init(emi-qusrobjd-buflen);
+dcl dd emi-qusrobjd-format-name char(8) auto;
+dcl spcptr .emi-qusrobjd-format-name auto init(emi-qusrobjd-format-name);
+dcl dd emi-qusrobjd-object-lib char(20) auto;
+dcl spcptr .emi-qusrobjd-object-lib auto init(emi-qusrobjd-object-lib);
+dcl dd emi-qusrobjd-object-type char(10) auto;
+dcl spcptr .emi-qusrobjd-object-type auto init(emi-qusrobjd-object-type);
+dcl spcptr .emi-qusrobjd-ec auto;
+dcl ol emi-qusrobjd-al (
+        .emi-qusrobjd-receiver,
+        .emi-qusrobjd-buflen,
+        .emi-qusrobjd-format-name,
+        .emi-qusrobjd-object-lib,
+        .emi-qusrobjd-object-type,
+        .emi-qusrobjd-ec
+) arg;
+
+/* hex 1356 */
+dcl spcptr emi-qusrobjd-sept-ptr baspco ;
+        dcl sysptr emi-qusrobjd bas(emi-qusrobjd-sept-ptr) pos(79201) ;
+
+/**
+ * emi-qusrobjd-objd0100-t
+ *
+ * @ref Qus_OBJD0100_t
+ */
+dcl spcptr .emi-qusrobjd-objd0100 auto;
+dcl spc emi-qusrobjd-objd0100-t
+        bas(.emi-qusrobjd-objd0100);
+  dcl dd emi-qusrobjd-objd0100-bytes-out bin(4) dir;
+  dcl dd emi-qusrobjd-objd0100-bytes-in bin(4) dir;
+  dcl dd emi-qusrobjd-objd0100-obj-name char(10) dir;
+  dcl dd emi-qusrobjd-objd0100-obj-lib char(10) dir;
+  dcl dd emi-qusrobjd-objd0100-obj-type char(10) dir;
+  dcl dd emi-qusrobjd-objd0100-rtn-lib char(10) dir;
+  dcl dd emi-qusrobjd-objd0100-asp-num bin(4) dir; /* Auxiliary Storage Pool */
+    /**
+     * 1        system asp
+     * 2-32     basic user asp
+     * 33-255   primary or secondary asp
+     */
+  dcl dd emi-qusrobjd-objd0100-obj-owner char(10) dir;
+  dcl dd emi-qusrobjd-objd0100-obj-domain char(2) dir;
+    /**
+     * *U       user domain
+     * *S       system domain
+     */
+  dcl dd emi-qusrobjd-objd0100-create-datetime char(13) dir;
+  dcl dd emi-qusrobjd-objd0100-change-datetime char(13) dir;
+
+/**
+ * emi-qusrobjd-objd0200-t
+ *
+ * @ref Qus_OBJD0200_t
+ */
+dcl spcptr .emi-qusrobjd-objd0200 auto;
+dcl spc emi-qusrobjd-objd0200-t
+        bas(.emi-qusrobjd-objd0200);
+  dcl dd emi-qusrobjd-objd0200-bytes-out bin(4) dir;
+  dcl dd emi-qusrobjd-objd0200-bytes-in bin(4) dir;
+  dcl dd emi-qusrobjd-objd0200-obj-name char(10) dir;
+  dcl dd emi-qusrobjd-objd0200-obj-lib char(10) dir;
+  dcl dd emi-qusrobjd-objd0200-obj-type char(10) dir;
+  dcl dd emi-qusrobjd-objd0200-rtn-lib char(10) dir;
+  dcl dd emi-qusrobjd-objd0200-asp-num bin(4) dir; /* Auxiliary Storage Pool */
+    /**
+     * 1        system asp
+     * 2-32     basic user asp
+     * 33-255   primary or secondary asp
+     */
+  dcl dd emi-qusrobjd-objd0200-obj-owner char(10) dir;
+  dcl dd emi-qusrobjd-objd0200-obj-domain char(2) dir;
+    /**
+     * *U       user domain
+     * *S       system domain
+     */
+  dcl dd emi-qusrobjd-objd0200-create-datetime char(13) dir;
+  dcl dd emi-qusrobjd-objd0200-change-datetime char(13) dir;
+  dcl dd emi-qusrobjd-objd0200-ext-obj-attr char(10) dir;
+  dcl dd emi-qusrobjd-objd0200-text char(50) dir;
+  dcl dd emi-qusrobjd-objd0200-srcfile char(10) dir;
+  dcl dd emi-qusrobjd-objd0200-srclib char(10) dir;
+  dcl dd emi-qusrobjd-objd0200-srcmbr char(10) dir;
+
+/**
+ * length of structure emi-qusrobjd-objd0100-t
+ */
+dcl con emi-qusrobjd-objd0100-len bin(4) init(90);
+
+/**
+ * length of structure emi-qusrobjd-objd0200-t
+ */
+dcl con emi-qusrobjd-objd0200-len bin(4) init(180);
+
+/endif                          ;
+/* eof - qusrobjd.emi */

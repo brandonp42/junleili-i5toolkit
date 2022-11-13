@@ -1,0 +1,72 @@
+/**
+ * @file sep5.mi
+ *
+ * list activation groups of current job
+ */
+
+entry * ext                     ;
+
+dcl spcptr tmpl-ptr auto        ;
+dcl spc tmpl-t bas(tmpl-ptr)    ;
+        dcl dd bytes-in bin(4) dir ;
+        dcl dd bytes-out bin(4) dir ;
+        dcl dd agp-num bin(4) dir   ;
+
+        /* get number of activation groups */
+dcl dd bytes-needed bin(4) auto       ;
+        modasa tmpl-ptr, 12     ;
+        cpynv bytes-in, 12      ;
+        matpragp tmpl-ptr       ;
+        cpynv bytes-needed, bytes-out ;
+        modasa tmpl-ptr, -12          ;
+
+        modasa tmpl-ptr, bytes-needed ;
+        cpynv bytes-in, bytes-needed  ;
+        matpragp tmpl-ptr             ;
+
+        /* print agp names */
+dcl dd agp-info-0 char(136) auto bdry(16)     ;
+dcl spcptr agp-info-ptr auto init(agp-info-0) ;
+dcl spc agp-info-spc bas(agp-info-ptr)        ;
+        dcl dd agp-bytes-in bin(4) dir        ;
+        dcl dd agp-bytes-out bin(4) dir       ;
+        dcl dd * char(8) dir                  ;
+        dcl dd * char(48) dir                 ;
+        dcl dd agp-name char(30) dir          ;
+dcl dd ind pkd(3,0) auto                      ;
+dcl dd num bin(4) auto                        ;
+dcl dd agp-mark bin(4) unsgnd bas(tmpl-ptr)   ;
+dcl dd agp-mark-ch char(4) bas(tmpl-ptr)   ;
+dcl dd msg char(64) auto                      ;
+dcl dd cvtnc-tmpl char(7) auto init(x'02000300000000') ;
+
+        cpynv ind, 0            ;
+        cpynv num, agp-num      ;
+        addspp tmpl-ptr, tmpl-ptr, 12 ;
+        cpynv agp-bytes-in, 136       ;
+        cpyblap msg, 'Activation groups of current job:', ' ' ;
+        %sendmsg(msg, 33)       ;
+        cpyblap msg, "    Num  Activation Group Name          Activation Mark", ' ' ;
+        %sendmsg(msg, 64)       ;
+
+agp-loop:
+        addn(s) ind, 1                         ;
+        cmpnv(b) ind, num / hi(end-agp-loop)   ;
+        matagpat agp-info-ptr, agp-mark, x'00' ; /* retieve basic actgrp info */
+
+        cpybrep msg, ' '        ;
+        cvtnc msg(5:3), ind, cvtnc-tmpl ;
+        cpybla msg(10:30), agp-name ;
+        cvthc msg(41:8), agp-mark-ch ;
+        %sendmsg(msg, 64)  ;
+
+        addspp tmpl-ptr, tmpl-ptr, 4 ;
+        b agp-loop              ;
+end-agp-loop:
+        /* free tmpl-ptr */
+        subn bytes-needed, 0, bytes-needed ;
+        modasa tmpl-ptr, bytes-needed ;
+
+        rtx *                   ;
+pend                            ;
+

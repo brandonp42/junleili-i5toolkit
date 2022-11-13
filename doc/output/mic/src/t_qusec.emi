@@ -1,0 +1,27 @@
+/**
+ * @file t-qusec.emi
+ *
+ * test of EMI include qusec.emi
+ */
+
+entry * ext                     ;
+
+dcl dd spc char(20) auto init('SEP1      LSBIN') ;
+
+        /* try to delete a nonexistent *USRSPC */
+        setspp emi-qusdltus-al-usrspc, spc ;
+        cpynv emi-ec-bytes-in, emi-qusec-len ;
+        setsppfp emi-qusdltus-al-ec, emi-qusec-ptr ;
+        callx emi-qusdltus, emi-qusdltus-al, * ;
+
+brk 'CHK-EC'                    ;
+        cmpnv(b) emi-ec-bytes-out, 0 / nhi(farewell) ;
+        %sendmsg(emi-ec-exid, 7)                  ;
+
+farewell:       
+	rtx *                   ;
+
+/include qusec.emi              ;
+/include qusdltus.emi           ;
+
+pend                            ;

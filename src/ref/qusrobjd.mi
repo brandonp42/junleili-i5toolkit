@@ -1,0 +1,144 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2009, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file qusrobjd.mi
+ *
+ * @ref QSYSINC/H(QUSROBJD)
+ * prototypes declared here:
+ *  - QUSROBJD
+ *
+ * structures declared here:
+ *  - qus-objd0100-t
+ *  - qus-objd0200-t
+ *  - 
+ *
+ * contants declared here:
+ *  - _QUS-OBJD0100-LEN
+ *  - _QUS-OBJD0200-LEN
+ *  - 
+ *
+ * @todo 3 other structures :p
+ */
+
+/**
+ * usage:
+ *  - allocate receiver buffer, structure OBJD0100, 0200, ...
+ *  - cpynv qusrobjd-buflen, _QUS-OBJD0n00-LEN
+ *  - cpybla qusrobjd-format-name
+ *    - OBJD0100
+ *    - OBJD0200
+ *    - ...
+ *  - cpybla qusrobjd-object-lib
+ *  - cpybla qusrobjd-object-type
+ *  - allocate and set qusrobjd-ec, and Qus_EC_t::Bytes_Provided
+ *  - set qus-objd0n00-bytes-in
+ *  - setallen ??
+ */
+dcl spcptr .qusrobjd-receiver auto;
+dcl dd qusrobjd-buflen bin(4) auto;
+dcl spcptr .qusrobjd-buflen auto init(qusrobjd-buflen);
+dcl dd qusrobjd-format-name char(8) auto;
+dcl spcptr .qusrobjd-format-name auto init(qusrobjd-format-name);
+dcl dd qusrobjd-object-lib char(20) auto;
+dcl spcptr .qusrobjd-object-lib auto init(qusrobjd-object-lib);
+dcl dd qusrobjd-object-type char(10) auto;
+dcl spcptr .qusrobjd-object-type auto init(qusrobjd-object-type);
+dcl spcptr .qusrobjd-ec auto;
+dcl ol argl-qusrobjd(
+  .qusrobjd-receiver,
+  .qusrobjd-buflen,
+  .qusrobjd-format-name,
+  .qusrobjd-object-lib,
+  .qusrobjd-object-type,
+  .qusrobjd-ec
+) arg;
+dcl sysptr .qusrobjd auto init("QUSROBJD", type(pgm));
+
+/**
+ * qus-objd0100-t
+ *
+ * @ref Qus_OBJD0100_t
+ */
+dcl spcptr .qus-objd0100 auto;
+dcl spc qus-objd0100-t bas(.qus-objd0100);
+  dcl dd qus-objd0100-bytes-out bin(4) dir;
+  dcl dd qus-objd0100-bytes-in bin(4) dir;
+  dcl dd qus-objd0100-obj-name char(10) dir;
+  dcl dd qus-objd0100-obj-lib char(10) dir;
+  dcl dd qus-objd0100-obj-type char(10) dir;
+  dcl dd qus-objd0100-rtn-lib char(10) dir;
+  dcl dd qus-objd0100-asp-num bin(4) dir; /* Auxiliary Storage Pool */
+    /**
+     * 1        system asp
+     * 2-32     basic user asp
+     * 33-255   primary or secondary asp
+     */
+  dcl dd qus-objd0100-obj-owner char(10) dir;
+  dcl dd qus-objd0100-obj-domain char(2) dir;
+    /**
+     * *U       user domain
+     * *S       system domain
+     */
+  dcl dd qus-objd0100-create-datetime char(13) dir;
+  dcl dd qus-objd0100-change-datetime char(13) dir;
+
+/**
+ * qus-objd0200-t
+ *
+ * @ref Qus_OBJD0200_t
+ */
+dcl spcptr .qus-objd0200 auto;
+dcl spc qus-objd0200-t bas(.qus-objd0200);
+  dcl dd qus-objd0200-bytes-out bin(4) dir;
+  dcl dd qus-objd0200-bytes-in bin(4) dir;
+  dcl dd qus-objd0200-obj-name char(10) dir;
+  dcl dd qus-objd0200-obj-lib char(10) dir;
+  dcl dd qus-objd0200-obj-type char(10) dir;
+  dcl dd qus-objd0200-rtn-lib char(10) dir;
+  dcl dd qus-objd0200-asp-num bin(4) dir; /* Auxiliary Storage Pool */
+    /**
+     * 1        system asp
+     * 2-32     basic user asp
+     * 33-255   primary or secondary asp
+     */
+  dcl dd qus-objd0200-obj-owner char(10) dir;
+  dcl dd qus-objd0200-obj-domain char(2) dir;
+    /**
+     * *U       user domain
+     * *S       system domain
+     */
+  dcl dd qus-objd0200-create-datetime char(13) dir;
+  dcl dd qus-objd0200-change-datetime char(13) dir;
+  dcl dd qus-objd0200-ext-obj-attr char(10) dir;
+  dcl dd qus-objd0200-text char(50) dir;
+  dcl dd qus-objd0200-srcfile char(10) dir;
+  dcl dd qus-objd0200-srclib char(10) dir;
+  dcl dd qus-objd0200-srcmbr char(10) dir;
+
+/**
+ * length of structure qus-objd0100-t
+ */
+dcl con _QUS-OBJD0100-LEN bin(4) init(90);
+
+/**
+ * length of structure qus-objd0200-t
+ */
+dcl con _QUS-OBJD0200-LEN bin(4) init(180);
+
+/* eof - qusrobjd.mi */

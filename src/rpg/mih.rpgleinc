@@ -1,0 +1,55 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih.rpgleinc
+      *
+      * Header of system builtins for ILE RPG provided by the
+      * open-source project i5/OS Programmer's Toolkit.
+      * For details please refer to the project's web site,
+      * http://i5toolkit.sourceforge.net/
+      */
+
+      /if not defined(i5toolkit_rpg_mih)
+      /define i5toolkit_rpg_mih
+
+      /copy mih-comp
+      /copy mih-dattim
+      /copy mih-ptr
+      /copy mih-dtaptr
+      /copy mih-spc
+      /copy mih-pgmmng
+      /copy mih-pgmexec
+      /copy mih-heap
+      /copy mih-inx
+      /copy mih-q
+      /copy mih-lock
+      /copy mih-mutex
+      /copy mih-stgsync
+      /copy mih-ctx
+      /copy mih-auth
+      /copy mih-prcthd
+      /copy mih-stgrsc
+      /copy mih-jrn
+      /copy mih-mchobs
+      /copy mih-spt
+      /copy mih-undoc
+
+      /endif
+     /* eof - mih.rpgleinc */

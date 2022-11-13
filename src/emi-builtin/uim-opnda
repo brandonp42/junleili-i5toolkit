@@ -1,0 +1,35 @@
+6       5       6       28      UIM-OPNDA Open Display Application
+        CPYBLAP @0006-#1, :1, ' ' ;
+        CPYNV   @0006-#2, :2  ;
+        CPYNV   @0006-#3, :3  ;
+        CPYBLA  @0006-#4, :4  ;
+        SETSPP  .@0006-#5, :5 ;
+        CALLI @0006, *, .@0006  ;
+/* builtin %UIM-OPNDA */ DCL INSPTR .@0006 AUTO            ;
+DCL DD @0006-#1 CHAR(20) AUTO     ;
+DCL DD @0006-#2 BIN(4) AUTO       ;
+DCL DD @0006-#3 BIN(4) AUTO       ;
+DCL DD @0006-#4 CHAR(1) AUTO      ;
+DCL SPCPTR .@0006-#5 AUTO         ;
+DCL DD @0006-#RTN CHAR(8) AUTO    ;
+ENTRY @0006 INT                   ;
+DCL SPCPTR .@0006-APPH AUTO INIT(@0006-#RTN) ;
+DCL SPCPTR .@0006-PNLGRP AUTO INIT(@0006-#1) ;
+DCL SPCPTR .@0006-SCOPE AUTO INIT(@0006-#2)  ;
+DCL SPCPTR .@0006-EXTPGM-INTERFACE
+        AUTO INIT(@0006-#3)       ;
+DCL SPCPTR .@0006-FULL-SCREEN-HELP
+        AUTO INIT(@0006-#4)       ;
+DCL OL @0006-AL-OPNDA (
+        .@0006-APPH,
+        .@0006-PNLGRP,
+        .@0006-SCOPE,
+        .@0006-EXTPGM-INTERFACE,
+        .@0006-FULL-SCREEN-HELP,
+        .@0006-#5
+) ARG MIN(6);
+DCL SPCPTR @0006-SEPT-PTR BASPCO ;
+/* 12F6 */ DCL SYSPTR @0006-QUIOPNDA BAS(@0006-SEPT-PTR) POS(77665) ;
+        CALLX @0006-QUIOPNDA, @0006-AL-OPNDA, * ;
+BRK '@0006-RTN'                                 ;
+        B .@0006                                ;

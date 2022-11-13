@@ -1,0 +1,6 @@
+                R REC
+                  INX            3S 0       COLHDG('INDEX')
+                  PATTERN       32O         COLHDG('PATTERN STRING')
+                  SSTR          64O         COLHDG('SOURCE STRING')
+
+                K INX

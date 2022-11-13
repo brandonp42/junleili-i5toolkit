@@ -1,0 +1,46 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+ * @file qusec.emi
+ *
+ * @ref t-qusec.emi
+ */
+
+/ifndef __emi_qusec_h__         ;
+/define __emi_qusec_h__         ;
+
+/*
+API error code structure
+
+@remark remember to set emi-ec-bytes-in to emi-qusec-len before
+        passed emi-qusec-ptr to an API
+*/
+dcl dd emi-qusec char(512) auto;
+dcl spcptr emi-qusec-ptr auto init(emi-qusec);
+dcl spc * bas(emi-qusec-ptr);
+        dcl dd emi-ec-bytes-in bin(4) dir;  /* bytes provided */
+        dcl dd emi-ec-bytes-out bin(4) dir; /* bytes available */
+        dcl dd emi-ec-exid char(7) dir;     /* exception ID */
+        dcl dd * char(1) dir;
+        dcl dd emi-ec-exdata char(496) dir; /* exception data */
+dcl con emi-qusec-len bin(2) init(512);
+
+/endif                          ;
+/* eof - qusec.mi */

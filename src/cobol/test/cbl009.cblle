@@ -1,0 +1,96 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file cbl009.cblle
+      *
+      * Test of:
+      *  - _CRTS (Create Space)
+      *  - _DESS (Destroy Space)
+      *  - _MODS1 (Modify Space)
+      * This program creates a temporary space object whose
+      * addressiblity is not in any context (library).
+      */
+
+       process
+           NOSTDTRUNC
+           NOMONOPRC.
+
+       id division.
+       program-id. cbl009.
+
+       environment division.
+       configuration section.
+       special-names.
+           copy mih-lnktyp.
+
+       data division.
+       working-storage section.
+       01 tmpl     type crts-tmpl-t.
+      * name of the space object to create
+       01 spc-name pic x(30) value "Romio".
+       01 len      pic 9(9) usage comp-4.
+       01 romio    usage pointer.
+
+       linkage section.
+           copy mih-comp.
+           copy mih-spc.
+
+       procedure division.
+       main-pgm.
+
+           move length of crts-tmpl-t to len.
+           call "_PROPB" using
+                by reference  tmpl
+                by value      x"00"
+                by value      len.
+           move len      to bytes-in of tmpl.
+           move x"19EF"  to obj-type of tmpl.
+           move spc-name to obj-name of tmpl.
+      *     creation option: x'40020000'
+      *     bit 0 = 0, temporary
+      *     bit 1 = 1, variable-length
+      *     bit 2 = 0, addressability is not inserted into context
+      *     bit 7 = 0, does not specify the initial owner, so the owner
+      *                of the created space object is the current USRPRF
+      *     bit 14 = 1, automatically expand space
+           move x"40020000" to crt-opt of tmpl.
+           move 4096        to spc-size of tmpl.
+           move x"00"       to init-val of tmpl.
+
+           call "_CRTS" using
+                by reference romio
+                by reference tmpl.
+
+           call program "CBL013" using
+                by reference romio.
+      * modify space size
+           compute len = spc-size of tmpl * 2.
+           call "_MODS1" using
+                by reference romio
+                by reference len.
+
+           call program "CBL013" using
+                by reference romio.
+
+           call "_DESS" using
+                by reference romio.
+
+           stop run.
+       end program cbl009.

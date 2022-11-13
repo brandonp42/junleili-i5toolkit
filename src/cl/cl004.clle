@@ -1,0 +1,42 @@
+/******************************************************************************/
+/* This file is part of i5/OS Programmer's Toolkit.                           */
+/*                                                                            */
+/* Copyright (C) 2010, 2011  Junlei Li.                                       */
+/*                                                                            */
+/* i5/OS Programmer's Toolkit is free software: you can redistribute          */
+/* it and/or modify it under the terms of the GNU General Public              */
+/* License as published by the Free Software Foundation, either               */
+/* version 3 of the License, or (at your option) any later version.           */
+/* i5/OS Programmer's Toolkit is distributed in the hope that it will         */
+/* be useful, but WITHOUT ANY WARRANTY; without even the implied              */
+/* warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           */
+/* See the GNU General Public License for more details.                       */
+/*                                                                            */
+/* You should have received a copy of the GNU General Public License          */
+/* along with i5/OS Programmer's Toolkit.  If not, see                        */
+/* <http://www.gnu.org/licenses/>.                                            */
+/******************************************************************************/
+
+/******************************************************************************/
+/* @file cl004.clle                                                           */
+/*                                                                            */
+/* Test of the following system builtins:                                     */
+/*  - __strlen (STRLENNULL)                                                   */
+/*  - _CPYBYTES                                                               */
+/*                                                                            */
+/* This program use STRLENNULL and CPYBYTES to handle input C-style string.   */
+/******************************************************************************/
+
+             PGM        PARM(&C_STR)
+             /* &C_STR is a c-style (null-terminated) string */
+             DCL        VAR(&C_STR) TYPE(*CHAR) LEN(128)
+             DCL        VAR(&STR) TYPE(*CHAR) LEN(128)
+             DCL        VAR(&LEN) TYPE(*UINT) LEN(4)
+
+             /* Name of the system builtin of the STRLENNULL instruction */
+             /* is '__strlen'.                                           */
+             CALLPRC    PRC('__strlen') PARM((&C_STR *BYREF)) RTNVAL(&LEN)
+             CALLPRC    PRC('_CPYBYTES') PARM((&STR *BYREF) (&C_STR *BYREF) (&LEN *BYVAL))
+             SNDPGMMSG  MSG(&STR)
+
+             ENDPGM

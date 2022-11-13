@@ -1,0 +1,56 @@
+/* *
+ * @file uu.emi
+ *
+ * Display panel-group LSBIN/UU
+ */
+
+entry i-main ext                ;
+
+dcl dd apph char(8) auto        ;
+dcl dd pnlgrp char(20) auto
+        init("UU        LSBIN") ;
+
+        /* init emi-qusec */
+        cpynv emi-ec-bytes-in, emi-qusec-len ;
+
+        /* open UIM display application */
+        cpybla apph, %uim-opnda(
+          pnlgrp,       /* panel-group name */
+          -1,           /* application scope: program level  */
+          0,            /* exit program interface */
+          'N',          /* do NOT show full screen help info */
+          emi-qusec     /* error code */
+        );
+
+        /* set panel title */
+        %uim-putv(
+          apph,         /* application handle returned by %uim-opnda */
+          title,        /* program variable */
+          20,           /* length of program variable */
+          "RT",         /* variable record name */
+          emi-qusec     /* error code */
+        );
+dcl dd word char(20) auto                          ;
+        /* set panel UIM variable WORD */
+        cpybrep word, x'00'       ;
+        cpybla  word, x'4F60597D' ; /* UCS-2 chinese string: '你好' */
+        %uim-putv(apph, word, 20, "RW", emi-qusec);
+
+        /* display panel IDXATTR */
+        %uim-dspp(
+          apph,         /* application handle */
+          "PP",         /* panel name */
+          'Y',          /* redisplay option */
+          emi-qusec     /* error code */
+        );
+
+        /* close UIM application */
+        %uim-cloa(apph, 'M', emi-qusec);
+
+brk "RTN"                       ;
+        rtx *                   ;
+
+/include qusec.emi              ;
+
+pend                            ;
+/* eof - uu.emi */

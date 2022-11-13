@@ -1,0 +1,289 @@
+.* This file is part of i5/OS Programmer's Toolkit.
+.* 
+.* Copyright (C) 2010, 2011  Junlei Li (李君磊).
+.* 
+.* i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* (at your option) any later version.
+.* 
+.* i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.* 
+.* You should have received a copy of the GNU General Public License
+.* along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+
+.*
+.* help info of index tools
+.*
+
+:pnlgrp.
+
+.* for CL command DSPIDXD and INSIDX
+:help name='hlp/idxd'.
+:p.CL commands DSPIDXD and INSIDX are members of i5/OS Programmer's
+Toolkit.  The DSPIDXD command displays attributes of a user index
+object whose MI object type and subtype is hex 0E0A.  The INSIDX
+command insert an entry into a user index.
+:p.
+Refer to :hp2.http://i5toolkit.sourceforge.net:ehp2. for details of
+the open source project, i5/OS Programmer's Toolkit.  To download
+i5/OS Programmer's Toolkit, please visit
+:hp2.http://sourceforge.net/projects/i5toolkit:ehp2..
+:p.
+:xh3.Bugs
+:p.
+Please report bugs to :hp2.junleili-cn@users.sourceforge.net:ehp2.
+:p.
+:xh3.Author
+:p.
+Junlei Li
+:p.
+:ehelp.
+
+:help name='hlp/idxd/usridx'.User Index Object (USRIDX)
+:xh3.User Index Object (USRIDX)
+:p.
+Name and library of the user index object (*USRIDX) object.
+:ehelp.
+
+:help name='hlp/idxd/entry'.Entry data (ENTRY)
+:xh3.Entry data (ENTRY)
+:p.
+Entry data to insert into the user index.
+:ehelp.
+
+:help name='hlp/idxd/entlen'.Entry length (ENTLEN)
+:xh3.Entry length (ENTLEN)
+:p.
+Length of entry data.  For a fixed-length-entry user index object, the
+actural entry length of the user index will be used instead.  Use CL
+command DSPIDXD to check the entry length attributes of a user index
+object.
+:ehelp.
+
+:help name='hlp/idxd/replace'.Insert with replacement (REPLACE)
+:xh3.Insert with replacement (REPLACE)
+:p.
+Valid only for a keyed user index.  Specify *YES to replace the nonkey
+portion of the index entry if the key is already in the user index.
+Specify *NO to insert the entry only if the key is not already in the
+user index.
+:ehelp.
+
+.* for panel IDXATTR
+
+.* for common attributes
+
+:help name='common/object'.
+:p.
+:xh3.Object
+:p.
+Name and library of the current displayed user index object.
+:ehelp.
+
+:help name='common/objasp'.
+:p.
+:xh3.Object ASP number
+:p.
+The number of the auxiliary storage pool (ASP) where storage is
+allocated for the object.  Possible values ranges are
+:ul.
+:li.1, System ASP
+:li.2-32, Basic user ASP
+:li.33-255, Primary or secondary ASP
+:eul.
+:ehelp.
+
+:help name='common/objtype'.
+:p.
+:xh3.Object Type
+:p.
+External object type such as *DTAQ, *USRQ.
+:ehelp.
+
+:help name='common/extattr'.
+:p.
+:xh3.Attribute
+:p.
+The extended attribute of the queue object.  Possible values are:
+:ul.
+:li.Data queue, empty
+:li.DDM data queue, DDMDTAQUE
+:li.User queue, provided by user who created the queue object
+:eul.
+:ehelp.
+
+:help name='common/owner'.
+:p.
+:xh3.Owner
+:p.
+The name of the queue object owner's user profile.
+:ehelp.
+
+:help name='common/objdmn'.
+:p.
+:xh3.Object Domain
+:p.
+The domain that contains the queue object.
+:ehelp.
+
+.* *USRIDX attributes
+
+:help name='idx/lenattr'.
+:p.
+:xh3.Entry length attribute.
+:p.
+The types of entries in the user index.
+Possible values are
+:ul.
+:li.F Fixed-length entries
+:li.V Variable-length entries
+:eul.
+:ehelp.
+
+:help name='idx/imdupd'.
+:p.
+:xh3.Immediate update.
+:p.
+Whether or not the updates to the index are written
+synchronously to auxiliary storage on each update to the index.  The
+possible values are
+:ul.
+:li.0 No immediate update
+:li.1 Immediate update
+:eul.
+:ehelp.
+
+:help name='idx/keyins'.
+:p.
+:xh3.Key insertion.
+:p.
+Whether or not the inserts to the index are by key.
+:ul.
+:li.0 No insertion by key
+:li.1 Insertion by key
+:eul.
+:ehelp.
+
+:help name='idx/opt'.
+:p.
+:xh3.Optimized processing mode.
+:p.
+Whether the user index is maintained in a
+manner that optimizes performance for
+:ul.
+:li.0 Random references
+:li.1 Sequential references
+:eul.
+:ehelp.
+
+:help name='idx/entlen'.
+:p.
+:xh3.Entry length.
+:p.
+For user indexes with fixed-length entries, this is the
+length of each index entry. For user indexes with variable-length
+entries, this is equal to the longest entry that has ever been
+inserted into the index. Valid values are from 1 through 2000.
+:ehelp.
+
+:help name='idx/maxentlen'.
+:p.
+:xh3.Maximum entry length.
+:p.
+The maximum entry length any user index entry can have.
+:ehelp.
+
+:help name='idx/keylen'.
+:p.
+:xh3.Key length.
+:p.
+The length of the key where the first byte of an entry is
+the beginning of the key for the index entries. This field will be 0
+for a nonkeyed user index.
+:ehelp.
+
+:help name='idx/entadded'.
+:p.
+:xh3.Number of entries added.
+:p.
+The number of entries added to the user
+index. The number of entries currently in the index can be obtained by
+subtracting the number of entries removed from the number of entries
+added.
+:ehelp.
+
+:help name='idx/entrmved'.
+:p.
+:xh3.Number of entries removed.
+:p.
+The number of entries removed from the user index.
+:ehelp.
+
+:help name='idx/numrtv'.
+:p.
+:xh3.Number of retrieve operations.
+:p.
+The number of times either the FNDINXEN
+(find independent index entry) MI instruction or Retrieve User Index
+Entry (QUSRTVUI) API has been used on this user index. The QUSRUIAT
+API or MATINXAT (materialize independent index attributes) MI
+instruction sets the number of retrieve operations to 0 after the
+retrieve or materialize operation is completed.
+:ehelp.
+
+.* for keys
+:help name='help/key/f1'.Function keys - help
+:p.
+:xh2.F1=Help
+:p.
+Press F1 to see information about this display.
+:ehelp.
+
+:help name='help/key/f3'.Function keys - help
+:p.
+:xh2.F3=Exit
+:p.
+Exit the current display.
+:ehelp.
+
+:help name='help/key/f5'.Function keys - help
+:p.
+:xh2.F5=Refresh
+:p.
+Refresh message list.
+:ehelp.
+
+:help name='help/key/f12'.Function keys - help
+:p.
+:xh2.F12=Cancel
+:p.
+Exit the current display.
+:ehelp.
+
+:help name='help/key/enter'.Function keys - help
+:p.
+:xh2.Enter
+:p.
+Confirm menu bar selection, or list entry options, or exit the current display.
+:ehelp.
+
+:help name='help/key/pageup'.Function keys - help
+:p.
+:xh2.Pageup
+:p.
+Show previous page.
+:ehelp.
+
+:help name='help/key/pagedown'.Function keys - help
+:p.
+:xh2.Pagedown
+:p.
+Show next page.
+:ehelp.
+
+:epnlgrp.
+.* eof - idxhlp.pnlgrp

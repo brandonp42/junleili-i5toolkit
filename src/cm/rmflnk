@@ -1,0 +1,45 @@
+#! /bin/sh
+
+# This file is part of i5/OS Programmer's Toolkit.
+# 
+# Copyright (C) 2009, 2011  Junlei Li (李君磊).
+# 
+# i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+
+#
+# PASE shell script to remove symbolic links along with corresponding link targets.
+#
+
+if [ $# -eq 0 ]
+    then
+    echo "Usage: rmflnk [symbolic-link, ...]"
+    exit
+fi
+
+for LINK_NAME in $*
+do
+    if [ -L $LINK_NAME ]
+    then
+        TARGET=$(qsh -c "readlink $LINK_NAME")
+        if qsh -c "rm $TARGET"
+        then
+            echo "Target $TARGET removed."
+        fi
+
+        rm $LINK_NAME
+        echo "Symbolic link $LINK_NAME removed."
+    else
+        echo "$LINK_NAME is NOT a symbolic link."
+    fi
+done

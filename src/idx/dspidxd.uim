@@ -1,0 +1,315 @@
+.* This file is part of i5/OS Programmer's Toolkit.
+.* 
+.* Copyright (C) 2010, 2011  Junlei Li (李君磊).
+.* 
+.* i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* (at your option) any later version.
+.* 
+.* i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.* 
+.* You should have received a copy of the GNU General Public License
+.* along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+
+.*
+.* @file dspidxd.pnlgrp
+.*
+
+:pnlgrp.
+
+:copyr.(C)Copyright 2009, 2011 Junlei Li &colon.p
+
+.* my help info
+:import name='*'
+        pnlgrp='*libl/idxhlp'
+        .
+
+.*
+.* classes
+.*
+
+.*
+.* charater types
+.*
+:class name=o32
+       basetype='igc 32'
+       .
+:eclass.
+:class name=a10
+       basetype='char 10'
+       .
+:eclass.
+:class name=a1
+       basetype='char 1'
+       .
+:eclass.
+
+.*
+.* integer types
+.*
+:class  name=bin2
+        basetype='bin 15'
+        .
+:eclass.
+:class  name=bin4
+        basetype='bin 31'
+        .
+:eclass.
+
+.*
+.* vars
+.*
+
+:var name=vtitle
+     class=o32
+     .
+.* vars of rcd rcommon
+:var name=vidx
+     class=a10
+     .
+:var name=vlib
+     class=a10
+     .
+:var name=vobjtype
+     class=a10
+     .
+:var name=vobjasp
+     class=bin2
+     .
+:var name=vextattr
+     class=a10
+     .
+:var name=vowner
+     class=a10
+     .
+:var name=vdomain
+     class=a10
+     .
+
+.* vars, index attributes
+:var name=vlenattr
+     class=a1
+     .
+:var name=vimdupd
+     class=a1
+     .
+:var name=vkeyins
+     class=a1
+     .
+:var name=vopt
+     class=a1
+     .
+:var name=ventlen
+     class=bin4
+     .
+:var name=vmaxentlen
+     class=bin4
+     .
+:var name=vkeylen
+     class=bin4
+     .
+:var name=ventadded
+     class=bin4
+     .
+:var name=ventrmved
+     class=bin4
+     .
+:var name=vnumrtv
+     class=bin4
+     .
+
+
+.*
+.* varrcd
+.*
+:varrcd name=rtitle
+        vars='vtitle'
+        .
+:varrcd name=rcommon
+        vars='vidx vlib vobjtype vobjasp vextattr vowner vdomain'
+        .
+:varrcd name=ridxattr
+        vars='vlenattr vimdupd vkeyins vopt ventlen vmaxentlen vkeylen'
+        vars='ventadded ventrmved vnumrtv'
+        .
+
+.*
+.* key lists
+.*
+:keyl   name=klistmain.
+:keyi   key=f1
+        help='help/key/f1'
+        action=help
+        varupd=no
+        .
+:keyi   key=f3
+        help='help/key/f3'
+        action='exit noset'
+        varupd=yes
+        .F3=Exit
+:keyi   key=f12
+        help='help/key/f12'
+        action='cancel set'
+        varupd=yes
+        .F12=Cancel
+:keyi   key=enter
+        help='help/key/enter'
+        action=enter
+        .
+:keyi   key=pageup
+        help='help/key/pageup'
+        action=pageup
+        .
+:keyi   key=pagedown
+        help='help/key/pagedown'
+        action=pagedown
+        .
+:ekeyl.
+
+.* .im dspidxattr
+.* insert dspidxattr.pnl directly here
+:panel  name=idxattr
+        title=vtitle
+        keyl=klistmain
+        help='hlp/idxd'
+        enter='return 100'
+        .
+
+.* common data items
+:data    depth=5
+         scroll=no
+         layout=2
+         botsep=space
+         compact
+         .
+:datacol width=22.
+:datacol width='*'.
+
+:datagrp grpsep=qindent
+         compact
+         .
+:datai var=vidx
+       help='common/object'
+       usage=out
+       .Object
+:datai   var=vlib
+         help='common/object'
+         usage=out
+         .Library
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai   var=vobjasp
+         help='common/objasp'
+         usage=out
+         .Object ASP number
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai   var=vobjtype
+         help='common/objtype'
+         usage=out
+         .Type
+:edatagrp.
+
+:datagrp grpsep=none
+         compact
+         .
+:datai var=vextattr
+       help='common/extattr'
+       usage=out
+       .Attribute
+:datai var=vowner
+       help='common/owner'
+       usage=out
+       .Owner
+:datai var=vdomain
+       help='common/objdmn'
+       usage=out
+       .Object Domain
+:edatagrp.
+:edata.
+
+.* index attributes
+:data    depth='*'
+         scroll=yes
+         layout=1
+         botsep=space
+         compact
+         .
+
+:datacol width=30.
+:datacol width=10.
+:datacol width='*'.
+
+:datagrp grpsep=indent
+         compact
+         .User Index Attributes
+
+:datai   var=vlenattr
+         help='idx/lenattr'
+         usage=out
+         .Entry length attribute
+:datac.F=Fixed-length
+:datac.V=Variable-length
+:datai   var=vimdupd
+         help='idx/imdupd'
+         usage=out
+         .Immediate update
+:datac.0=No immediate update
+:datac.1=Immediate update
+:datai   var=vkeyins
+         help='idx/keyins'
+         usage=out
+         .Key insertion
+:datac.0=No insertion by key
+:datac.1=Insertion by key
+:datai   var=vopt
+         help='idx/opt'
+         usage=out
+         .Optimized processing mode
+:datac.0=Random references
+:datac.1=Sequential references
+:datai   var=ventlen
+         help='idx/entlen'
+         usage=out
+         .Entry length
+:datai   var=vmaxentlen
+         help='idx/maxentlen'
+         usage=out
+         .Maximum entry length
+:datai   var=vkeylen
+         help='idx/keylen'
+         usage=out
+         .Key length
+:datai   var=ventadded
+         help='idx/entadded'
+         usage=out
+         .Number of entries added
+:datai   var=ventrmved
+         help='idx/entrmved'
+         usage=out
+         .Number of entries removed
+:datai   var=vnumrtv
+         help='idx/numrtv'
+         usage=out
+         .Number of retrieve operations
+
+:edatagrp.
+
+:edata.
+
+:epanel.
+
+.* eof - panel dspidxattr
+
+:epnlgrp.
+.* eof - dspidxd.pnlgrp

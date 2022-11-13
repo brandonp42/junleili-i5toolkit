@@ -1,0 +1,172 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/* *
+ * @file rtvidxd.emi
+ *
+ * print *USRIDX attributes
+ */
+
+dcl spcptr idx-object-ptr parm  ;
+dcl ol pl-main(
+        idx-object-ptr
+) ext parm       ;
+
+entry *(pl-main)ext             ;
+
+dcl dd idx-object char(20) bas(idx-object-ptr) ;
+dcl dd apph char(8) auto                       ;
+dcl dd pnlgrp char(20) auto init("DSPIDXD   I5TOOLKIT") ;
+
+        /* init emi-qusec */
+        cpynv emi-ec-bytes-in, emi-qusec-len ; /* 512 */
+
+        /* open display application */
+        cpybla apph, %uim-opnda(pnlgrp, -1, 0, 'N', emi-qusec);
+        cmpnv(b) emi-ec-bytes-out, 0 / neq(opda-error)      ;
+
+        /* set title */
+dcl dd title char(32) auto init('Display User Index Description') ;
+dcl dd len bin(4) auto init(32)                                   ;
+
+        /* get object description */
+        calli get-objd, *, .get-objd ;
+
+        /* get *usridx attributes */
+        calli get-idxd, *, .get-idxd ;
+
+        %uim-putv(apph, title, len, "RTITLE", emi-qusec);
+
+        /* display panel IDXATTR */
+        %uim-dspp(apph, "IDXATTR", 'Y', emi-qusec);
+
+        /* close application */
+        %uim-cloa(apph, 'M', emi-qusec);
+
+farewell:       
+        rtx *                   ;
+
+opda-error:
+dcl dd err char(64) auto        ;
+
+        cpyblap err,
+          "builtin uim-opnda() failed with exid:",
+          ' '                   ;
+        cpybla err(32:7), emi-ec-exid ;
+        %sendmsg(err, 40)             ;
+
+        b farewell              ;
+
+/* get object description */
+dcl insptr .get-objd auto                           ;
+entry get-objd int                                  ;
+
+        /* allocate buffer */
+dcl dd buf-len bin(4) auto      ;
+        modasa .emi-qusrobjd-objd0200, emi-qusrobjd-objd0200-len ;
+
+        /* retrieve obj d */
+        setsppfp .emi-qusrobjd-receiver,
+          .emi-qusrobjd-objd0200                             ;
+        cpynv emi-qusrobjd-buflen, emi-qusrobjd-objd0200-len ;
+        cpybla emi-qusrobjd-format-name, "OBJD0200"          ;
+        cpybla emi-qusrobjd-object-lib, idx-object           ;
+        cpyblap emi-qusrobjd-object-type, "*USRIDX", ' '     ;
+        setspp .emi-qusrobjd-ec, emi-qusec                    ;
+        callx emi-qusrobjd, emi-qusrobjd-al, *               ;
+
+dcl dd obj-attr char(62) auto   ;
+dcl spcptr obj-attr-ptr auto init(obj-attr) ;
+dcl spc * bas(obj-attr-ptr)                 ;
+        dcl dd vidx char(10) dir ;
+        dcl dd vlib char(10) dir ;
+        dcl dd vobjtype char(10) dir ;
+        dcl dd vobjasp bin(2) dir ;
+        dcl dd vextattr char(10) dir ;
+        dcl dd vowner char(10) dir ;
+        dcl dd vdomain char(10) dir ;
+
+        cpybla vidx, emi-qusrobjd-objd0200-obj-name ;
+        cpybla vlib, emi-qusrobjd-objd0200-obj-lib  ;
+        cpybla vobjtype, emi-qusrobjd-objd0200-obj-type ;
+        cpynv vobjasp, emi-qusrobjd-objd0200-asp-num    ;
+        cpybla vextattr, emi-qusrobjd-objd0200-ext-obj-attr ;
+        cpybla vowner, emi-qusrobjd-objd0200-obj-owner      ;
+        cmpbla(b) emi-qusrobjd-objd0200-obj-domain, "*U" / neq(=+3) ;
+        cpyblap vdomain, "*USER", ' '   ;
+        b =+2                           ;
+:       
+        cpyblap vdomain, "*SYSTEM", ' ' ;
+:       
+        %uim-putv(apph, obj-attr, 62, "RCOMMON", emi-qusec) ;
+
+        /* release objd-ptr */
+        subn buf-len, 0, emi-qusrobjd-objd0200-len ;
+        modasa .emi-qusrobjd-objd0200, buf-len     ;
+
+        b .get-objd             ;
+
+/* get *usridx attributes */
+dcl insptr .get-idxd auto                           ;
+entry get-idxd int                                  ;
+
+        cpynv emi-ec-bytes-in, emi-qusec-len ;
+        setsppfp .emi-qusruiat-ec, emi-qusec-ptr ;
+        cpybla emi-qusruiat-idx, idx-object      ;
+        callx emi-qusruiat, emi-qusruiat-al, *      ;
+
+        /* set varrcd RIDXATTR */
+dcl dd idx-attr char(28) auto   ;
+dcl spcptr idx-attr-ptr auto
+        init(idx-attr)          ;
+dcl spc * bas(idx-attr-ptr)     ;
+        dcl dd vlenattr char(1) dir ;
+        dcl dd vimdupd char(1) dir  ;
+        dcl dd vkeyins char(1) dir  ;
+        dcl dd vopt char(1) dir     ;
+        dcl dd ventlen bin(4) dir   ;
+        dcl dd vmaxentlen bin(4) dir ;
+        dcl dd vkeylen bin(4) dir    ;
+        dcl dd ventadded bin(4) dir  ;
+        dcl dd ventrmved bin(4) dir  ;
+        dcl dd vnumrtv bin(4) dir    ;
+
+        cpybla vlenattr, emi-qusruiat-idxa0100-len-attr ;
+        cpybla vimdupd, emi-qusruiat-idxa0100-immed-upd ;
+        cpybla vkeyins, emi-qusruiat-idxa0100-keyed     ;
+        cpybla vopt, emi-qusruiat-idxa0100-opt          ;
+
+        cpynv ventlen, emi-qusruiat-idxa0100-ent-len ;
+        cpynv vmaxentlen, emi-qusruiat-idxa0100-max-ent-len ;
+        cpynv vkeylen, emi-qusruiat-idxa0100-key-len     ;
+        cpynv ventadded, emi-qusruiat-idxa0100-ent-added   ;
+        cpynv ventrmved, emi-qusruiat-idxa0100-ent-rmved   ;
+        cpynv vnumrtv, emi-qusruiat-idxa0100-num-opt     ;
+
+        %uim-putv(apph, idx-attr, 28, "RIDXATTR", emi-qusec) ;
+brk 'IDXATTTR'                  ;
+        b .get-idxd             ;
+
+/include qusec.emi              ;
+/include qusruiat.emi           ;
+/include qusrobjd.emi           ;
+
+pend                            ;
+
+/* eof - dspidxd.emi */

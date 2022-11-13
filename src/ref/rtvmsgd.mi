@@ -1,0 +1,208 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2009, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file rtvmsgd.mi
+ *
+ * retreive message d using QMHRTVD
+ *
+ * caller of rtvmsgd should do the follwing steps
+ *  - setspp .rtvmsgd-ec, real-ec-buf;
+ *  - calli rtvmsgd, argl-rtvmsgd, .rtvmsgd;
+ *  - use rtvmsgd-error-msg/.rtvmsgd-error-msg
+ *      and rtvmsgd-error-msglen/.rtvmsgd-error-msglen
+ */
+
+/* for caller */
+dcl spcptr .rtvmsgd-ec;
+dcl spc * bas(.rtvmsgd-ec);
+  dcl dd rtvmsgd-ec-bytes-in bin(4) dir;
+  dcl dd rtvmsgd-ec-bytes-out bin(4) dir;
+  dcl dd rtvmsgd-ec-exid char(7) dir;
+  dcl dd * char(1) dir;
+  dcl dd rtvmsgd-ec-exdata char(496) dir;
+dcl spcptr .rtvmsgd-error-msg;
+dcl dd rtvmsgd-error-msg char(4072) bas(.rtvmsgd-error-msg);
+dcl spcptr .rtvmsgd-error-msglen;
+dcl dd rtvmsgd-error-msglen bin(4) bas(.rtvmsgd-error-msglen);
+dcl ol argl-rtvmsgd(
+  .rtvmsgd-ec,
+  .rtvmsgd-error-msg,
+  .rtvmsgd-error-msglen
+) arg;
+
+dcl dd m-msg-info char(4096) auto;
+dcl spcptr .m-msg-info auto init(m-msg-info);
+dcl spc * bas(.m-msg-info);
+  dcl dd m-msg-bytes-out bin(4) dir;
+  dcl dd m-msg-bytes-in bin(4) dir;
+  dcl dd m-msg-msglen-out bin(4) dir;
+  dcl dd m-msg-msglen-in bin(4) dir;
+  dcl dd m-msg-helplen-out bin(4) dir;
+  dcl dd m-msg-helplen-in bin(4) dir;
+  dcl dd m-msg-body char(4072) dir; /* message + help */
+
+dcl dd m-msg-len bin(4) auto init(4096);
+dcl spcptr .m-msg-len auto init(m-msg-len);
+dcl dd m-fmt-name char(8) init("RTVM0100");
+dcl spcptr .m-fmt-name auto init(m-fmt-name);
+dcl dd m-msg-id char(7) auto;
+dcl spcptr .m-msg-id auto init(m-msg-id);
+dcl dd m-msgf-name char(20) auto;
+dcl spcptr .m-msgf-name auto init(m-msgf-name);
+dcl spcptr .m-msg-data auto;   /* qusec: ec-exdata */
+dcl dd m-msg-data-len bin(4) auto;
+dcl spcptr .m-msg-data-len auto init(m-msg-data-len);
+dcl dd m-replace-sub-val char(10) auto init("*YES");
+dcl spcptr .m-replace-sub-val auto init(m-replace-sub-val);
+dcl dd m-rtn-fmtctl char(10) auto init("*NO");
+dcl spcptr .m-rtn-fmtctl auto init(m-rtn-fmtctl);
+dcl ol argl-rtvm (
+  .m-msg-info,
+  .m-msg-len,
+  .m-fmt-name,
+  .m-msg-id,
+  .m-msgf-name,
+  .m-msg-data,
+  .m-msg-data-len,
+  .m-replace-sub-val,
+  .m-rtn-fmtctl,
+  .qusec
+) arg;
+dcl sysptr .qmhrtvm auto init("QMHRTVM", type(pgm));
+
+dcl spcptr .pl-rtvmsgd-ec parm;
+dcl spc * bas(.pl-rtvmsgd-ec);
+  dcl dd pl-rtvmsgd-ec-bytes-in bin(4) dir;
+  dcl dd pl-rtvmsgd-ec-bytes-out bin(4) dir;
+  dcl dd pl-rtvmsgd-ec-exid char(7) dir;
+  dcl dd * char(1) dir;
+  dcl dd pl-rtvmsgd-ec-exdata char(496) dir;
+dcl spcptr .pl-rtvmsgd-error-msg parm;
+dcl spcptr .pl-rtvmsgd-error-msglen parm;
+dcl dd pl-rtvmsgd-error-msglen bin(4) auto;
+dcl ol pl-rtvmsgd(
+  .pl-rtvmsgd-ec,
+  .pl-rtvmsgd-error-msg,
+  .pl-rtvmsgd-error-msglen
+) parm int;
+
+dcl insptr .rtvmsgd;
+entry rtvmsgd(pl-rtvmsgd) int;
+
+  cpybla m-msg-id, pl-rtvmsgd-ec-exid;
+
+  /* determine: m-msgf-name */
+  calli determine-msgf-name, *, .determine-msgf-name;
+
+  /* set: m-msg-id, m-msg-data-len */
+  cpynv m-msg-data-len, pl-rtvmsgd-ec-bytes-out;
+  setspp .m-msg-data, pl-rtvmsgd-ec-exdata;
+
+  callx .qmhrtvm, argl-rtvm, *;
+  addn pl-rtvmsgd-error-msglen,
+    m-msg-msglen-out,
+    m-msg-helplen-out;
+
+  setspp .pl-rtvmsgd-error-msg, m-msg-body;
+  setspp .pl-rtvmsgd-error-msglen, pl-rtvmsgd-error-msglen;
+
+  b .rtvmsgd;
+
+/**
+ * map msgf by message compare value
+ *
+ * @pre  m-msg-id
+ * @post m-msgf-name
+ *
+ * @todo 把这里cmpbla再分支的算法改为 search，不然分支多了慢
+ *
+ * @todo i'd support most MSGFs in QSYS:
+ * QALRMSG  
+ * QBASMSG  
+ * QBMGMSGF 
+ * QCBLMSGE 
+ * QCEEMSG  
+ * QCPFMSG  
+ * QCWXMSG  
+ * QCZCMDMSG
+ * QCZXLCMSG
+ * QC2MSGF  
+ * QDFUMSG  
+ * QFMTMSG 
+ * QFMTTXT 
+ * QFSMSG  
+ * QGLDMSG 
+ * QGUIMSG 
+ * QIWSMSG 
+ * QJVAMSG 
+ * QJVAMSGF
+ * QLBLMSGE
+ * QLIBMSG 
+ * QLNRMSG 
+ * QOFCMSG  
+ * QORMSG   
+ * QPLIMSGE 
+ * QPQMSGF  
+ * QQDAMSGF 
+ * QQRYMSG  
+ * QRNXMSG  
+ * QRPGMSGE 
+ * QRPG3MSGE
+ * QSDAMSG  
+ * QSQCCMSG 
+ * QSQLMSG 
+ * QSUUMSG 
+ * QTCPMSG 
+ * QXXEMSG 
+ * QYPPMSGF
+ */
+dcl dd rtvmsgd-msg-cv char(3) bas(*) pos(1);
+dcl dd rtvmsgd-msg-cv-array(7) char(3) auto init(
+  *(1)"MCH",
+  "CPF",
+  "SQL",
+  "RNI",
+  "RNQ",
+  "RNT",
+  "RNX"
+);
+dcl dd rtvmsgd-msgf-array(7) char(20) auto init(
+  *(1)"QCPFMSG   QSYS",
+  "QCPFMSG   QSYS",
+  "QSQLMSG   QSYS",
+  "QRNXMSG   QSYS",
+  "QRNXMSG   QSYS",
+  "QRNXMSG   QSYS",
+  "QRNXMSG   QSYS"
+);
+dcl dd rtvmsgd-found bin(4) auto;
+
+dcl insptr .determine-msgf-name;
+entry determine-msgf-name int;
+
+  search rtvmsgd-found,
+    rtvmsgd-msg-cv-array,
+    .m-msg-id->rtvmsgd-msg-cv,
+    1;
+  cmpnv(b) rtvmsgd-found, 0 / eq(.determine-msgf-name);
+
+  cpybla m-msgf-name, rtvmsgd-msgf-array(rtvmsgd-found);
+  b .determine-msgf-name;
+
+/* eof - rtvmsgd.mi */

@@ -1,0 +1,234 @@
+.* This file is part of i5/OS Programmer's Toolkit.
+.* 
+.* Copyright (C) 2010, 2011  Junlei Li (李君磊).
+.* 
+.* i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* (at your option) any later version.
+.* 
+.* i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.* 
+.* You should have received a copy of the GNU General Public License
+.* along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+
+.*
+.* help info for CL command MIC
+.*
+
+:pnlgrp.
+
+.* for CL command MIC
+:help name='hlp/mic'.
+:p.
+MIC is a Machine Interface Language compiler with the following features:
+:ul.
+:li.can be invoked both from CL command and also from QShell command
+:li.provides extensible builtin support
+:li.supports source including through directives `include'
+:li.supports both stream source file or sources stored in members
+of source PFs
+:li.supports compilation information output when invoked from QShell
+:li.supports source code in mixed case
+:li.supports multi-line comments
+:eul.
+:p.
+Refer to
+:hp2.http://i5toolkit.sourceforge.net:ehp2. for details of
+the open source project, i5/OS Programmer's Toolkit.
+To download i5/OS Programmer's Toolkit, please visit
+:hp2.http://sourceforge.net/projects/i5toolkit:ehp2..
+:p.
+:xh3.Bugs
+:p.
+Please report bugs to :hp2.junleili-cn@users.sourceforge.net:ehp2.
+:p.
+:xh3.Author
+:p.
+Junlei Li
+:p.
+:ehelp.
+
+:help name='hlp/mic/pgm'.Program object (PGM)
+:xh3.Program object (PGM)
+:p.
+Specifies the qualified name of the program object created.
+:ehelp.
+
+:help name='hlp/mic/srcpath'.Source file path (SRCPATH)
+:xh3.Source file path (SRCPATH)
+:p.
+Path name of the source file. MIC support both stream source files
+or members of source physical files.
+When specifying a source PF member, use /qsys.lib path format.
+For example, /qsys.lib/src_lib.lib/src_file.file/src.mbr.
+MIC supports both absolute path name or reletive path name.
+To change your current working directory, use CL command
+CHDIR or CHGCURDIR.
+To view one's current directory, use CL command DSPCURDIR.
+:ehelp.
+
+:help name='hlp/mic/text'.Text description (TEXT)
+:xh3.Text description (TEXT)
+:p.
+Text description of the program.
+:ehelp.
+
+:help name='hlp/mic/output'.Output printer file name (OUTPUT)
+:xh3.Output printer file name (OUTPUT)
+:p.
+The name and library containing the printer file used to generate
+listings.
+:ehelp.
+
+:help name='hlp/mic/aut'.Public authority (AUT)
+:xh3.
+:p.
+Specifies the authority given to users who do not have specific
+authority to the program, who are not on the authorization list, and
+whose user group has no specific authority to the program.
+:ehelp.
+
+:help name='hlp/mic/incdir'.Include directory (INCDIR)
+:xh3.Include directory (INCDIR)
+:p.
+Specifies one or more directories to add to the search path used by
+the compiler to find include files.
+:ehelp.
+
+:help name='hlp/mic/option'.Compiler options (OPTION)
+:xh3.Compiler options (OPTION)
+:p.
+Supported compiler options are
+:ul.
+:li.*GEN
+:lp.Generates a program and places the program in the appropriate library.
+:li.*NOGEN
+:lp.No program is generated. The syntax of the intermediate representation
+of the program is checked, and if the generate listing option is
+*LIST, a listing is produced.
+:li.*NOREPLACE
+:lp.Does not replace an existing program by the same name in the specified library.
+:li.*REPLACE
+:lp.Replaces the existing program by moving it to the QRPLOBJ library.
+:li.*NOLIST
+:lp.Does not generate a listing.
+:li.*LIST
+:lp.Generates a listing. You must specify the OUTPUT parameters.
+:li.*NOXREF
+:lp.Does not create cross-reference listing.
+:li.*XREF
+:lp.Creates a cross-reference listing of references to variables, labels,
+or both.
+:li.*NOATR
+:lp.Does not create a summary listing section.
+:li.*ATR
+:lp.Creates a summary listing section.
+:li.*USER
+:lp.The user profile of the user running the program is used as a source
+of authority when this program runs.
+:li.*ADOPT
+:lp.When the program runs, the object authority of both the program's
+owner and user are used.
+:li.*OWNER
+:lp.The system uses the user profile of the owner of the program as a
+source of authority when this program runs. Programs called by this
+program adopt this authority.
+:li.*ADPAUT
+:lp.The system uses program-adopted authority from the calling program.
+:li.*NOADPAUT
+:lp.The system does not use program-adopted authority from the calling
+program.
+:li.*SUBSCR
+:lp.Constrains arrays. This requests additional run-time checks to ensure
+that references to array elements are not outside the bounds of the
+declare statement. This option causes the resulting program to run
+slower.
+:li.*NOSUBSCR
+:lp.Does not constrain arrays. The results of references to array elements
+outside the bounds of the declare statement are not defined.
+:li.*UNCON
+:lp.Allows fully unconstrained arrays. This ensures that references to
+array elements outside the bounds of the declare statement act as if
+the array element actually exists.
+:li.*SUBSTR
+:lp.Constrains strings. This requests additional run-time checks to ensure
+that references to character strings are not outside the bounds of the
+declare statement. This option causes the resulting program to run
+slower.
+:li.*NOSUBSTR
+:lp.Does not constrain strings. The results of substring references
+outside the bounds of the declare statement are not defined.
+:li.*CLRPSSA
+:lp.Initializes static storage. This code clears the program static
+storage area (PSSA) on entry using the Call External (CALLX) MI
+instruction.
+:li.*NOCLRPSSA
+:lp.Does not initialize the PSSA.
+:li.*CLRPASA
+:lp.Initializes automatic storage. This code clears the program automatic
+storage area (PASA) on entry using the Call External (CALLX) MI
+instruction.
+:li.*NOCLRPASA
+:lp.Does not initialize the PASA.
+:li.*NOIGNDEC
+:lp.Does not ignore decimal data errors.
+:li.*IGNDEC
+:lp.Ignores data decimal errors.
+:li.*NOIGNBIN
+:lp.The system handles binary data size errors normally. When a binary
+size error occurs, an exception is signaled and the receiver contains
+the left-truncated result.
+:li.*IGNBIN
+:lp.The system ignores binary data size errors. This is used when an
+overflow or underflow occurs on a computation and when a control MI
+instruction has a receiver that is a binary field. The receiver
+contains the left-truncated result.
+:li.*NOOVERLAP
+:lp.Does not support coincident operands. If you specify *NOOVERLAP, you
+guarantee that coincident operand overlap will not occur while running
+the instruction. Therefore, the system can use the receiver on an
+instruction as a work area during operations performed to produce the
+final result. Using the receiver as a work area does not use as much
+processor resource as would be required to move the final result from
+an internal work area to the receiver.
+:li.*OVERLAP
+:lp.Supports coincident operands. If you specify *OVERLAP, the operands on
+an MI instruction may overlap. Therefore, the system cannot use the
+receiver on an instruction as a work area during operations that
+produce the final result. This can require more processor resource for
+running the instruction but it ensures valid results if an overlap
+occurs.
+:li.*NODUP
+:lp.This does not allow a program object to be declared more than
+once. This requests that duplicate declare (DCL) statements be
+diagnosed as errors.
+:li.*DUP
+:lp.This allows a program object to be declared more than once. This
+requests that program objects declared more than once be pooled and
+not be diagnosed as errors.
+:li.*OPT
+:lp.This optimizes the program. In most instances, this produces the
+smallest and best running program. Occasionally, the source program
+may signal a MCH2802 escape message during processing. If this occurs,
+you should not optimize the program.
+:li.*NOOPT
+:lp.This does not optimize the program. This requests the normal level
+code optimization when you create the program.
+:li.*CURRENT
+:lp.The object is to be used on the release of the operating system
+currently running on your system.
+:li.*PRV
+:lp.The object is to be used on the previous release with modification
+level 0 of the operating system.
+:li.target-release
+:lp.Specify the release in the format VxRxMx.
+:eul.
+:ehelp.
+
+:epnlgrp.
+
+.* eof

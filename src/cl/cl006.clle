@@ -1,0 +1,71 @@
+/******************************************************************************/
+/* This file is part of i5/OS Programmer's Toolkit.                           */
+/*                                                                            */
+/* Copyright (C) 2010, 2011  Junlei Li.                                       */
+/*                                                                            */
+/* i5/OS Programmer's Toolkit is free software: you can redistribute          */
+/* it and/or modify it under the terms of the GNU General Public              */
+/* License as published by the Free Software Foundation, either               */
+/* version 3 of the License, or (at your option) any later version.           */
+/* i5/OS Programmer's Toolkit is distributed in the hope that it will         */
+/* be useful, but WITHOUT ANY WARRANTY; without even the implied              */
+/* warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           */
+/* See the GNU General Public License for more details.                       */
+/*                                                                            */
+/* You should have received a copy of the GNU General Public License          */
+/* along with i5/OS Programmer's Toolkit.  If not, see                        */
+/* <http://www.gnu.org/licenses/>.                                            */
+/******************************************************************************/
+
+/******************************************************************************/
+/* @file cl006.clle                                                           */
+/*                                                                            */
+/* Test of the following system builtins:                                     */
+/*  - _CTSD (Compute Timestamp Duration)                                      */
+/*  - _LBCPYNV (Copy Numeric Value)                                           */
+/*                                                                            */
+/* Call this program like the following:                                      */
+/* CALL PGM(CL006)                                                            */
+/*      PARM('2011-05-02-19.15.15.000000' '2011-05-01-08.11.11.111000')       */
+/*                                                                            */
+/* Output: 00000001110403889000                                               */
+/******************************************************************************/
+
+             PGM        PARM(&EVENING &MORNING)
+             DCL        VAR(&EVENING) TYPE(*CHAR) LEN(26) /* end timestamp */
+             DCL        VAR(&MORNING) TYPE(*CHAR) LEN(26) /* start timestamp */
+             DCL        VAR(&TSDURTMPL) TYPE(*CHAR) LEN(298) +
+                          VALUE(X'0000012A0001000200020000001A001A000+
+                          0000000000000000000000000000000000000000000+
+                          0000000000010000020000000000000000000000000+
+                          0180000008C00000016000000000000000000000000+
+                          0000000000000000000000000000000000000000000+
+                          0000000000000000000000000000000000000000000+
+                          0000000000000000000000000000000000000000000+
+                          0000000000000000000000000000000000000000000+
+                          0000000000000000000000000000000000090000001+
+                          8003C00000000000000000000000000000052000000+
+                          0000000001001A4452C1C4404040404040404040404+
+                          0404040404040404040404040404040404040400000+
+                          000000000000000000000002001A445200010000000+
+                          00000000000000051FE2D0000000000000000000000+
+                          00') /* instruction template to compute +
+                          ISO time duration */
+             DCL        VAR(&DURATION) TYPE(*CHAR) LEN(11) /* pkd(20,6) */
+             DCL        VAR(&STRDUR) TYPE(*CHAR) LEN(20)
+             DCL        VAR(&DPATZND) TYPE(*CHAR) LEN(7) +
+                          VALUE(X'02001400000000')
+             DCL        VAR(&DPATPKD) TYPE(*CHAR) LEN(7) +
+                          VALUE(X'03001400000000')
+
+             CALLPRC    PRC('_CTSD') PARM((&DURATION *BYREF) +
+                          (&EVENING *BYREF) (&MORNING *BYREF) +
+                          (&TSDURTMPL *BYREF))
+                        /* &DURATION: hex 000000001110403889000F */
+
+             CALLPRC    PRC('_LBCPYNV') PARM((&STRDUR *BYREF) +
+                          (&DPATZND *BYREF) (&DURATION *BYREF) +
+                          (&DPATPKD *BYREF)) /* Convert packed +
+                          timestatmp-duration to character format */
+             SNDPGMMSG  MSG(&STRDUR)
+             ENDPGM

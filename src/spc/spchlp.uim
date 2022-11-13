@@ -1,0 +1,217 @@
+.* This file is part of i5/OS Programmer's Toolkit.
+.* 
+.* Copyright (C) 2010, 2011  Junlei Li.
+.* 
+.* i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* (at your option) any later version.
+.* 
+.* i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.* 
+.* You should have received a copy of the GNU General Public License
+.* along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+
+.*
+.* @file spchlp.pnlgrp
+.*
+.* Help info of space tools. The following CL commands or panel groups
+.* rely on help information defined here:
+.*  - The CHGUSRSPC command
+.*  - The DSPPNL command
+.*  - The DSPUSRSPCD command and ..
+.*  - The DSPUSRSPC command and ..
+.*
+
+:pnlgrp.
+
+.* =============================================================================
+.* Help info for the CHGUSRSPC command
+.* =============================================================================
+
+:help name='hlp/chg'.
+
+:p. CL command CHGUSRSPC is one of the Space Object Tools provided by
+i5/OS Programmer's Toolkit.
+
+:p.  The Change User Space (CHGUSRSPC) command changes the content of
+a User Space (USRSPC) object. A USRSPC object is MI space object with
+object type code/subtype code hex 1934. This command can be used
+either interactively or in a CL program. The key difference between
+CHGUSRSPC and the Change User Space (QUSCHGUS) API is that the
+QUSCHGUS API cannot preserve the of validity of pointers written into
+a USRSPC, while the CHGUSRSPC command can write system pointers or
+space pointers into a USRSPC and the pointers written into the USRSPC
+will remain valid. As we know that system pointers to permanent
+objects will remain valid even across IPLs, so do space pointers
+addressing associated spaces of permanent objects, so these pointers
+stored in a USRSPC can be re-used by other applications repeatedly,
+and with no relation to the job who wrote them into the USRSPC.
+
+:p.  Refer to :hp2.http://i5toolkit.sourceforge.net:ehp2. for details
+of the open source project, i5/OS Programmer's Toolkit.  To download
+i5/OS Programmer's Toolkit, please visit
+:hp2.http://sourceforge.net/projects/i5toolkit:ehp2..
+
+:p.  :xh3.Bugs
+
+:p.  Please report bugs to
+:hp2.junleili-cn@users.sourceforge.net:ehp2.
+
+:p.
+:xh3.Author
+
+:p.
+Junlei Li
+
+:p.
+:ehelp.
+
+.* CHGUSRSPC.USRSPC
+:help name='hlp/chg/usrspc'.User space object (USRSPC)
+:xh3.User space object (USRSPC)
+:p.
+Sepecifies the user space the content of which to be changed.
+:ehelp.
+
+.* CHGUSRSPC.OFFSET
+:help name='hlp/chg/offset'.Offset into space (OFFSET)
+:xh3.Offset into space (OFFSET)
+:p.  Offset into the space object's associated space. Unlike the
+<b>Start position</b> parameter of the QUSCHGUS API, this offset value
+is start from 0, and should not be larger than 16M - 1Page.
+:ehelp.
+
+.* CHGUSRSPC.DTATYPE
+:help name='hlp/chg/dtatype'.Data type (DTATYPE)
+:xh3.Data type  (DTATYPE)
+
+:p.  Specifies the type of data to be written into the user
+space. Default to *SCALAR. Valiad values are:
+
+:p. :hp2.*SCALAR:ehp2.
+:p. Write scalar data into the target user space
+
+:p. :hp2.*PTR:ehp2.
+:p. Write pointer data into the target usre space
+
+:ehelp.
+
+.* CHGUSRSPC.DTA
+:help name='hlp/chg/dta'.Data (DTA)
+:xh3.Data (DTA)
+:p.
+Value of scalar data to be written into the space object.
+:ehelp.
+
+.* CHGUSRSPC.DTALEN
+:help name='hlp/chg/dtalen'.Length of scalar data (DTALEN)
+:xh3.Length of scalar data (DTALEN)
+
+:p.  Length of scalar data to be written into the space
+object. Default to *CALC, in which case the length of the input scalar
+data will be calculated automatically.
+:ehelp.
+
+.* CHGUSRSPC.PTRTYPE
+:help name='hlp/chg/ptrtype'.Pointer type (PTRTYPE)
+:xh3.Pointer type (PTRTYPE)
+
+:p. Type of the pointer to be written into the target user
+space. Default to *SYP. Valid values are:
+
+:p. :hp2.*SYP:ehp2.
+:p. System pointer. When PTRTYPE(*SYP) is specified, CHGUSRSPC will
+try to write the system pointer to the object identified by parameter
+SYSOBJ.
+
+:p. :hp2.*SPP:ehp2.
+:p. Space pointer. The pointer to be written into the target USRSPC is
+a space pointer.
+
+:ehelp.
+
+.* CHGUSRSPC.SYSOBJ
+:help name='hlp/chg/sysobj'.System object (SYSOBJ)
+:xh3.System object (SYSOBJ).
+
+:p.When DTATYPE(*PTR) is specified, the SYSOBJ parameter must be set to a valid objet name. If PTRTYPE(*SYP) is specified, a system pointer the the object specified by this paramter is to be written into the target user space. If PTRTYPE(*SPP) is specified, a space pointer addressing the associated space of the object specified by this parameter is to be written into the target user space. See SPPOFFSET for more information.
+
+:ehelp.
+
+.* CHGUSRSPC.OBJTYPE
+:help name='hlp/chg/objtype'.Object type (OBJTYPE)
+:xh3.Object type (OBJTYPE)
+:p.Specifies the object type of SYSOBJ.
+
+:p.Note that the OBJTYPE parameter expects an external object
+type. CHGUSRSPC will convert the external object type to the
+corresponding MI object type before resolving the system pointer to
+the target MI object. For example, CHGUSRSPC SYSOBJ(SOMELIB/SOMEFILE)
+DTATYPE(*PTR) PTRTYPE(*SYP) OBJTYPE(*FILE) will write the system
+pointer to the space object 'SOMEFILE SOMELIB' (with MI object hex
+1901) into the target USRSPC.
+
+:ehelp.
+
+.* CHGUSRSPC.SPPOFFSET
+:help name='hlp/chg/sppoffset'.Offset value of space pointer (SPPOFFSET)
+:xh3.Offset value of space pointer (SPPOFFSET)
+:p.Offset value of space pointer.
+
+:p.When both DTATYPE(*PTR) and PTRTYPE(*SPP) are specified, this
+parameter indicates the offset value of a space pointer addressing the
+primary associated space SYSOBJ.
+
+:ehelp.
+
+.* =============================================================================
+.* Help info for the DSPPNL command
+.* =============================================================================
+
+:help name='hlp/dsppnl'.
+
+:p. The Display Panel (DSPPNL) command is one of the UIM Related Tools
+provided by i5/OS Programmer's Toolkit.
+
+:p. The Display Panel (DSPPNL) command displays a panel in a compiled
+Panel Group (*PNLGRP) object.
+
+:p.  Refer to :hp2.http://i5toolkit.sourceforge.net:ehp2. for details
+of the open source project, i5/OS Programmer's Toolkit.  To download
+i5/OS Programmer's Toolkit, please visit
+:hp2.http://sourceforge.net/projects/i5toolkit:ehp2..
+
+:xh3.Bugs
+
+:p.  Please report bugs to
+:hp2.junleili-cn@users.sourceforge.net:ehp2.
+
+:p.
+:xh3.Author
+
+:p.
+Junlei Li
+
+:p.
+:ehelp.
+
+.* DSPPNL.PNLGRP
+:help name='hlp/dsppnl/pnlgrp'.Pangel group (PNLGRP)
+:xh3.Pangel group (PNLGRP)
+:p.
+:p. Panel group object in which the UIM panel to be displayed resides in.
+:ehelp.
+
+.* DSPPNL.PANEL
+:help name='hlp/dsppnl/panel'. (PANEL)
+:xh3. (PANEL)
+:p.
+:p. The UIM panel to be displayed
+:ehelp.
+
+:epnlgrp.
+.* eof - spchlp.pnlgrp

@@ -1,0 +1,147 @@
+.* This file is part of i5/OS Programmer's Toolkit.
+.* 
+.* Copyright (C) 2010, 2011  Junlei Li (李君磊).
+.* 
+.* i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation, either version 3 of the License, or
+.* (at your option) any later version.
+.* 
+.* i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.* 
+.* You should have received a copy of the GNU General Public License
+.* along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+
+.*
+.* @file t075.pnlgrp
+.* 
+.* test of uim.rpgleinc.
+.*
+
+:pnlgrp.
+
+:copyr.Copyright text ... &colon.p
+
+.* classes
+:class  name=a1
+        basetype='char 1'
+        width=1.
+:eclass.
+:class  name=clspgm
+        basetype='char 20'
+        .
+:eclass.
+:class  name=o50
+        basetype='igc 50'.
+:eclass.
+:class  name=pkd8
+        basetype='packed 8 0'
+        .
+:eclass.
+:class  name=pkd172
+        basetype='packed 17 2'
+        .
+:eclass.
+
+.* variables
+:var    name=vpgmf5
+        class=clspgm
+        .
+:var    name=vtitle
+        class=o50
+        .
+
+.* records
+:varrcd name=rcdttl
+        vars='vtitle'
+        .
+:varrcd name=rcdpgm
+        vars='vpgmf5'
+        .
+
+.* key lists
+:keyl   name=klistmain.
+:keyi   key=f1
+        help='help/help'
+        action=help
+        varupd=no
+        .
+:keyi   key=f3
+        help='help/help'
+        action='exit noset'
+        varupd=yes
+        .F3=exit
+:keyi   key=f12
+        help='help/help'
+        action='cancel set'
+        varupd=no
+        .F12=Cancel
+:keyi   key=f4
+        help='help/help'
+        action='prompt'
+        .F4=Prompt
+:keyi   key=f5
+        help='help/help'
+        action='call vpgmf5'
+        .F5=Refresh
+:keyi   key=enter
+        help='help/help'
+        action=enter
+        .
+:keyi   key=f9
+        help='help/help'
+        action='retrieve'
+        .F9=Retrieve
+:ekeyl.
+
+.* main panel
+:panel  name=mainpanel
+        title=vtitle
+        help='help/help'
+        keyl=klistmain
+        .
+
+:menu depth='*'
+      scroll=no
+      botsep=space.
+:topinst.Select one of the following
+:menui option=1
+       action='CMD DSPLIBL'
+       help='help/help'
+       .Display Library List
+:menui option=2
+       action='CMD WRKLIBPDM'
+       help='help/help'
+       .Work with Libraries Using PDM
+:menui option=3
+       action='CMD WRKACTJOB SBS(QSYSWRK)'
+       help='help/help'
+       .Work with Subsystem QSYSWRK
+:menui option=4
+       action='cmd wrkenvvar'
+       help='help/help'
+       .Work with Environment Variables
+:menui option=5
+       action='cmd wrkrdbdire'
+       help='help/help'
+       .Work with RDB Directory Entry
+:emenu.
+
+.* :cmdline  size=short
+.*           .Selection or command
+:optline.Selection
+
+:epanel.
+
+.* help definitions
+:help   name='help/help'.mn - help
+:p.
+'i cannot help you :('
+:ehelp.
+
+:epnlgrp.
+.* eof
+

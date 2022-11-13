@@ -1,0 +1,80 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file cbl003.cblle
+      *
+      * Test of the following computation instructions:
+      *  - CLRBTS
+      *  - SETBTS
+      */
+       process
+           NOMONOPRC.
+
+       id division.
+       program-id. cbl003.
+
+       environment division.
+       configuration section.
+       special-names.
+           copy mih-lnktyp.
+
+       data division.
+       working-storage section.
+
+      * the hex content of str is x'8182'
+       01 str pic x(2) value "ab".
+       01 offset pic 9(9) usage comp-4 value 1.
+
+       procedure division.
+       main-pgm.
+
+           display "str: " str.
+
+      * set bits 1 and 9 of str
+           call "_SETBTS" using
+               by value address of str
+               by value            offset.
+           move 9 to offset.
+           call "_SETBTS" using
+               by reference str
+               by value     offset.
+
+      * now, the hex content of str becomes x'C1C2' ('AB').
+           display "str: " str.
+
+      * clear bits 1 and 9 of str
+           call "_CLRBTS" using
+                by reference str
+                by value     offset.
+           move 1 to offset.
+           call "_CLRBTS" using
+                by reference str
+                by value     offset.
+
+           display "str: " str.
+
+       see-you.
+           stop run.
+
+      * Output:
+      * call cbl003
+      * str: ab    
+      * str: AB    
+      * str: ab    

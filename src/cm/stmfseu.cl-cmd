@@ -1,0 +1,52 @@
+/* This file is part of i5/OS Programmer's Toolkit.                      */
+/*                                                                       */
+/* Copyright (C) 2010, 2011  Junlei Li.                                  */
+/*                                                                       */
+/* i5/OS Programmer's Toolkit is free software: you can redistribute it  */
+/* and/or modify it under the terms of the GNU General Public License as */
+/* published by the Free Software Foundation, either version 3 of the    */
+/* License, or (at your option) any later version.                       */
+/*                                                                       */
+/* i5/OS Programmer's Toolkit is distributed in the hope that it will be */
+/* useful, but WITHOUT ANY WARRANTY; without even the implied warranty   */
+/* of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU  */
+/* General Public License for more details.                              */
+/*                                                                       */
+/* You should have received a copy of the GNU General Public License     */
+/* along with i5/OS Programmer's Toolkit.  If not, see                   */
+/* <http://www.gnu.org/licenses/>.                                       */
+
+/*                                                                       */
+/* @file stmfseu.cl-cmd                                                  */
+/*                                                                       */
+/* CL command STMFSEU enables 5250 users to edit, view, or               */
+/* print a stream file using the Source Entry Utility (SEU)              */
+/*                                                                       */
+/* Compile: CRTCMD STMFSEU PGM(I5TOOLKIT/STMFSEU) ...                    */
+/*                                                                       */
+
+             CMD        PROMPT('Start SEU on Stream Files')
+             /* PATH OF TARGET STREAM FILE */
+             PARM       KWD(STMF) TYPE(*PNAME) LEN(5000) MIN(1) +
+                          VARY(*YES *INT2) CASE(*MIXED) +
+                          KEYPARM(*YES) INLPMTLEN(50) +
+                          PROMPT('Stream file')
+             /* SOURCE TYPE */
+             PARM       KWD(SRCTYPE) TYPE(*SNAME) LEN(10) RTNVAL(*NO) +
+                          RSTD(*NO) DFT(*SAME) SPCVAL((*SAME '*SAME')) +
+                          CASE(*MONO) CHOICE(*PGM) +
+                          CHOICEPGM(I5TOOLKIT/CHSTMFSEU) PROMPT('Source type')
+             /* SEU OPTION  */
+             PARM       KWD(OPTION) TYPE(*CHAR) LEN(1) RSTD(*YES) +
+                          DFT(*BLANK) VALUES(' ' 2 5 6) +
+                          SPCVAL((*BLANK ' ')) CASE(*MONO) +
+                          PROMPT('Option')
+             /* STMF CCSID */
+             PARM       KWD(STMFCCSID) TYPE(*INT2) DFT(1208) +
+                          PMTCTL(*PMTRQS) PROMPT('Stream file CCSID')
+             /* End of line characters */
+             PARM       KWD(ENDLINFMT) TYPE(*CHAR) LEN(10) RSTD(*YES) +
+                          DFT(*LF) VALUES(*LF *CR *CRLF *LFCR *FIXED) +
+                          CHOICE(*VALUES) PMTCTL(*PMTRQS) +
+                          PROMPT('End of line characters')
+/* EOF */

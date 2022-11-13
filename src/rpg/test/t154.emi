@@ -1,0 +1,16 @@
+/**
+ * @file t154.emi
+ *
+ * Depenedent by t155.rpgle, which materializes the OMT component of this program.
+ */
+
+dcl dd a char(32) auto          ;
+dcl dd b char(16) stat          ;
+
+dcl dd c char(9) def(b) pos(8) ;
+dcl dd d char(8) def(a) pos(5)  ;
+dcl dd e char(2) def(b) pos(31) ;
+
+brk 'END'                       ;
+	rtx *                   ;
+pend                            ;

@@ -1,0 +1,92 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file cbl008.cblle
+      *
+      * Test of:
+      *  - _CTSD (Compute Timestamp Duration)
+      */
+
+       process
+           NOSTDTRUNC
+           NOMONOPRC.
+
+       id division.
+       program-id. cbl008.
+
+       environment division.
+       configuration section.
+       special-names.
+           copy mih-lnktyp.
+
+       data division.
+       working-storage section.
+       01 ddat type ddat-t.
+       01 len  pic 9(9).
+
+       01 tmpl type compute-dattim-t.
+       01 ts-dur-ddat type timestamp-duration-ddat-value.
+       01 saa-ts-ddat type saa-timestamp-ddat-value.
+       01 duration    pic 9(14)v9(6) usage comp-3.
+
+       linkage section.
+           copy mih-comp.
+           copy mih-dattim.
+
+       77 begin-ts pic x(26).
+       77 end-ts   pic x(26).
+
+       procedure division using
+           begin-ts
+           end-ts.
+       main-pgm.
+
+           call "_PROPB" using
+                by reference tmpl
+                by value x"00"
+                by value 298.
+           move 298 to tmpl-size of tmpl.
+           move 1   to op1-ddat-num of tmpl.
+           move 2   to op2-ddat-num of tmpl.
+           move 2   to op3-ddat-num of tmpl.
+           move 26  to op2-len      of tmpl.
+           move 26  to op3-len      of tmpl.
+           move 256 to ddat-list-len of tmpl.
+           move 2   to ddats        of tmpl.
+           move 24  to off-ddat1    of tmpl.
+           move 140 to off-ddat2    of tmpl.
+
+           move ts-dur-ddat to ddat1 of tmpl.
+           move saa-ts-ddat to ddat2 of tmpl.
+
+           call "_CTSD" using
+                by reference duration
+                by reference end-ts
+                by reference begin-ts
+                by reference tmpl.
+
+           display "Timestamp duration: " duration.
+
+           stop run.
+       end program cbl008.
+
+      * output:
+      * call cbl008 ('2011-01-01-11.10.05.111000' '2011-01-06-12.15.15.879000')
+      * Timestamp duration: 00000005010510768000

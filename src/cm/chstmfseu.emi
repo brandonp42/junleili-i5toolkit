@@ -1,0 +1,148 @@
+/**
+ * @file chseutype.emi
+ *
+ * CHOICEPGM of STMFSEU
+ */
+
+dcl spcptr ctrl-ptr parm        ;
+dcl spcptr rtn-ptr parm         ;
+dcl ol pl-main(ctrl-ptr, rtn-ptr) parm ext ;
+
+entry i-main(pl-main) ext       ;
+
+dcl spc ctrl-t bas(ctrl-ptr)    ;
+        dcl dd cmd-name char(10) dir ;
+        dcl dd parm-name char(10) dir ;
+        /* 'C'-short fmt; 'P'-long fmt */
+        dcl dd len-flag char(1) dir   ;
+dcl dd rtn-30 char(30) bas(rtn-ptr)   ;
+
+        /* only serve parameter SRCTYPE of STMFSEU */
+        cmpbla(b) cmd-name, "STMFSEU" / neq(see-you) ;
+        cmpbla(b) parm-name, "SRCTYPE" / neq(see-you) ;
+
+        cmpbla(b) len-flag, 'C' / neq(=+3) ;
+        cpybla rtn-30, types-30         ;
+        b see-you                       ;
+:       
+        cmpbla(b) len-flag, 'P' / neq(see-you) ;
+dcl dd rtn-long char(2000) bas(rtn-ptr) ;
+        dcl dd num-types bin(2) def(rtn-long) pos(1)           ;
+        dcl dd ent-len(91) bin(2) def(rtn-long) aeo(12) pos(3) ;
+        dcl dd ent(91) char(10) def(rtn-long) aeo(12) pos(5)   ;
+dcl dd ind bin(2) auto                                         ;
+
+        cpynv num-types, 91     ;
+        cpynv ind, 0            ;
+loop:
+        addn(s) ind, 1          ;
+        cmpnv(b) ind, num-types / hi(end-loop) ;
+
+        cpynv ent-len(ind), 10  ;
+        cpybla ent(ind), srctypes(ind) ;
+        b loop                  ;
+end-loop:       
+
+brk 'END'                       ;
+see-you:        
+        rtx *                   ;
+
+dcl con types-30 char(30) init(
+        "Name *SAME BAS BASP..."
+)                               ;
+/* by now, 91 entries are declared. */
+dcl dd srctypes(91) char(10) init(
+        *(1)"*SAME",
+        "BAS",
+        "BASP",
+        "BND",
+        "C",
+        "CBL",
+        "CBLLE",
+        "CICSC",
+        "CICSCBL",
+        "CICSCBLLE",
+	"CICSMAP",
+	"CICSSQLCBL",
+	"CL",
+	"CLD",
+	"CLP",
+	"CLLE",
+	"CMD",
+	"CPP",
+	"DFU",
+	"DSPF",
+	"FTN",
+	"ICFF",
+	"LF",
+	"MENU",
+	"MNU",
+	"MNUCMD",
+	"MNUDDS",
+	"PAS",
+	"PF",
+	"PLI",
+	"PNLGRP",
+	"PRTF",
+	"QRY",
+	"REXX",
+	"RMC",
+	"RPG",
+	"RPGLE",
+	"RPT",
+	"SPADCT",
+	"SQLC",
+	"SQLCBL",
+	"SQLCBLLE",
+	"SQLFTN",
+	"SQLPLI",
+	"SQLRPG",
+	"SQLRPGLE",
+	"SRT",
+	"TBL",
+	"TXT",
+	"BAS38",
+	"BASP38",
+	"BSCF38",
+	"CBL38",
+	"CL38",
+	"CLP38",
+	"CMD38",
+	"CMNF38",
+	"DFU38",
+	"DSPF38",
+	"LF38",
+	"MXDF38",
+	"PF38",
+	"PLI38",
+	"PRTF38",
+	"QRY38",
+	"RPG38",
+	"RPT38",
+	"SRT38",
+	"TXT38",
+	"ARS36",
+	"ASM36",
+	"BAS36",
+	"BASP36",
+	"BGC36",
+	"BGD36",
+	"BGF36",
+	"CBL36",
+	"DFU36",
+	"DTA36",
+	"DSPF36",
+	"FOR36",
+	"MNU36",
+	"MSGF36",
+	"OCL36",
+	"PHL36",
+	"RPG36",
+	"RPT36",
+	"SRT36",
+	"TXT36",
+	"UNS36",
+	"WSU36"
+)                               ;
+
+pend                            ;

@@ -1,0 +1,391 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file dspdtaqmsg.mi
+ *
+ * usage: call dspdtaqmsg 'Q_NAME'
+ *
+ * includes:
+ *  - ptrres.mi
+ *  - qusec.mi
+ *  - qcmn.mi
+ *
+ */
+
+/include ptrres.mi;
+/include qusec.mi;
+/include qcmn.mi;
+
+/* misc variables */
+dcl dd error-msg char(128) auto;
+dcl dd len bin(4) auto;
+dcl spcptr .entry auto;
+dcl dd entry char(256) bas(.entry);
+
+entry i-main(pl-main) ext;
+
+  /* resolve q */
+  cpybla rslv-option-obj-type, x"0A01";
+  cpyblap rslv-option-obj-name, q-name, " ";
+  rslvsp q, rslv-option-short, *, x'0000';
+
+  /* determine q type */
+dcl dd dtaq-attr char(108) auto;
+  setspp .dtaq-attr, dtaq-attr;
+  setspp .qmhqrdqd-receiver, dtaq-attr;
+  cpynv qmhqrdqd-receiver-len, RDQD0100-LEN;
+  cpynv dtaq-attr-bytes-in, RDQD0100-LEN;
+  cpyblap qmhqrdqd-q-lib, q-name, " ";
+  cpybra  qmhqrdqd-q-lib, "*LIBL     ";
+  callx septs(h"0C89"), argl-qmhqrdqd, *;
+
+  cmpbla(b) dtaq-attr-type, "1" / neq(=+7); /* ddm dtaq */
+  cpyblap error-msg, "DDM data queue is not supported.", " ";
+  triml len, error-msg, " ";
+  setspp .sendmsg-msg, error-msg;
+  setspp .sendmsg-msglen, len;
+  calli send-msg, argl-sendmsg, .send-msg;
+  b farewell;
+:
+  cmpbla(b) dtaq-attr-sequence, "K" / neq(=+3);
+  calli mat-keyed-q-msg, *, .mat-keyed-q-msg;
+  b =+2;
+:
+  calli mat-nonkeyed-q-msg, *, .mat-nonkeyed-q-msg;
+
+farewell:
+
+  brk 'RTN';
+  rtx *;
+
+/* mat-keyed-q-msg */
+dcl insptr .mat-keyed-q-msg auto;
+entry mat-keyed-q-msg int;
+
+  /* here, call qmhrdqm the first time */
+  setspp .a-qmhrdqm-receiver, rdqm0200;
+  cpynv a-qmhrdqm-receiver-len, min-rdqm0200-len;
+  cpyblap a-qmhrdqm-q-name, q-name, " ";
+  cpybra a-qmhrdqm-q-name, "*LIBL     ";
+  setsppfp .a-qmhrdqm-selection, .rdqs0200;
+  setsppfp .a-qmhrdqm-ec, .qusec;
+  callx septs(h'130D'), argl-qmhrdqm, *;
+  brk '1ST';
+
+  cmpnv(b) ec-bytes-out, 0 / eq(=+3);
+  calli report-error, *, .report-error;
+  b end-mat-keyed-q-msg;
+:  
+  /* second time */
+  cpynv a-qmhrdqm-receiver-len, rdqm-bytes-available;
+  cpynv rdqs0200-msgtxt-bytes-to-get, rdqm-textlen-available;
+  cpynv rdqs0200-msgkey-bytes-to-get, rdqm-keylen-available;
+  cpynv rdqs0200-key-len, rdqm-keylen-available;
+  cpybrep rdqs0200-key, x"00";
+  modasa .rdqm0200, rdqm-bytes-available;
+  setsppfp .a-qmhrdqm-receiver, .rdqm0200;
+  callx septs(h'130D'), argl-qmhrdqm, *;
+  addspp .entry, .rdqm0200, rdqm-first-entry-offset;
+  brk '2ND';
+
+  cmpnv(b) ec-bytes-out, 0 / eq(=+3);
+  calli report-error, *, .report-error;
+  b end-mat-keyed-q-msg;
+:
+  /* display keyed messages */
+  calli display-keyed-messages, *, .display-keyed-messages;
+  
+end-mat-keyed-q-msg:
+  b .mat-keyed-q-msg;
+/* eof - mat-keyed-q-msg */
+
+/**
+ * mat-nonkeyed-q-msg
+ *
+ * for nonkeyed dataq, rdqm-entlen-returned is set
+ * to the returned entry length.
+ */
+dcl insptr .mat-nonkeyed-q-msg auto;
+entry mat-nonkeyed-q-msg int;
+
+  /* first time */
+  cpybla a-qmhrdqm-format, "RDQM0100";
+  cpybla a-qmhrdqm-selection-format, "RDQS0100";
+  cpynv a-qmhrdqm-selection-len, 8; /* length of RDQS0100 */
+  setspp .a-qmhrdqm-receiver, rdqm0200;
+  cpynv a-qmhrdqm-receiver-len, min-rdqm0200-len;
+  cpyblap a-qmhrdqm-q-name, q-name, " ";
+  cpybra a-qmhrdqm-q-name, "*LIBL     ";
+  setsppfp .a-qmhrdqm-selection, .rdqs0100;
+  setsppfp .a-qmhrdqm-ec, .qusec;
+  callx septs(h'130D'), argl-qmhrdqm, *;
+  brk 'N1ST';
+
+  cmpnv(b) ec-bytes-out, 0 / eq(=+3);
+  calli report-error, *, .report-error;
+  b end-mat-nonkeyed-q-msg;
+:
+  /* second time */
+  cpynv a-qmhrdqm-receiver-len, rdqm-bytes-available;
+  cpynv rdqs-msg-bytes-to-retrieve, rdqm-textlen-available;
+  modasa .rdqm0200, rdqm-bytes-available;
+  setsppfp .a-qmhrdqm-receiver, .rdqm0200;
+  callx septs(h'130D'), argl-qmhrdqm, *;
+  addspp .entry, .rdqm0200, rdqm-first-entry-offset;
+  brk 'N2ND';
+
+  cmpnv(b) ec-bytes-out, 0 / eq(=+3);
+  calli report-error, *, .report-error;
+  b end-mat-nonkeyed-q-msg;
+:
+  /* display non-keyed messages */
+  calli display-nonkeyed-messages, *, .display-nonkeyed-messages;
+
+end-mat-nonkeyed-q-msg:
+  b .mat-nonkeyed-q-msg;
+/* eof - mat-nonkeyed-q-msg */
+
+/**
+ * @function display-nonkeyed-messages
+ *
+ * message entry length is rdqm-entlen-returned
+ *
+ * @pre .rdqm0200
+ * @post report q messages to user, including index number,
+ *       time equeued, message text
+ */
+dcl dd index bin(4) auto;
+dcl spcptr .q-entry-non-keyed auto;
+dcl spc * bas(.q-entry-non-keyed);
+  dcl dd qentry0100-next-entry bin(4) dir;
+  dcl dd qentry0100-enqueque-time char(8) dir;
+  dcl dd qentry0100-msgtxt char(1) dir;
+/* should be set to .q-entry-non-keyed plus 12 */
+dcl spcptr .qentry0100-msgtxt auto;
+
+dcl dd info char(32) auto;
+dcl dd info-num char(6) def(info) pos(1);
+  dcl dd z-info-num znd(5,0) def(info-num) pos(1);
+  dcl dd * char(1) def(info-num) pos(6) init(" ");
+dcl dd info-text char(26) def(info) pos(7);
+dcl con info-len bin(4) init(32);
+
+dcl insptr .display-nonkeyed-messages;
+entry display-nonkeyed-messages int;
+
+  cpynv index, 0;
+  addspp .q-entry-non-keyed, .rdqm0200, rdqm-first-entry-offset;
+  setspp .sendmsg-msglen, len;
+loop-nk:
+  addn(s) index, 1;
+  cmpnv(b) index, rdqm-msgs-returned / hi(end-loop-nk);
+  addspp .qentry0100-msgtxt, .q-entry-non-keyed, 12;
+
+  /* number */
+  cpynv z-info-num, index;
+
+  /* enqueued time */
+  setspp .a-system-clock, qentry0100-enqueque-time;
+  setspp .a-timestamp, info-text;
+  calli 
+    get-local-saa-timestamp,
+    argl-get-local-saa-timestamp,
+    .get-local-saa-timestamp;
+
+  cpynv len, info-len;
+  setspp .sendmsg-msg, info;
+  calli send-msg, argl-sendmsg, .send-msg;
+
+  /* message text */
+  cpynv len, rdqm-textlen-requested;
+  setsppfp .sendmsg-msg, .qentry0100-msgtxt;
+  calli send-msg, argl-sendmsg, .send-msg;
+
+  addspp .q-entry-non-keyed, .q-entry-non-keyed, rdqm-entlen-returned;
+  b loop-nk;
+end-loop-nk:
+
+  b .display-nonkeyed-messages;
+
+/**
+ * @function display-keyed-messages
+ *
+ *  - 到下一条entry的offset是:
+ *  - message entry length is 
+ *
+ * @pre .rdqm0200
+ * @post report q messages to user, including index number,
+ *       time equeued, message key, message text
+ */
+dcl spcptr .q-entry-keyed auto;
+dcl spc * bas(.q-entry-keyed);
+  dcl dd qentry0200-next-entry bin(4) dir;
+  dcl dd qentry0200-enqueque-time char(8) dir;
+  dcl dd qentry0200-msgtxt-len bin(4) dir;
+  dcl dd qentry0200-key char(1) dir;
+  /* key length is determined by rdqm-keylen-returned */
+  /* message text is placed after message key, of length qentry0200-msgtxt-len */
+
+/* should be set to .q-entry-keyed plus 4+8+4=16 */
+dcl spcptr .qentry0200-key auto;
+/* should be set to .q-entry-keyed + rdqm-keylen-returned */
+dcl spcptr .qentry0200-msg auto;
+
+dcl insptr .display-keyed-messages auto;
+entry display-keyed-messages int;
+
+  cpynv index, 0;
+  addspp .q-entry-keyed, .rdqm0200, rdqm-first-entry-offset;
+  setspp .sendmsg-msglen, len;
+loop-k:
+  addn(s) index, 1;
+  cmpnv(b) index, rdqm-msgs-returned / hi(end-loop-k);
+
+  addspp .qentry0200-key, .q-entry-keyed, 16;
+  addspp .qentry0200-msg, .qentry0200-key, rdqm-keylen-returned;
+
+  /* number */
+  cpynv z-info-num, index;
+
+  /* enqueued time */
+  setspp .a-system-clock, qentry0200-enqueque-time;
+  setspp .a-timestamp, info-text;
+  calli 
+    get-local-saa-timestamp,
+    argl-get-local-saa-timestamp,
+    .get-local-saa-timestamp;
+
+  cpynv len, info-len;
+  setspp .sendmsg-msg, info;
+  calli send-msg, argl-sendmsg, .send-msg;
+
+  /* message key */
+  cpynv len, rdqm-keylen-returned;
+  setsppfp .sendmsg-msg, .qentry0200-key;
+  calli send-msg, argl-sendmsg, .send-msg;
+
+  /* message text */
+  cpynv len, qentry0200-msgtxt-len;
+  setsppfp .sendmsg-msg, .qentry0200-msg;
+  calli send-msg, argl-sendmsg, .send-msg;
+
+  addspp .q-entry-keyed, .rdqm0200, qentry0200-next-entry;
+  brk 'ENT';
+  b loop-k;
+end-loop-k:
+
+  b .display-keyed-messages;
+
+/* variables */
+dcl spcptr .q-name parm;
+dcl ol pl-main(.q-name) parm ext;
+
+dcl dd q-name char(10) bas(.q-name);
+dcl sysptr q auto;
+
+/* SEPT */
+dcl spcptr .sept-ptr baspco;
+dcl sysptr septs(0:7000) bas(.sept-ptr);
+
+/* QMHRDQM, 130D */
+dcl spcptr .a-qmhrdqm-receiver auto;
+dcl dd a-qmhrdqm-receiver-len bin(4) auto;
+dcl spcptr .a-qmhrdqm-receiver-len auto init(a-qmhrdqm-receiver-len);
+dcl dd a-qmhrdqm-format char(8) auto init("RDQM0200");
+dcl spcptr .a-qmhrdqm-format auto init(a-qmhrdqm-format);
+dcl dd a-qmhrdqm-q-name char(20) auto;
+dcl spcptr .a-qmhrdqm-q-name auto init(a-qmhrdqm-q-name);
+dcl spcptr .a-qmhrdqm-selection auto;
+dcl dd a-qmhrdqm-selection-len bin(4) auto init(272);
+dcl spcptr .a-qmhrdqm-selection-len auto init(a-qmhrdqm-selection-len);
+dcl dd a-qmhrdqm-selection-format char(10) auto init("RDQS0200");
+dcl spcptr .a-qmhrdqm-selection-format auto init(a-qmhrdqm-selection-format);
+dcl spcptr .a-qmhrdqm-ec auto;
+dcl ol argl-qmhrdqm(
+  .a-qmhrdqm-receiver,
+  .a-qmhrdqm-receiver-len,
+  .a-qmhrdqm-format,
+  .a-qmhrdqm-q-name,
+  .a-qmhrdqm-selection,
+  .a-qmhrdqm-selection-len,
+  .a-qmhrdqm-selection-format,
+  .a-qmhrdqm-ec
+) arg;
+
+/* RDQM0200 */
+dcl dd rdqm0200 char(54) auto bdry(16);
+dcl spcptr .rdqm0200 auto init(rdqm0200);
+dcl spc * bas(.rdqm0200);
+  dcl dd rdqm-bytes-returned bin(4) dir;
+  dcl dd rdqm-bytes-available bin(4) dir;
+  dcl dd rdqm-msgs-returned bin(4) dir;
+  dcl dd rdqm-msgs-available bin(4) dir;
+  dcl dd rdqm-keylen-returned bin(4) dir;
+  dcl dd rdqm-keylen-available bin(4) dir;
+  dcl dd rdqm-textlen-requested bin(4) dir;
+  dcl dd rdqm-textlen-available bin(4) dir;
+  dcl dd rdqm-entlen-returned bin(4) dir;
+  dcl dd rdqm-entlen-available bin(4) dir;
+  dcl dd rdqm-first-entry-offset bin(4) dir;
+  dcl dd rdqm-libname-returned char(10) dir;
+dcl con min-rdqm0200-len bin(4) init(54);
+
+/* selection template: RDQS0100 */
+dcl dd rdqs0100 char(8) auto;
+  dcl dd rdqs-type char(1) def(rdqs0100) pos(1) init("A");
+  dcl dd * char(3) def(rdqs0100) pos(2);
+  dcl dd rdqs-msg-bytes-to-retrieve bin(4) def(rdqs0100) pos(5);
+dcl spcptr .rdqs0100 auto init(rdqs0100);
+
+/* selection template: RDQS0200 */
+dcl dd rdqs0200 char(272) auto;
+  dcl dd rdqs0200-type char(1) def(rdqs0200) pos(1) init("K");
+  dcl dd rdqs0200-search-order char(2) def(rdqs0200) pos(2) init("GE");
+  dcl dd rdqs0200-reserved char(1) def(rdqs0200) pos(4);
+  dcl dd rdqs0200-msgtxt-bytes-to-get bin(4) def(rdqs0200) pos(5);
+  dcl dd rdqs0200-msgkey-bytes-to-get bin(4) def(rdqs0200) pos(9);
+  dcl dd rdqs0200-key-len bin(4) def(rdqs0200) pos(13);
+  dcl dd rdqs0200-key char(256) def(rdqs0200) pos(17);
+dcl spcptr .rdqs0200 auto init(rdqs0200);
+
+/**
+ * report error
+ *
+ * @param[in]  qusec
+ * @post       send message to interactive user
+ */
+dcl insptr .report-error;
+entry report-error int;
+
+  brk 'RTPERR';
+
+  cpybla sndpm-msgid, ec-exid;
+  cpyblap sndpm-msgf, "QCPFMSG   QSYS", " ";
+  setspp .sendmsg-msg, ec-exdata;
+  setspp .sendmsg-msglen, ec-bytes-out;
+  calli send-msg, argl-sendmsg, .send-msg;
+
+  b .report-error;
+
+/include when.mi;
+/include sendmsg.mi;
+
+pend;
+
+/* eof - dspdtaqmsg.mi */

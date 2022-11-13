@@ -1,0 +1,9 @@
+/*                                                                       */
+/* @file add.cl-cmd                                                      */
+/*                                                                       */
+/* CL command ADD adds two decimal(15,5) values and returns the sum.     */
+/*                                                                       */
+             CMD        PROMPT(ADD)
+             PARM       KWD(SUM) TYPE(*DEC) LEN(15 5) RTNVAL(*YES) MIN(1)
+             PARM       KWD(ADDENT1) TYPE(*DEC) LEN(15 5) DFT(0)
+             PARM       KWD(ADDENT2) TYPE(*DEC) LEN(15 5) DFT(0)

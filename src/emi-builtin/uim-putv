@@ -1,0 +1,29 @@
+9       5       6       22      UIM-PUTV Put Dialog Variable
+        CPYBLA @0009-#1, :1             ;
+        SETSPP .@0009-#2, :2            ;
+        CPYNV @0009-#3, :3              ;
+        CPYBLAP @0009-#4, :4, ' '       ;
+        SETSPP .@0009-#5, :5            ;
+        CALLI @0009, *, .@0009          ;
+/* builtin %uim-putv*/ DCL INSPTR .@0009 AUTO            ;
+DCL DD @0009-#1 CHAR(8) AUTO      ;
+DCL SPCPTR .@0009-#2 AUTO         ;
+DCL DD @0009-#3 BIN(4) AUTO       ;
+DCL DD @0009-#4 CHAR(10) AUTO     ;
+DCL SPCPTR .@0009-#5 AUTO         ;
+ENTRY @0009 INT                   ;
+DCL SPCPTR .@0009-APPH AUTO INIT(@0009-#1) ;
+DCL SPCPTR .@0009-VAR-BUFLEN AUTO INIT(@0009-#3) ;
+DCL SPCPTR .@0009-RCD-NAME AUTO INIT(@0009-#4)   ;
+DCL OL @0009-AL-PUTV (
+        .@0009-APPH,
+        .@0009-#2,
+        .@0009-VAR-BUFLEN,
+        .@0009-RCD-NAME,
+        .@0009-#5
+) ARG MIN(5);
+DCL SPCPTR @0009-SEPT-PTR BASPCO ;
+/* 1508 */ DCL SYSPTR @0009-QUIPUTV BAS(@0009-SEPT-PTR) POS(86145) ;
+        CALLX @0009-QUIPUTV, @0009-AL-PUTV, * ;
+BRK '@0009-RTN'                   ;
+        B .@0009                  ;

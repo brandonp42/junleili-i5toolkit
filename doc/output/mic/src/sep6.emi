@@ -1,0 +1,146 @@
+/* *
+ * @file sep6.mi
+ *
+ * list activation entries in a activation group
+ *
+ * @param[in] arg-mark, bin(4) unsgnd, activation group mark
+ */
+
+dcl spcptr agp-mark-ptr parm    ;
+dcl ol pl-main(agp-mark-ptr) parm ext ;
+
+entry *(pl-main) ext            ;
+
+dcl dd agp-mark bin(4) unsgnd bas(agp-mark-ptr) ;
+
+dcl spcptr agp-info-ptr auto            ;
+dcl spc agp-info-spc bas(agp-info-ptr)        ;
+        dcl dd agp-bytes-in bin(4) dir        ;
+        dcl dd agp-bytes-out bin(4) dir       ;
+        dcl dd * char(8) dir                  ;
+dcl dd len bin(4) auto                        ;
+dcl dd act-count bin(4) unsgnd bas(agp-info-ptr) pos(109) ;
+dcl dd num-act bin(4) unsgnd auto                         ;
+
+        /* get activation count */
+        modasa agp-info-ptr, 16                ;
+        cpynv agp-bytes-in, 16                 ;
+        matagpat agp-info-ptr, agp-mark, x'00' ;
+        cpynv len, agp-bytes-out               ;
+        modasa agp-info-ptr, -16               ;
+
+        modasa agp-info-ptr, len ;
+        cpynv agp-bytes-in, len  ;
+        matagpat agp-info-ptr, agp-mark, x'00' ;
+
+        cpynv num-act, act-count ;
+        subn len, 0, len        ;
+        modasa agp-info-ptr, len ;
+
+        /* list activation marks */
+        modasa agp-info-ptr, 16                ;
+        cpynv agp-bytes-in, 16                 ;
+        matagpat agp-info-ptr, agp-mark, x'02' ;
+        cpynv len, agp-bytes-out               ;
+        modasa agp-info-ptr, -16               ;
+
+        modasa agp-info-ptr, len ;
+        cpynv agp-bytes-in, len  ;
+        matagpat agp-info-ptr, agp-mark, x'02' ;
+
+        /* matactat */
+/* basic activation info */
+dcl dd act-info char(72) auto bdry(16) ;
+dcl spcptr act-info-ptr auto init(act-info) ;
+dcl spc act-info-t bas(act-info-ptr)        ;
+        dcl dd act-bytes-in bin(4) dir      ;
+        dcl dd act-bytes-out bin(4) dir     ;
+        dcl dd * char(8) dir                ;
+        dcl sysptr act-pgm dir              ;
+        dcl dd * bin(4) unsgnd dir          ; /* activation mark: act-mark */
+        dcl dd * bin(4) unsgnd dir          ; /* activation group mark */
+        dcl dd inv-count bin(4) unsgnd dir  ; 
+        dcl dd ssf-count bin(4) unsgnd dir  ;
+        dcl dd pgm-type char(1) dir         ;
+        dcl dd act-status char(1) dir       ; /* bit 0: 0=inactive, 1=active */
+        dcl dd tgt-agp char(1) dir          ;
+        dcl dd * char(1) dir                ;
+        dcl dd dep-act-count bin(4) unsgnd dir ;
+        dcl dd act-mark-long char(8) dir    ;
+        dcl dd agp-mark-long char(8) dir    ;
+
+dcl dd ind bin(4) auto          ;
+dcl spcptr act-mark-ptr auto    ;
+dcl dd act-mark bin(4) unsgnd bas(act-mark-ptr) ;
+dcl dd msg char(64) auto        ;
+dcl dd cvtnc-attr char(7) auto init(x'02000200000000') ;
+        cpynv ind, 0            ;
+        cpynv act-bytes-in, 72  ;
+        setsppfp act-mark-ptr, agp-info-ptr ;
+        addspp act-mark-ptr, act-mark-ptr, 16 ;
+
+        cpynv matptr-bytes-in, 77 ;
+
+        cpyblap msg(1:10), "Library", " " ;
+        cpyblap msg(11:10), "Program", " " ;
+        cpyblap msg(21:10), "Inv-Cnt", " " ;
+        cpyblap msg(32:10), "Act-sts", " " ;
+        %sendmsg(msg, 64)                          ;
+
+        cpybrep msg, ' '        ;
+
+activation-loop:
+
+        addn(s) ind, 1          ;
+        cmpnv(b) ind, num-act / hi(end-loop) ;
+
+        matactat act-info-ptr, act-mark, x'00' ;
+brk 'CHK'                       ;
+        /* check inv-count, act-pgm */
+        matptr matptr-tmpl-ptr, act-pgm ;
+
+        cpybla msg(1:10), matptr-ctx-name ;
+        cpybla msg(11:10), matptr-pgm-name ;
+        cvtnc  msg(28:2), inv-count, cvtnc-attr ;
+        cmpbla(b) act-status, '0' / neq(=+3) ;
+        cpyblap msg(31:10), "Inactive", " "  ;
+        b =+2                   ;
+:
+        cpyblap msg(31:10), "Active", ' ' ;
+:
+        %sendmsg(msg, 64)           ;
+recover:
+        addspp act-mark-ptr, act-mark-ptr, 4 ;
+        b activation-loop       ;
+end-loop:
+
+brk 'END'                       ;
+
+        subn len, 0, len        ;
+        modasa agp-info-ptr, len ;
+        rtx *                   ;
+
+/* template of MATPTR */
+dcl dd matptr-tmpl char(77) auto ;
+dcl spcptr matptr-tmpl-ptr auto init(matptr-tmpl) ;
+dcl spc matptr-tmpl-t bas(matptr-tmpl-ptr)        ;
+        dcl dd matptr-bytes-in bin(4) dir         ;
+        dcl dd matptr-bytes-out bin(4) dir        ;
+        dcl dd matptr-ptr-type char(1) dir        ;
+        dcl dd matptr-ctx-type char(2) dir        ;
+        dcl dd matptr-ctx-name char(30) dir       ;
+        dcl dd matptr-pgm-type char(2) dir        ;
+        dcl dd matptr-pgm-name char(30) dir       ;
+        dcl dd matptr-ptr-auth char(2) dir        ;
+        dcl dd matptr-ptr-tgt char(2) dir         ;
+
+dcl excm ex excid(h'0000') bp(on-error) imd cv('MCH') ;
+
+on-error:       
+
+dcl dd ex-info char(16) auto init('Oops :p') ;
+        %sendmsg(ex-info, 16)   ;
+        b recover               ; /* 用法有问题 here-today */
+
+pend                            ;
+/* eof - sep6.mi */

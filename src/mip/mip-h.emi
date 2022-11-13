@@ -1,0 +1,193 @@
+/**
+ * This file is part of i5/OS Programmer's Toolkit.
+ *
+ * Copyright (C) 2010, 2011  Junlei Li.
+ *
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file mip-h.emi
+ *
+ * SPC objects for subproject MIP.
+ */
+
+/ifndef __mip_h__               ;
+/define __mip_h__               ;
+
+/**
+ * Materialization template for instruction MATPG.
+ */
+dcl spc matpg-t bas(*)                              ;
+        dcl dd matpg?bytes-in   bin(4)          dir ;
+        dcl dd matpg?bytes-out  bin(4)          dir ;
+        dcl dd matpg?pgm-id     char(32)        dir ;
+        dcl dd matpg?pgm-type           char(2) def(matpg?pgm-id) pos(1) ;
+        dcl dd matpg?pgm-name           char(30) def(matpg?pgm-id) pos(3) ;
+        dcl dd matpg?crt-opt    char(4)         dir ;
+        dcl dd *                char(4)         dir ;
+        dcl dd matpg?spc-size   bin(4)          dir ;
+        dcl dd matpg?spc-init-val char(1)       dir ;
+        dcl dd matpg?perf-cls   char(4)         dir ;
+        dcl dd *                char(7)         dir ;
+        dcl sysptr matpg?ctx                    dir ;
+        dcl sysptr matpg?ag                     dir ;
+        dcl dd matpg?pgm-attr   char(2)         dir ;
+        dcl dd matpg?gen-opt    char(1)         dir ;
+        dcl dd matpg?obsv-attr  char(1)         dir ;
+        dcl dd matpg?ss-size    bin(4) unsgnd   dir ; /* size of static storage */
+        dcl dd matpg?as-size    bin(4) unsgnd   dir ; /* size of automatic storage */
+        dcl dd matpg?num-inst1  bin(2) unsgnd   dir ; /* number of instructions (1). for version number x'0000' */
+        dcl dd matpg?num-odv1   bin(2)          dir ; /* number of ODV entries (1). for version number x'0000' */
+        dcl dd matpg?inss-off   bin(4)          dir ; /* offset (in bytes) from beginning of template to the instruction stream component */
+        dcl dd matpg?odv-off    bin(4)          dir ; /* odv offset */
+        dcl dd matpg?oes-off    bin(4)          dir ; /* oes offset */
+        dcl dd matpg?bome-len   bin(4)          dir ; /* length of BOM entry */
+        dcl dd matpg?bom-len    bin(4)          dir ; /* length of BOM component */
+        dcl dd matpg?bom-off    bin(4)          dir ; /* bom offset */
+        dcl dd matpg?symtble-len bin(4)         dir ; /* length of symbol table entry */
+        dcl dd matpg?symtbl-len bin(4)          dir ; /* length of symbol component */
+        dcl dd matpg?symtbl-off bin(4)          dir ; /* symbol table offset */
+        dcl dd matpg?omt-off    bin(4)          dir ; /* omt offset */
+        dcl dd matpg?num-inst2  bin(4)          dir ; /* number of instructions (2). for version number x'0001' */
+        dcl dd matpg?num-odv2   bin(4)          dir ; /* number of ODV entries (2). for version number x'0001' */
+        /* template extension */
+        dcl dd matpg?expgm-attr char(4)         dir ; /* extended program attributes */
+        dcl dd matpg?lang-vrm   char(2)         dir ; /* language VRM. V/R/M: bits 4-7/8-11/12-15 */
+        dcl dd matpg?bom-flag   char(1)         dir ; /* bit 0: BOM format. bits 1-7: user data5A. */
+        dcl dd matpg?udata5b    char(7)         dir ; /* user data5B */
+        dcl dd matpg?pgm-vrm    char(2)         dir ; /* program VRM. */
+        dcl dd matpg?retrns     char(1)         dir ; /* bit 0 = 1, All data required for machine retranslation is present. */
+        dcl dd *                char(47)        dir ; /* reserved (binary 0) */
+        /*
+         * Program data
+         *    Instruction stream component
+         *    ODV component
+         *    OES component
+         * BOM table
+         * Symbol table
+         * Object mapping table
+         */
+
+/**
+ * hashing table of a symbol table component
+ */
+dcl spc symtbl-hash-t bas(*)    ;
+        /* Number of hash buckets */
+        dcl dd symtbl-hash?num-buckets bin(4) dir ;
+        /*
+         * Each hash bucket contains an offset to the first symbol
+         * table base segment entry of the chain. This offset is from
+         * the beginning of the symbol table. The end of the chain has
+         * a -1 value.
+         */
+        dcl dd symtbl-hash?buckets(1000) bin(4) dir ;
+
+/**
+ * symbol table base segment
+ */
+dcl spc symtbl-base-t bas(*)    ;
+        /* Offset to next entry from beginning of the table. The end of the chain has a -1 value. */
+        dcl dd symtbl-base?next-entry-offset bin(4) dir ;
+        /* ODT or MI number */
+        dcl dd symtbl-base?num bin(2) dir ;
+        /*
+         * bit 0. Instruction or ODT number
+         *  0 = MI instruction number. This also means the symbol is the name of a LABEL in the program template.
+         *  1 = ODT number. The symbol is the name of an ODT object.
+         * bit 1. Symbol origin
+         *  0 = Compiler generated
+         *  1 = Source program
+         */ 
+        dcl dd symtbl-base?flag char(1) dir ;
+        dcl dd symtbl-base?len  char(1) dir ;
+        dcl dd symtbl-base?name char(15) dir ;
+
+/**
+ * Old BOM format
+ *
+ * @remark In the old BOM format, it 0 of field bome0?mi-inst is used
+ *         as the format flag that indicates whether the HLL statement
+ *         number is in character format or in numeric format.
+ */
+dcl spc bom-entry0-t bas(*)     ;
+        /*
+         * bit 0. Format flag.
+         *  0 = HLL statement number is in character format
+         *  1 = HLL statement number is in numeric format
+         */
+        dcl dd bom0?mi-inst bin(2) unsgnd dir ;
+        dcl dd bom0?hll-stmt-str char(10) dir ;
+        dcl dd bom0?hll-stmt-num bin(2) def(bom0?hll-stmt-str) ;
+
+/**
+ * New BOM format
+ */
+dcl spc bom-entry1-t bas(*)     ;
+        dcl dd bom1?mi-inst bin(2) unsgnd dir ;
+        /*
+         * bit 0. Format flag.
+         *  0 = HLL statement number is in character format
+         *  1 = HLL statement number is in numeric format
+         */
+        dcl dd bom1?fmt char(1) dir      ;
+        dcl dd bom1?hll-stmt-str char(10) dir ;
+        dcl dd bom1?hll-stmt-num bin(2) def(bom1?hll-stmt-str) ;
+
+/**
+ * OMT entry
+ */
+dcl spc omt-entry-t bas(*)      ;
+        /*
+         * base addressability type
+         *  hex 00 = based on an static storage area
+         *  hex 01 = based on an automatic storage area
+         *  hex 02 = based on a space pointer
+         *  hex 03 = based on a parameter
+         *  hex 04 = based on the PCO object
+         *  hex FF = base addressability not provided
+         */
+        dcl dd omt?addr-type char(1) dir ;
+        /*
+         * For types hex 00, hex 01, hex 02, hex 03, and hex 04, this
+         * is a 3-byte logical binary value representing the offset to
+         * the object from the base addressability. For type hex FF,
+         * the value is binary 0.
+         */
+        dcl dd omt?offset char(3) dir    ;
+        /*
+         * For types hex 02 and hex 03, this is a 2-byte binary field
+         * containing the number of the OMT entry for the space
+         * pointer or a parameter that provides base addressability
+         * for this object.
+         */
+        dcl dd omt?num-basee bin(2) dir  ;
+
+/**
+ * Length of an OMT entry is 6 bytes.
+ */
+dcl con omt-entry-len bin(2) init(6) ;
+
+/**
+ * ODV entry
+ */
+dcl spc odv-entry-t bas(*)      ;
+        dcl dd odv?hi char(2) dir ;
+        dcl dd odv?lo char(2) dir ;
+        dcl dd odv?scalar-len bin(2) unsgnd def(odv?lo) pos(1) ;
+        dcl dd odv?inst-num bin(2) unsgnd def(odv?lo) pos(1)   ;
+        dcl dd odv?oes-off bin(2) unsgnd def(odv?lo) pos(1)    ;
+
+/endif                          ;
+/* !defined __mip_h__ */

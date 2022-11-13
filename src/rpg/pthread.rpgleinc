@@ -1,0 +1,95 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file pthread.rpgleinc
+      *
+      * Header of pthread APIs for ILE RPG provided by the
+      * open source project i5/OS Programmer's Toolkit.
+      * For details please refer to the project's web site,
+      * http://i5toolkit.sourceforge.net/
+      *
+      */
+
+      /if not defined(i5toolkit_rpg_pthread)
+      /define i5toolkit_rpg_pthread
+
+     d pthread_t       ds                  qualified
+     d                                 *
+     d     hi_id                     10u 0
+     d     low_id                    10u 0
+     d     handle                    10u 0
+     d                               10u 0
+     d                                 *
+
+     d pthread_attr_t  ds                  qualified
+     d                               10u 0 dim(4)
+     d                                 *
+
+     /* create thread */
+     d pthread_create  pr            10i 0 extproc('pthread_create')
+     d     thread                          likeds(pthread_t)
+     d     attr                        *   value
+     d     proc                        *   procptr
+     d                                     value
+     d     param                       *   value
+
+     /* wait for and detach thread */
+     d pthread_join    pr            10i 0 extproc('pthread_join')
+     d     thread                          likeds(pthread_t)
+     d                                     value
+     d     status                      *
+
+     /* mutex APIs */
+
+     /* locks a global mutex provided by the pthreads run-time */
+     d pthread_lock_global_np...
+     d                 pr            10i 0 extproc('pthread_lock_global_np')
+
+     /* unlocks a global mutex provided by the pthreads run-time */
+     d pthread_unlock_global_np...
+     d                 pr            10i 0 extproc('pthread_unlock_global_np')
+
+     /* thread specific storage APIs */
+
+     /* get thread local storage value by key */
+     d pthread_getspecific...
+     d                 pr              *   extproc('pthread_getspecific')
+     d     key                       10i 0 value
+
+     /* create thread local storage key */
+     d pthread_key_create...
+     d                 pr            10i 0 extproc('pthread_key_create')
+     d     key                       10i 0
+     d     destructor                  *   procptr
+     d                                     value
+
+     /* set thread local storage by key */
+     d pthread_setspecific...
+     d                 pr            10i 0 extproc('pthread_setspecific')
+     d     key                       10i 0 value
+     d     value                       *   value
+
+     /* deletes a process-wide thread local storage key */
+     d pthread_key_delete...
+     d                 pr            10i 0 extproc('pthread_key_delete')
+     d     key                       10i 0 value
+
+      /endif
+     /* eof - pthread.rpgleinc */

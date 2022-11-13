@@ -1,0 +1,28 @@
+/**
+ * @file world.mi
+ *
+ * returns a programming language name randomly
+ */
+
+dcl spcptr .world parm           ;
+dcl ol pl-world(.world) parm ext ;
+entry * ext                     ;
+
+dcl dd world char(8) bas(.world) ;
+dcl dd words(0:3) char(8) init(
+        *(0)'ILE RPG',
+        'COBOL',
+        'Java',
+        'MI'
+) ;
+
+dcl dd buf char(8) auto         ;
+dcl dd i bin(2) unsgnd def(buf) pos(7) ;
+
+        matmdata buf, x'0000'   ;
+        div(s) i, 16384         ;
+        cpyblap world, words(i), ' ' ;
+brk 'END'                       ;
+        rtx *                   ;
+pend;
+/* eof - world.mi */

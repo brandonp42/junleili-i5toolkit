@@ -1,0 +1,496 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-auth.rpgleinc
+      *
+      * Authorization management instructions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_auth)
+      /define i5toolkit_rpg_mih_auth
+
+     /* Materialized authorization info of MATAU */
+     d matau_tmpl_t    ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+      *
+      * Private authorization (1 = authorized)
+      *   Bit 0  = Object control
+      *   Bit 1  = Object management
+      *   Bit 2  = Authorized pointer
+      *   Bit 3  = Space authority
+      *   Bit 4  = Retrieve
+      *   Bit 5  = Insert
+      *   Bit 6  = Delete
+      *   Bit 7  = Update
+      *   Bit 8  = Ownership (1 = yes)
+      *   Bit 9  = Excluded
+      *   Bit 10 = Authority list management
+      *   Bit 11 = Execute
+      *   Bit 12 = Alter
+      *   Bit 13 = Reference
+      *   Bit 14-15, reserved (binary 0)
+      *
+     d     private_auth...
+     d                                2a
+     d     public_auth...
+     d                                2a
+      *
+      * Private authorization source
+      *   0 =  Authority to object
+      *   1 =  Authority to authority list
+      *   2 =  Authority to object via primary group
+      *   3 =  Authority to authority list via primary group
+      *
+     d     pri_auth_source...
+     d                                5u 0
+      *
+      * Public authorization source
+      *   0 =  Authority to object
+      *   1 =  Authority to authority list
+      *
+     d     pub_auth_source...
+     d                                5u 0
+
+     /* Materialize option of MATAU */
+     d matau_option_t  ds                  qualified
+      *
+      * Bit 0, ignore all object special authority.
+      *   0 = No
+      *   1 = Yes
+      *
+     d     flag                       2a
+     d                               14a
+     d     usrprf                      *
+
+     /**
+      * @BIF _MATAU1 (Materialize Authority (MATAU))
+      *
+      * Materialize public and private authority of a permanent MI object.
+      */
+     d matau1          pr                  extproc('_MATAU1')
+     d     receiver                        likeds(matau_tmpl_t)
+     d     object                      *
+      * System pointer to a *USRPRF object or a matau_option_t DS.
+     d     usrprf_or_option...
+     d                                 *
+
+     /**
+      * @BIF _MATAU2 (Materialize Authority (MATAU))
+      *
+      * Materialize public authority of a permanent MI object.
+      *
+      * @remark _MATAU2 does not accept a user profile operand.
+      */
+     d matau2          pr                  extproc('_MATAU2')
+     d     receiver                        likeds(matau_tmpl_t)
+     d     object                      *
+
+     /* Materialization option of MATAL */
+     d matal_option_t  ds                  qualified
+      *
+      * Control flag.
+      *
+      * hex 12 = Materialize count of entries matching the criteria
+      * hex 22 = Materialize identification of entries matching
+      *          the criteria and return information using
+      *          short description format
+      * hex 32 = Materialize identification of entries matching
+      *          the criteria and return information using long
+      *          description format
+      *
+     d     flag                       1a
+      *
+      * Selection criteria.
+      *
+      * hex 00 = All authority list or authority list extension entries
+      * hex 01 = Select by object type code.
+      * hex 02 = Select by object type code and subtype code.
+      *
+     d     criteria                   1a
+     d                                2a
+     d     type_code                  1a
+     d     subtype_code...
+     d                                1a
+     d                               30a
+
+     /* Materialization template of MATAL */
+     d matal_tmpl_t    ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+      * *AUTL
+     d     obj_type                   2a
+     d     obj_name                  30a
+     d     crt_option                 4a
+     d                                4a
+     d     spc_size                  10i 0
+     d     init_spc_value...
+     d                                1a
+     d     performance_class...
+     d                                4a
+     d                                7a
+     d     contex                      *
+     d                               16a
+      *
+      * Bit 0, override specific object authority
+      * 0 = No
+      * 1 = Yes
+      *
+     d     attr                       4a
+     d                               28a
+     d     num_entries...
+     d                               10u 0
+     d                               12a
+
+     /* Short *AUTL entry description */
+     d autl_entry_short_desc_t...
+     d                 ds                  qualified
+     d     obj_type                   2a
+     d                               14a
+     d     object                      *
+
+     /* Long *AUTL entry description */
+     d autl_entry_long_desc_t...
+     d                 ds                  qualified
+     d     obj_type                   2a
+     d     obj_name                  30a
+     d                               16a
+     d     object                      *
+     d     obj_owner                   *
+     d     ctx_type                   2a
+     d     ctx_name                  30a
+     d     context                     *
+
+     /**
+      * @BIF _MATAL (Materialize Authority List (MATAL))
+      */
+     d matal           pr                  extproc('_MATAL')
+     d     receiver                        likeds(matal_tmpl_t)
+     d     autl                        *
+     d     option                          likeds(matal_option_t)
+
+     /* MATAUU template */
+     d matauu_tmpl_t   ds            16    qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     public_auth...
+     d                                2a
+     d     num_private_users...
+     d                                5i 0
+     d     reserved                   4a
+
+     /* long format privately authorized USRPRF struction */
+     d auth_desc_long_t...
+     d                 ds            80    qualified
+     d                                     based(dummy_ptr)
+     d     usrprf_type...
+     d                                2a
+     d     usrprf_name...
+     d                               30a
+     d     private_auth...
+     d                                2a
+     d     reserved                  12a
+     d     usrprf                      *
+
+     /* length of structure auth_desc_long_t */
+     d AUTH_DESC_LONG_LENGTH...
+     d                 c                   64
+
+     /**
+      * @BIF MATAUU (Materialize Authorized Users (MATAUU))
+      */
+     d matauu          pr                  extproc('_MATAUU')
+     d     receiver                    *   value
+     d     obj                         *
+     d     option                     1a
+
+     /**
+      * @BIF _MODINVAU (Modify Invocation Authority Attributes (MODINVAU))
+      */
+     d modinvau        pr                  extproc('_MODINVAU')
+      * 
+      * option
+      *   hex 00 = Do not suppress adopted user profile authority
+      *   hex 01 = Suppress adopted user profile authority
+      * 
+     d     option                     1a
+
+     /* Object template for TESTAU */
+     d testau_object_tmpl_t...
+     d                 ds                  qualified
+     d     relative_invocation_number...
+     d                                5i 0
+      * reserved (binary 0)
+     d                               14a
+     d     object                      *
+
+     /**
+      * @BIF _TESTAU1 (Test Authority (TESTAU))
+      *
+      * Test the authority to an MI object of the current invocation
+      * or a previous invocation.
+      *
+      * @return 1 = authroized; 0 = NOT authorized.
+      *
+      * @remark _TESTAU1 accept 2 operands.
+      */
+     d testau1         pr            10i 0 extproc('_TESTAU1')
+      * System pointer to target MI object or space pointer to object
+      * template DS defined by testau_object_tmpl_t.
+     d     obj_or_tmpl...
+     d                                 *
+     d     auth_required...
+     d                                2a
+
+     /**
+      * @BIF _TESTAU2 (Test Authority (TESTAU))
+      *
+      * Test the authority to an MI object of the current invocation
+      * or a previous invocation.
+      *
+      * @return 1 = authroized; 0 = NOT authorized.
+      *
+      * @remark _TESTAU2 accept 3 operands including available
+      *         authorities returned in operand 1.
+      */
+     d testau2         pr            10i 0 extproc('_TESTAU2')
+     d     auth_available...
+     d                                2a
+      * System pointer to target MI object or space pointer to object
+      * template DS defined by testau_object_tmpl_t.
+     d     obj_or_tmpl...
+     d                                 *
+     d     auth_required...
+     d                                2a
+
+     /* Authorization template used by TESTEAU. */
+     d testeau_auth_tmpl_t...
+     d                 ds                  qualified
+      *
+      * Privileged instruction template
+      *   Bit  0 = Create Logical Unit Description
+      *   Bit  1 = Create Network Description
+      *   Bit  2 = Create Controller Description
+      *   Bit  3 = Create user profile
+      *   Bit  4 = Modify user profile
+      *   Bit  5 = Diagnose
+      *   Bit  6 = Terminate machine processing
+      *   Bit  7 = Initiate process
+      *   Bit  8 = Modify Resource Management Control
+      *   Bit  9 = Create Mode Description
+      *   Bit 10 = Create Class of Service Description
+      *   Bit 11-31, reserved (binary 0)
+      *
+     d     priv_inst_tmpl...
+     d                                4a
+      *
+      * Special authority template
+      *   Bit  0 = All object
+      *   Bit  1 = Load (unrestricted)
+      *   Bit  2 = Dump (unrestricted)
+      *   Bit  3 = Suspend (unrestricted)
+      *   Bit  4 = Load (restricted)
+      *   Bit  5 = Dump (restricted)
+      *   Bit  6 = Suspend (restricted)
+      *   Bit  7 = Process control
+      *   Bit  8 = Reserved (binary 0)
+      *   Bit  9 = Service
+      *   Bit 10 = Auditor authroity
+      *   Bit 11 = Spool control
+      *   Bit 12 = I/O system configuration
+      *   Bit 13-23, reserved (binary 0)
+      *   Bit 24-31, Modify machine attributes
+      *     Bit 24 = Group 2
+      *     Bit 25 = Group 3
+      *     Bit 26 = Group 4
+      *     Bit 27 = Group 5
+      *     Bit 28 = Group 6
+      *     Bit 29 = Group 7
+      *     Bit 30 = Group 8
+      *     Bit 31 = Group 9
+      *
+     d     spec_auth_tmpl...
+     d                                4a
+
+     /**
+      * @BIF _TESTEAU3 (Test Extended Authorities (TESTEAU))
+      */
+     d testeau3        pr            10i 0 extproc('_TESTEAU3')
+     d     avail_auth                      likeds(testeau_auth_tmpl_t)
+     d     required_auth...
+     d                                     likeds(testeau_auth_tmpl_t)
+
+     /**
+      * @BIF _TESTEAU4 (Test Extended Authorities (TESTEAU))
+      */
+     d testeau4        pr            10i 0 extproc('_TESTEAU4')
+     d     required_auth...
+     d                                     likeds(testeau_auth_tmpl_t)
+
+     /* Selection template of MATUPID. */
+     d matupid_select_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+      *
+      * Format option
+      *   hex 01 = return short template
+      *   hex 02 = return long template
+      *
+      * @remark The short format contains only a system pointer to
+      *         each materialized user profile object.
+      *
+     d     fmt_option                 1a
+      *
+      * Materialization type option
+      *   hex 00 = list provided
+      *   hex 41 = Return all gids starting with the specified gid
+      *   hex 80 = Return all uids then all gids
+      *   hex 81 = Return all uids then gids starting with the
+      *            specified uid
+      *
+     d     type_option...
+     d                                1a
+     d     num_uids                  10u 0
+     d     num_gids                  10u 0
+     d                               10a
+      * array of Ubin(4) uids or gids
+
+     /* Materialization template of MATUPID. */
+     d matupid_tmpl_t  ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+      * Number of uids returned
+     d     num_uids                  10u 0
+      * Number of gids returned
+     d     num_gids                  10u 0
+      *
+      * Bit 0, one or more USRPRF pointers are not set.
+      * Bits 1-7, reserved.
+      *
+     d     flag                       1a
+     d                               15a
+      * materialized user profile templates
+
+     /* Long format materialization template. */
+     d matupid_usrprf_long_t...
+     d                 ds                  qualified
+     d     prf_type                   2a
+     d     prf_name                  30a
+      * uid or gid
+     d     id                        10u 0
+      *
+      * type of id
+      *   hex 01 = user id
+      *   hex 02 = group id
+      *
+     d     id_type                    1a
+      *
+      * Bit 0, system pointer to USRPRF is not set.
+      * Bits 1-7, reserved.
+      *
+     d     flag                       1a
+     d                               10a
+     d     usrprf                      *
+
+     /**
+      * @BIF _MATUPID (Materialize User Profile Pointers from ID (MATUPID))
+      */
+     d matupid         pr                  extproc('_MATUPID')
+     d     output                          likeds(matupid_tmpl_t)
+     d     input                           likeds(matupid_select_tmpl_t)
+
+     /* Template of available authorizations returned by TESTULA. */
+     d testula_receiver_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     num_auth_returned...
+     d                                5i 0
+     d                                6a
+      * authroization templates returned as array of char(2)
+
+     /**
+      * Test option tempalte used by TESTULA.
+      *
+      * This template contains a governing user profile and optionally
+      * one or more group profiles as the sources of authorities to
+      * an MI object.
+      */
+     d testula_option_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     num_group_pfrs...
+     d                                5i 0
+      *
+      * Required authorities.
+      *   Bit  0 = Object control
+      *   Bit  1 = Object management
+      *   Bit  2 = Authorized pointer
+      *   Bit  3 = Space authority
+      *   Bit  4 = Retrieve
+      *   Bit  5 = Insert
+      *   Bit  6 = Delete
+      *   Bit  7 = Update
+      *   Bit  8 = Ownership (1 = yes)
+      *   Bit  9 = Excluded
+      *   Bit 10 = Authority list management
+      *   Bit 11 = Execute
+      *   Bit 12 = Alter
+      *   Bit 13 = Reference
+      *   Bit 14 = Reserved (binary 0)
+      *   Bit 15 = Test option
+      *            0 = All of the above authorities must be present
+      *            1 = Any one or more of the above authorities must be present
+      *
+     d     required_auth...
+     d                                2a
+      *
+      * indicator of profile format
+      *   hex 80 = Users are identified by system pointers
+      *   hex 40 = Profiles are identified by uid/gid
+      *
+     d     indicator                  1a
+      *
+      * Test flag
+      *   Bit 0 = Ignore pointer authority
+      *   Bit 1-7, reserved (binary 0)
+      *
+     d     test_flag                  1a
+     d                               10a
+      * one user profile identification
+      * zero or more group profile identifications
+
+     /**
+      * @BIF _TESTULA (Test User List Authority (TESTULA))
+      *
+      * @return 1 if authorized; otherwise 0.
+      */
+     d testula         pr            10i 0 extproc('_TESTULA')
+     d     auth_available...
+     d                                     likeds(testula_receiver_tmpl_t)
+     d     object                      *
+     d     test_option...
+     d                                     likeds(testula_option_tmpl_t)
+
+      /endif

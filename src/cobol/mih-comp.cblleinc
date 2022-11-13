@@ -1,0 +1,116 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-comp.cblleinc
+      *
+      * Computation instructions.
+      */
+
+      *A   B
+
+     /**
+      * @BIF _CLRBTS (Set Bit in String (CLRBTS))
+      *
+      * @example test/cbl003.cblle
+      */
+      *    call "_CLRBTS" using
+      *        by value pointer
+      *        by value binary-4-offset.
+
+     /**
+      * @BIF _SETBTS (Set Bit in String (SETBTS))
+      *
+      * @example test/cbl003.cblle
+      */
+      *    call "_SETBTS" using
+      *        by value pointer
+      *        by value binary-4-offset.
+
+     /**
+      * @BIF _TSTBTS (Test Bit in String (TSTBTS))
+      *
+      * @return 1 if bit is set, otherwise 0.
+      * @example test/cbl014.cblle
+      */
+      *    call "_TSTBTS" using
+      *         by reference   character-or-numeric-scalar
+      *         by value       bin-4-bit-offset
+      *         returning into bin-4-result.
+
+     /**
+      * @BIF _PROPB (Propagate Byte (PROPB))
+      *
+      * @example test/cbl002.cblle
+      */
+      *    call "_PROPB" using
+      *        by value pointer
+      *        by value char-1-scalar
+      *        by value binary-4-length.
+
+     /**
+      * Pad operand of CPYECLAP
+      *
+      * @remark The default pad values are hex 40 for SBCS and hex 4040 for DBCS.
+      */
+       01 cpyeclap-pad-t is typedef.
+          05 sbcs-pad pic x value x"40".
+          05 dbcs-pad pic x(2) value x"4040".
+
+     /**
+      * @BIF _CPYECLAP (Copy Extended Characters Left-Adjusted With Pad (CPYECLAP))
+      */
+      *    call "_CPYECLAP" using
+      *         by reference target-data-pointer
+      *         by reference source-data-pointer
+      *         by reference cpyeclap-pad-t.
+
+     /**
+      * @BIF _LBCPYNV (Copy Numeric Value (CPYNV))
+      */
+
+     /* bound program calculation builtins */
+
+     /**
+      * @BIF _ANDCSTR (AND String (ANDSTR))
+      */
+      *    call "_ANDSTR" using
+      *         by reference receiver-tring
+      *         by reference first-source-string
+      *         by reference second-source-string
+      *         by value     string-length.
+
+     /**
+      * @BIF _CPYBYTES (Copy Bytes (CPYBYTES))
+      *
+      * @example test/cbl006.cblle
+      */
+      *     call "_CPYBYTES" using
+      *          by reference target-character-scalar
+      *          by reference source-character-scalar
+      *          by value     length.
+
+     /**
+      * @BIF _STRLENNULL (Compute Length of Null-Terminated String (STRLENNULL))
+      *
+      * @example test/cbl006.cblle
+      */
+      *     call "__strlen" using
+      *          by reference null-terminated-string
+      *          returning into numeric-scalar.

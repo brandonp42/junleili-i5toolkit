@@ -1,0 +1,48 @@
+# This file is part of i5/OS Programmer's Toolkit.
+# 
+# Copyright (C) 2009  Junlei Li (李君磊).
+# 
+# i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+
+#
+# make remotely
+#
+# tasks:
+#  - pack source file: makefile src test
+#  - upload source package to remote host
+#  - unpack source package on remote host
+#  - compile sources using PASE's make utitlity
+#
+
+HOST=g525
+BIN_LIB=lsbin
+HOST_DIR=/home/ljl/chqs/cobol
+BUILD_SCRIPT=$(HOST_DIR)/build.sh
+BUILD_LOG=.build-log
+SRC_LIST=$(shell find . -type f -newer last-upload -a \( -name '*.cblle' -o -name '*.emi' -o -name '*.java' -o -name '*.uim' -o -name '*.c' -o -name '*.pf' -o -name '*.clp' -o -name '*.cbl' -o -name '*.cblleinc' \) ) ../../rules.mk makefile ../../build.sh
+
+all: upload_src compile
+	@echo "end of compilation -- i5toolkit/cobol"
+
+upload_src:
+	lftp -e "cd $(HOST_DIR); mput $(SRC_LIST); by" $(HOST)
+	touch last-upload
+
+compile:
+	rexec $(HOST) "CALL QP2SHELL PARM('$(BUILD_SCRIPT)' '$(HOST_DIR)/$(BUILD_LOG)' '-e BIN_LIB=$(BIN_LIB) -e MAKERULES=rules.mk')"
+	lftp -e "cd $(HOST_DIR); get $(BUILD_LOG); by" $(HOST)
+	cat $(BUILD_LOG)
+
+clean:
+	rexec $(HOST) "CALL QP2SHELL PARM('$(BUILD_SCRIPT)' '$(HOST_DIR)/$(BUILD_LOG)' 'clean')"

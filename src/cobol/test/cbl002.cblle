@@ -1,0 +1,64 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file cbl002.cblle
+      *
+      * Test of:
+      *  - _GENUUID
+      *  - _PROPB
+      */
+       process
+           NOMONOPRC.
+
+       id division.
+       program-id. cbl002.
+
+       environment division.
+       configuration section.
+       special-names.
+           copy mih-lnktyp.
+
+       data division.
+       working-storage section.
+           copy mih-spt.
+       01 result pic x(32).
+       01 tmpl   type uuid-t.
+       01 uuid-len pic 9(9) usage comp-4 value 32.
+
+       procedure division.
+       main-pgm.
+
+           move all x"00" to tmpl.
+           move 32 to bytes-in of tmpl.
+           call "_GENUUID" using
+               by reference tmpl.
+
+           call program "CVTHC" using
+               by reference result
+               by reference uuid of tmpl
+               by reference uuid-len.
+           display "UUID generated: " result.
+
+       see-you.
+           stop run.
+      *
+      * Output of cbl002 might be the following:
+      * UUID generated: 8E47800184071945AC820004AC117E94
+      *

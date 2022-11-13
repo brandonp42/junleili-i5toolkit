@@ -1,0 +1,29 @@
+10       5       6       22      UIM-GETV Get Dialog Variable
+        CPYBLA @000A-#1, :1             ;
+        SETSPP .@000A-#2, :2            ;
+        CPYNV @000A-#3, :3              ;
+        CPYBLAP @000A-#4, :4, ' '       ;
+        SETSPP .@000A-#5, :5            ;
+        CALLI @000A, *, .@000A          ;
+/* builtin %uim-getv*/ DCL INSPTR .@000A AUTO            ;
+DCL DD @000A-#1 CHAR(8) AUTO      ;
+DCL SPCPTR .@000A-#2 AUTO         ;
+DCL DD @000A-#3 BIN(4) AUTO       ;
+DCL DD @000A-#4 CHAR(10) AUTO     ;
+DCL SPCPTR .@000A-#5 AUTO         ;
+ENTRY @000A INT                   ;
+DCL SPCPTR .@000A-APPH AUTO INIT(@000A-#1) ;
+DCL SPCPTR .@000A-VAR-BUFLEN AUTO INIT(@000A-#3) ;
+DCL SPCPTR .@000A-RCD-NAME AUTO INIT(@000A-#4)   ;
+DCL OL @000A-AL-GETV (
+        .@000A-APPH,
+        .@000A-#2,
+        .@000A-VAR-BUFLEN,
+        .@000A-RCD-NAME,
+        .@000A-#5
+) ARG MIN(5);
+DCL SPCPTR @000A-SEPT-PTR BASPCO ;
+/* 12F5 */ DCL SYSPTR @000A-QUIGETV BAS(@000A-SEPT-PTR) POS(77649) ;
+        CALLX @000A-QUIGETV, @000A-AL-GETV, * ;
+BRK '@000A-RTN'                   ;
+        B .@000A                  ;

@@ -1,0 +1,499 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file qattr.mi
+ *
+ * main pgm of tool qattr
+ *
+ */
+
+/include qusec.mi;
+/include uim.mi;
+/include ptrres.mi;
+
+/include qcmn.mi;
+
+dcl spcptr .q-object parm;
+dcl dd q-object-lib char(20) bas(.q-object);
+dcl dd q-name char(10) bas(.q-object) pos(1);
+dcl dd q-lib char(10) bas(.q-object) pos(11);
+dcl spcptr .q-type   parm;
+dcl dd q-type char(10) bas(.q-type);
+dcl dd valid-q-types(2) char(10) auto init(
+  *(1)"*DTAQ",
+  "*USRQ"
+);
+dcl dd found bin(2) auto;
+dcl dd error-msg char(2048) auto;
+dcl dd len bin(4) auto;
+/* the q i operate on */
+dcl sysptr q auto;
+/* context where q stays in */
+dcl sysptr ctx auto;
+dcl ptr null-ptr auto;
+
+/* UIM vars */
+dcl dd pnlgrp-title char(32) auto init("Display Queue Description");
+dcl con pnlgrp-title-len bin(4) init(32);
+
+dcl ol plist-main(
+  .q-object,
+  .q-type
+) parm ext;
+
+dcl dd object-attr char(10) auto;
+dcl spcptr .object-attr auto init(object-attr);
+dcl ol argl-get-object-attr(
+  .object-attr
+) arg;
+
+entry *(plist-main) ext;
+
+  /* check q type */
+  search found, valid-q-types, q-type, 1;
+  cmpnv(b) found, 0 / neq(=+7);
+  cpyblap error-msg, "Invalid queue type.", " ";
+  triml len, error-msg, " ";
+  setspp .sendmsg-msg, error-msg;
+  setspp .sendmsg-msglen, len;
+  calli send-msg, argl-sendmsg, .send-msg;
+  b farewell;
+:
+  calli get-object-attr, argl-get-object-attr, .get-object-attr;
+  cmpnv(b) ec-bytes-out, 0 / eq(=+3);
+  /* report error message */
+  calli report-error, *, .report-error;
+  b farewell;
+:
+  /* open display application */
+  cpyblap pnlgrp, "DSPQAT    I5TOOLKIT", " ";
+  callx .quiopnda, argl-opnda, *;
+  cmpnv(b) uim-ec-bytes-out, 0 / eq(=+4);
+  setspp .qusec, uim-ec;
+  calli report-error, *, .report-error;
+  b farewell;
+:
+
+  /* set panel title */
+  setspp .var-buffer, pnlgrp-title;
+  cpynv var-buflen, pnlgrp-title-len;
+  cpyblap rcd-name, "RTITLE", " ";
+  callx .quiputv, argl-putv, *;
+
+  /* set common q info */
+  cpybla common-q-attr-vqname, qus-objd0200-obj-name;
+  cpybla common-q-attr-vqlib, qus-objd0200-rtn-lib;
+  cpybla common-q-attr-vqobjtype, q-type;
+  cpynv  common-q-attr-vqobjasp, qus-objd0200-asp-num;
+  cpybla common-q-attr-vextattr, qus-objd0200-ext-obj-attr;
+  cpybla common-q-attr-vowner, qus-objd0200-obj-owner;
+  cmpbla(b) qus-objd0200-obj-domain, '*U' / neq(=+2);
+  cpyblap common-q-attr-vdomain, "User", " ";
+:
+  cmpbla(b) qus-objd0200-obj-domain, '*S' / neq(=+2);
+  cpyblap common-q-attr-vdomain, "System", " ";
+:
+  /* set uim vars */
+  setspp .var-buffer, common-q-attrs;
+  cpynv var-buflen, common-q-attrs-len;
+  cpyblap rcd-name, "RCOMMON", " ";
+  callx .quiputv, argl-putv, *;
+
+  /* switch by object type */
+  cmpbla(b) q-type, _USRQ / neq(=+2);
+  calli display-usrq-attr, *, .display-usrq-attr;
+:
+  cmpbla(b) q-type, _DTAQ / neq(farewell);
+  cmpbla(b) object-attr, _DDMQ_EATTR / neq(=+3);
+  calli display-ddmq-attr, *, .display-ddmq-attr;
+  b farewell;
+:
+  calli display-dtaq-attr, *, .display-dtaq-attr;
+
+farewell:
+  callx .quicloa, argl-cloa, *;
+
+  brk 'RTN';
+  rtx *;
+
+/**
+ * @fn get-object-attr
+ *
+ * retreive extended object attriute, using OBJD0200 format
+ *
+ * @param object-attr, char(10)
+ */
+dcl spcptr .p-object-attr parm;
+dcl dd p-object-attr char(10) bas(.p-object-attr);
+dcl ol pl-get-object-attr(
+  .p-object-attr
+) parm int;
+
+/include qusrobjd.mi;
+dcl dd objd0200 char(180) auto;
+
+dcl insptr .get-object-attr;
+entry get-object-attr(pl-get-object-attr) int;
+
+  setspp .qus-objd0200, objd0200;
+  cpynv qus-objd0200-bytes-in, _QUS-OBJD0200-LEN;
+  setsppfp .qusrobjd-receiver, .qus-objd0200;
+  cpynv qusrobjd-buflen, _QUS-OBJD0200-LEN;
+  cpybla qusrobjd-format-name, "OBJD0200";
+  cpybla qusrobjd-object-lib, q-object-lib;
+  cpybla qusrobjd-object-type, q-type;
+  cpynv ec-bytes-in, _USECLEN;
+  setsppfp .qusrobjd-ec, .qusec;
+  callx .qusrobjd, argl-qusrobjd, *;
+
+  /* set object attr param */
+  cpybla p-object-attr, qus-objd0200-ext-obj-attr;
+
+  b .get-object-attr;
+
+/**
+ * @fn display-usrq-attr
+ */
+/include usrqattr.mi;
+
+dcl insptr .display-usrq-attr;
+entry display-usrq-attr int;
+
+  /* get userq attributes */
+  cmpbla(b) q-lib, "*CURLIB" / eq(resolve-q);
+  cmpbla(b) q-lib, "*LIBL" / eq(resolve-q);
+  cpybla rslv-option-obj-type, _CTXTYPE;
+  cpyblap rslv-option-obj-name, q-lib, " ";
+  rslvsp ctx, rslv-option-short, *, x'0000';
+  cpybla rslv-option-obj-type, _USRQTYPE;
+  cpyblap rslv-option-obj-name, q-name, " ";
+  rslvsp q, rslv-option-short, ctx, x'0000';
+  b end-resolve;
+resolve-q:
+  cpybla rslv-option-obj-type, _USRQTYPE;
+  cpyblap rslv-option-obj-name, q-name, " ";
+  rslvsp q, rslv-option-short, *, x'0000';
+end-resolve:
+
+  setspp .matqat-template, matqat-template-buf;
+  cpynv matqat-bytes-in, _MATQAT-TEMPLATE-LEN;
+  matqat .matqat-template, q;
+
+  /* usrq specific info */
+  calli set-uimv-usrq-attr, *, .set-uimv-usrq-attr;
+  setspp .var-buffer, rusrq;
+  cpynv var-buflen, _RUSRQ-LEN;
+  cpyblap rcd-name, "RUSRQ", " ";
+  callx .quiputv, argl-putv, *;
+
+  /* display panel */
+  cpyblap panel-name, "USRQATTR", " ";
+  callx .quidspp, argl-dspp, *;
+  cmpnv(b) uim-ec-bytes-out, 0 / eq(=+3);
+  setspp .qusec, uim-ec;
+  calli report-error, *, .report-error;
+:
+  b .display-usrq-attr;
+
+/**
+ * @pre .matqat-template is prepared by MATQAT
+ * @post .rusrq is filled according to matqat-template
+ */
+dcl spcptr .ptr auto;
+dcl dd ch2 char(2) bas(*) pos(3);
+dcl sysptr forge auto;
+dcl dd rusrq char(384) auto;
+
+dcl dd matptr-template char(77) auto bdry(16);
+dcl spcptr .matptr-template auto init(matptr-template);
+dcl spc * bas(.matptr-template);
+  dcl dd matptr-template-bytes-in bin(4) dir;
+  dcl dd matptr-template-bytes-out bin(4) dir;
+  dcl dd matptr-template-pointer-type char(1) dir;
+  dcl dd matptr-template-ctx char(32) dir;
+  dcl dd matptr-template-obj-type char(2) dir;
+  dcl dd matptr-template-obj-name char(30) dir;
+  dcl dd matptr-template-pointer-auth char(2) dir;
+  dcl dd matptr-template-pointer-target-info char(2) dir;
+
+dcl insptr .set-uimv-usrq-attr;
+entry set-uimv-usrq-attr int;
+
+  setspp .rusrq, rusrq;
+
+  /* creation options */
+  tstbts(b) matqat-create-options, 0 / zer(=+3);
+  cpyblap rusrq-existence-attr, "Permanent", " ";
+  b =+2;
+:
+  cpyblap rusrq-existence-attr, "Temporary", " ";
+:
+
+  tstbts(b) matqat-create-options, 1 / zer(=+3);
+  cpyblap rusrq-space-attr, "Variable-length", " ";
+  b =+2;
+:
+  cpyblap rusrq-space-attr, "Fixed-length", " ";
+:
+
+  tstbts(b) matqat-create-options, 2 / zer(=+3);
+  cpyblap rusrq-init-context, "Addressability in context", " ";
+  b =+2;
+:
+  cpyblap rusrq-init-context, "Addressability not in context", " ";
+:
+  tstbts(b) matqat-create-options, 3 / zer(=+3);
+  cpyblap rusrq-access-group, "Member of access group", " ";
+  b =+2;
+:
+  cpyblap rusrq-access-group, "Not a member of access group", " "; /* zero */
+:
+  tstbts(b) matqat-create-options, 13 / zer(=+3);
+  cpyblap rusrq-initialize-space, "*YES", " ";
+  b =+2;
+:
+  cpyblap rusrq-initialize-space, "*NO", " "; /* zero */
+:
+  cpynv rusrq-space-size, matqat-space-size;
+
+  cpybla rusrq-space-init-value, "X'  '";
+  setspp .ptr, rusrq-space-init-value;
+  cvthc .ptr->ch2, matqat-init-value;
+
+  /* performance class */
+  tstbts(b) matqat-performance-class, 0 / zer(=+3);
+  cpybla rusrq-space-alignment, "1";
+  b =+2;
+:
+  cpybla rusrq-space-alignment, "0";
+:
+  tstbts(b) matqat-performance-class, 3 / zer(=+3);
+  cpybla rusrq-machine-decide-alignment, "*YES";
+  b =+2;
+:
+  cpybla rusrq-machine-decide-alignment, "*NO"; /* zero */
+:
+  tstbts(b) matqat-performance-class, 5 / zer(=+3);
+  cpyblap rusrq-msp, "Machine default", " ";
+  b =+2;
+:
+  cpyblap rusrq-msp, "Process default", " ";
+:
+  tstbts(b) matqat-performance-class, 7 / zer(=+3);
+  cpybla rusrq-storage-transfer, "1";
+  b =+2;
+:
+  cpybla rusrq-storage-transfer, "0"; /* zero */
+:
+  /* context */
+  cpynv matptr-template-bytes-in, 77;
+/*  setspfp forge, matqat-ctx; 这不好使
+  matptr .matptr-template, forge;
+  cpybla rusrq-context-name, matptr-template-obj-name;
+*/
+  cpybla rusrq-context-name, qus-objd0200-rtn-lib;
+
+  cpyblap rusrq-accgrp-name, "*NONE", " ";
+  cmpptre(b) matqat-accgrp, null-ptr / eq(=+3);
+  matptr .matptr-template, matqat-accgrp;
+  cpybla rusrq-accgrp-name, matptr-template-obj-name;
+:
+  /* queue attributes */
+  tstbts(b) matqat-q-attr, 0 / zer(=+3);
+  cpyblap rusrq-msg-content, "Contains pointers and scalar data", " ";
+  b =+2;
+:
+  cpyblap rusrq-msg-content, "Contains scalar data only", " "; /* zero */
+:
+
+dcl dd str-q-type char(2) auto init("00") ;
+        dcl dd str-q-type-1 char(1) def(str-q-type) pos(1) ; 
+        dcl dd str-q-type-2 char(1) def(str-q-type) pos(2) ; 
+  tstbts(i) matqat-q-attr, 1 / nzer(str-q-type-1);
+  tstbts(i) matqat-q-attr, 2 / nzer(str-q-type-2);
+
+  cmpbla(b) str-q-type, "00" / neq(=+2);
+  cpyblap rusrq-q-type, "Keyed", " ";
+:
+  cmpbla(b) str-q-type, "01" / neq(=+2);
+  cpyblap rusrq-q-type, "LIFO", " ";
+:
+  cmpbla(b) str-q-type, "10" / neq(=+2);
+  cpyblap rusrq-q-type, "FIFO", " ";
+:
+  tstbts(b) matqat-q-attr, 3 / zer(=+3);
+  cpyblap rusrq-q-overflow-action, "Extend queue", " ";
+  b =+2;
+:
+  cpyblap rusrq-q-overflow-action, "Signal exception", " ";
+:
+
+  tstbts(b) matqat-q-attr, 4 / zer(=+3);
+  cpyblap rusrq-choose-max-extends, "User", " ";
+  b =+2;
+:
+  cpyblap rusrq-choose-max-extends, "Machine", " ";
+:
+
+  tstbts(b) matqat-q-attr, 5 / zer(=+3);
+  cpybla rusrq-reclaim-storage, "1";
+  b =+2;
+:
+  cpybla rusrq-reclaim-storage, "0";
+:
+/* end of q attr */
+  cpynv rusrq-cur-max-msgs, matqat-cur-max-msgs;
+  cpynv rusrq-cur-msgs-enqed, matqat-cur-msg-num;
+  cpynv rusrq-extendsion-value, matqat-extension-value;
+  cpynv rusrq-key-length, matqat-key-len;
+  cpynv rusrq-max-msg-length, matqat-max-msg-size;
+  cpynv rusrq-max-extends, matqat-max-extend-num;
+  cpynv rusrq-cur-extends, matqat-cur-extend-num;
+  cpynv rusrq-init-msgs, matqat-init-msg-num;
+
+  b .set-uimv-usrq-attr;
+/**
+ * @fn display-ddmq-attr
+ */
+dcl dd rddmq char(62) auto;
+dcl dd ddmq-attr char(90) auto;
+dcl dd ch62 char(62) bas(*) pos(9);
+
+dcl insptr .display-ddmq-attr;
+entry display-ddmq-attr int;
+
+  /* get q description */
+  setspp .ddmq-attr, ddmq-attr;
+  setspp .qmhqrdqd-receiver, ddmq-attr;
+  cpynv ddmq-attr-bytes-in, RDQD0200-LEN;
+  cpynv qmhqrdqd-receiver-len, RDQD0200-LEN;
+  cpybla qmhqrdqd-format, "RDQD0200";
+  setspp .qmhqrdqd-q-lib, q-object-lib;
+  callx .qmhqrdqd, argl-qmhqrdqd, *;
+
+  /* set uim variables */
+  cpybla rddmq, .ddmq-attr->ch62;
+
+  setspp .var-buffer, rddmq;
+  cpynv var-buflen, _RCD-DDMQ-LEN;
+  cpyblap rcd-name, "RDDMQ", " ";
+  callx .quiputv, argl-putv, *;
+
+  /* display panel */
+  cpyblap panel-name, "DDMQATTR", " ";
+  callx .quidspp, argl-dspp, *;
+  cmpnv(b) uim-ec-bytes-out, 0 / eq(=+3);
+  setspp .qusec, uim-ec;
+  calli report-error, *, .report-error;
+:
+  b .display-ddmq-attr;
+
+/**
+ * @fn display-dtaq-attr
+ */
+dcl dd dtaq-attr char(108) auto;
+dcl dd rdtaq char(113) auto;
+
+dcl insptr .display-dtaq-attr;
+entry display-dtaq-attr int;
+
+  /* get q description */
+  setspp .dtaq-attr, dtaq-attr;
+  setspp .qmhqrdqd-receiver, dtaq-attr;
+  cpynv dtaq-attr-bytes-in, RDQD0100-LEN;
+  cpynv qmhqrdqd-receiver-len, RDQD0100-LEN;
+  cpybla qmhqrdqd-format, "RDQD0100";
+  setspp .qmhqrdqd-q-lib, q-object-lib;
+  callx .qmhqrdqd, argl-qmhqrdqd, *;
+
+  /* set uim variables */
+  setspp .rdtaq, rdtaq;
+  cpynv rdtaq-msg-len, dtaq-attr-msg-len;
+  cpynv rdtaq-key-len, dtaq-attr-key-len;
+  cmpbla(b) dtaq-attr-sequence, "F" / neq(=+2);
+  cpyblap rdtaq-sequence, "FIFO", " ";
+:
+  cmpbla(b) dtaq-attr-sequence, "K" / neq(=+2);
+  cpyblap rdtaq-sequence, "Keyed", " ";
+:
+  cmpbla(b) dtaq-attr-sequence, "L" / neq(=+2);
+  cpyblap rdtaq-sequence, "LIFO", " ";
+:
+  cmpbla(b) dtaq-attr-inclue-sender-id, "Y" / neq(=+2);
+  cpybla rdtaq-inclue-sender-id, "*YES";
+:
+  cmpbla(b) dtaq-attr-inclue-sender-id, "N" / neq(=+2);
+  cpyblap rdtaq-inclue-sender-id, "*NO", " ";
+:
+  cmpbla(b) dtaq-attr-force-indicator, "Y" / neq(=+2);
+  cpybla rdtaq-force-indicator, "*YES";
+:
+  cmpbla(b) dtaq-attr-force-indicator, "N" / neq(=+2);
+  cpyblap rdtaq-force-indicator, "*NO", " ";
+:
+  cpybla rdtaq-text, dtaq-attr-text;
+  cmpbla(b) dtaq-attr-auto-reclaim, "1" / neq(=+2);
+  cpyblap rdtaq-auto-reclaim, "*YES", " ";
+:
+  cmpbla(b) dtaq-attr-auto-reclaim, "0" / neq(=+2);
+  cpyblap rdtaq-auto-reclaim, "*NO", " ";
+:
+  cpynv rdtaq-msg-num, dtaq-attr-msg-num;
+  cpynv rdtaq-entries-alloced, dtaq-attr-entries-alloced;
+  cpynv rdtaq-max-msg-num, dtaq-attr-max-msg-num;
+  cpynv rdtaq-init-msg-num, dtaq-attr-init-msg-num;
+
+  setspp .var-buffer, rdtaq;
+  cpynv var-buflen, RCD-DTAQ-LEN;
+  cpyblap rcd-name, "RDTAQ", " ";
+  callx .quiputv, argl-putv, *;
+
+  /* display panel */
+  cpyblap panel-name, "DTAQATTR", " ";
+  callx .quidspp, argl-dspp, *;
+  cmpnv(b) uim-ec-bytes-out, 0 / eq(=+3);
+  setspp .qusec, uim-ec;
+  calli report-error, *, .report-error;
+:
+  b .display-dtaq-attr;
+
+/**
+ * report error
+ *
+ * @param[in]  qusec
+ * @post       send message to interactive user
+ */
+dcl insptr .report-error;
+entry report-error int;
+
+  brk 'RTPERR';
+
+  cpybla sndpm-msgid, ec-exid;
+  cpyblap sndpm-msgf, "QCPFMSG   QSYS", " ";
+  setspp .sendmsg-msg, ec-exdata;
+  setspp .sendmsg-msglen, ec-bytes-out;
+  calli send-msg, argl-sendmsg, .send-msg;
+
+  b .report-error;
+
+/include sendmsg.mi;
+
+pend;
+
+/* eof */

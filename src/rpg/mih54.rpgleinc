@@ -1,0 +1,377 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih54.rpgleinc
+      *
+      * Header of system builtins for ILE RPG provided by the
+      * open-source project i5/OS Programmer's Toolkit.
+      * For details please refer to the project's web site,
+      * http://i5toolkit.sourceforge.net/
+      *
+      * @attention This header is for i5/OS Release 5 Version 4 or higher.
+      */
+
+      /if not defined(i5toolkit_rpg_mih54)
+      /define i5toolkit_rpg_mih54
+
+      /copy mih52
+
+     /**
+      * @BIF _MPYADD (Multiply-Add (MPYADD))
+      */
+     d mpyadd          pr             8f   extproc('_MPYADD')
+     d   multiplicand                 8f   value
+     d   multiplier                   8f   value
+     d   addend                       8f   value
+
+     /**
+      * @BIF _MPYSUB (Multiply-Subtract (MPYSUB))
+      */
+     d mpysub          pr             8f   extproc('_MPYSUB')
+     d   multiplicand                 8f   value
+     d   multiplier                   8f   value
+     d   addend                       8f   value
+
+     /**
+      * @BIF _CALLPGMV (Call Program with Variable Length Argument List (CALLPGMV))
+      *
+      * call program with variable length argument list
+      */
+     d callpgmv        pr                  extproc('_CALLPGMV')
+     d     pgm_ptr                     *
+     d     argv                        *   dim(1) options(*varsize)
+     d     argc                      10u 0 value
+
+     /* materialization template of TOD clock adjustment for MATTODAT */
+     d mattodat_adjustment_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     adj_opt                    2a
+     d                                6a
+      * Time interval is a time value which specifies the remaining
+      * amount of time by which the time-of-day clock will be
+      * increased or decreased.
+     d time_interval...
+     d                                8a
+      * Adjustment duration is a time value which provides an estimate
+      * of the amount of time required in order to complete the
+      * time-of-day clock adjustment.
+     d adj_duration...
+     d                                8a
+     d mattodat_adjustment_len...
+     d                 c                   32
+
+     /**
+      * @BIF _MATTODAT (Materialize Time of Day Clock Attributes (MATTODAT))
+      *
+      * @return 0 upon successful completion, otherwise an error number
+      * incicates the corresponding error condition.
+      */
+     d mattodat        pr            10i 0 extproc('_MATTODAT')
+     d     attr                        *   value
+     d     selection                 10u 0 value
+
+     /* Shared storage synchronization */
+
+     /**
+      * @BIF _ATMCADD4 (Atomic Add (ATMCADD))
+      *
+      * @return original value of sum_addend
+      */
+     d atmcadd4        pr            10i 0 extproc('_ATMCADD4')
+     d     sum_addend                10i 0
+     d     augend                    10i 0 value
+
+     /**
+      * @BIF _ATMCADD8 (Atomic Add (ATMCADD))
+      *
+      * atomic add 8-byte singed binary value.
+      */
+     d atmcadd8        pr            20i 0 extproc('_ATMCADD8')
+     d     sum_addend                20i 0
+     d     augend                    20i 0 value
+
+     /**
+      * @BIF _ATMCAND4 (Atomic And (ATMCAND))
+      *
+      * @return original value of op1
+      */
+     d atmcand4        pr            10u 0 extproc('_ATMCAND4')
+     d     op1                       10u 0
+     d     mask                      10u 0 value
+
+     /**
+      * @BIF _ATMCAND8 (Atomic And (ATMCAND))
+      *
+      * atomic and 8-byte unsinged binary value.
+      */
+     d atmcand8        pr            20u 0 extproc('_ATMCAND8')
+     d     op1                       20u 0
+     d     mask                      20u 0 value
+
+     /**
+      * @BIF _ATMCOR4 (Atomic Or (ATMCOR))
+      *
+      * atomic or 4-byte unsinged binary value.
+      *
+      * @return original value of op1
+      */
+     d atmcor4         pr            10u 0 extproc('_ATMCOR4')
+     d     op1                       10u 0
+     d     mask                      10u 0 value
+
+     /**
+      * @BIF _ATMCOR8 (Atomic Or (ATMCOR))
+      *
+      * atomic or 8-byte unsinged binary value.
+      *
+      * @return original value of op1
+      */
+     d atmcor8         pr            20u 0 extproc('_ATMCOR8')
+     d     op1                       20u 0
+     d     mask                      20u 0 value
+
+     /* pointer resolution */
+
+     /**
+      * @BIF _RETTSADR (Retrieve Teraspace Address From Space Pointer (RETTSADR))
+      *
+      * @remark instruction may be specified in a program template
+      *         only when the (bound) program is to be created as
+      *         teraspace capable. So to use _RETTSADR in ILE RPG you
+      *         need to have a 7.1 machine. For an ILE C example,
+      *         refer to test/t084.c
+      */
+     d rettsadr        pr             8a   extproc('_RETTSADR')
+     d     spc_ptr                     *   value
+
+     /* end -- pointer resolution */
+
+     /**
+      * @BIF _CHKLKVAL (Check Lock Value (CHKLKVAL))
+      *
+      * @remark CHKLKVAL and CLRLKVAL are available since V5R3
+      */
+     d chklkval        pr            10i 0 extproc('_CHKLKVAL')
+     d     lock                      20i 0
+     d     old_val                   20i 0 value
+     d     new_val                   20i 0 value
+
+     /**
+      * @BIF _CLRKLVAL (Clear Lock Value (CLRLKVAL))
+      */
+     d clrlkval        pr                  extproc('_CLRLKVAL')
+     d     lock                      20i 0
+     d     new_val                   20i 0 value
+
+     /**
+      * @BIF _SYNCSTG (Synchronize Shared Storage Accesses (SYNCSTG))
+      */
+     d syncstg         pr                  extproc('_SYNCSTG')
+     d     action                    10u 0 value
+
+     /* end -- Shared storage synchronization */
+
+     /* Machine Interface Support Functions */
+
+     d matmif_tmpl_t   ds                  qualified
+     d     bytes_in                  10u 0
+     d     bytes_out                 10u 0
+
+     /* Materialization template for MATMIF with option x'0001' */
+     d matmif_basic_tmpl_t...
+     d                 ds                  qualified
+     d     bytes_in                  10u 0
+     d     bytes_out                 10u 0
+      *
+      * Maximum memory.  The maximum amount of memory (in units of
+      * megabytes) that can be assigned to this partition.
+      *
+     d     max_mem                   20u 0
+      * Minimum memory
+     d     min_mem                   20u 0
+      * Dispatch wheel rotation period
+     d     dsp_whl_period...
+     d                               20u 0
+     d     partition_id...
+     d                               10u 0
+      *
+      * indicators
+      *   bit 0-29, reserved (binary 0)
+      *   bit 30, bound hardware thread indicator
+      *     0 = Hardware threads are not bound
+      *     1 = Hardware threads are bound
+      *   bit 31, Dedicated processors indicator
+      *     0 = Partition shares processors
+      *     1 = Partition has dedicated processors
+      *
+     d     indicator                  4a
+      * Maximum processors in the physical machine
+     d     max_prc_in_machine...
+     d                               10u 0
+      * Minimum virtual processors
+     d     min_vic_prcs...
+     d                               10u 0
+      * Maximum virtual processors
+     d     max_vic_prcs...
+     d                               10u 0
+      *
+      * Minimum processing capacity (in units of 1/100 of a physical
+      * processor)
+      *
+     d     min_prc_cap...
+     d                               10u 0
+      *
+      * Maximum processing capacity (in units of 1/100 of a physical
+      * processor)
+      *
+     d     max_prc_cap...
+     d                               10u 0
+      *
+      * Processing capacity delta. The delta (in units of 1/100 of a
+      * physical processor) can be added to or removed from this
+      * partition's processing capacity.
+      *
+     d     prc_cap_delta...
+     d                               10u 0
+      * Minimum interactive capacity percentage
+     d     min_int_cap_percent...
+     d                               10u 0
+      * Maximum interactive capacity percentage
+     d     max_int_cap_percent...
+     d                               10u 0
+      * Hardware threads per processor
+     d     hdw_thds_per_prc...
+     d                                5u 0
+     d     partition_name...
+     d                              256a
+     d                                6a
+     d     memory_delta...
+     d                               20u 0
+      * Configured virtual processors
+     d     cfg_vic_prcs...
+     d                               10u 0
+      *
+      * Configured processing capacity.  The processing capacity (in
+      * units of 1/100 of a physical processor) that is configured for
+      * this partition.
+      *
+     d     cfg_prc_cap...
+     d                               10u 0
+      * Configured interactive capacity percentage
+     d     cfg_int_cap_percent...
+     d                               10u 0
+      * Configured variable processing capacity weight
+     d     cfg_var_prc_cap...
+     d                               10u 0
+      * Configured memory
+     d     cfg_memory...
+     d                               20u 0
+
+     /* Materialization template for MATMIF with option x'0002' */
+     d matmif_prc_tmpl_t...
+     d                 ds                  qualified
+     d     bytes_in                  10u 0
+     d     bytes_out                 10u 0
+      * Usable memory
+     d     usable_memory...
+     d                               20u 0
+      * CPU time since IPL
+     d     cpu_time...
+     d                               20u 0
+      * Interactive time since IPL
+     d     int_time...
+     d                               20u 0
+      * Excess interactive time since IPL
+     d     exc_int_time...
+     d                               20u 0
+      * Shared processor pool idle time since IPL
+     d     shr_prc_pool_idl_time...
+     d                               20u 0
+      *
+      * indicators.
+      *   bits 0-27, reserved (binary 0)
+      *   bit 28, Service aggregation point indicator
+      *     0 = This partition has a service aggregation point
+      *     1 = Another partition or HMC has a service aggregation point
+      *   bit 29, Capped partition indicator
+      *     0 = Uncapped partition
+      *     1 = Capped partition
+      *   bit 30, Hardware multi-threading indicator
+      *     0 = Hardware multi-threading is not enabled
+      *     1 = Hardware multi-threading is enabled
+      *   bit 31, shared processor pool idle time since IPL indicator
+      *     0 = Shared processor pool idle time since IPL was not materialized
+      *     1 = Shared processor pool idle time since IPL was materialized
+      *
+     d     indicator                  4a
+      * Processors in the physical machine
+     d     physical_prcs...
+     d                               10u 0
+      * Usable virtual processors
+     d     usable_vic_prcs...
+     d                               10u 0
+      * Physical processors in the shared processor pool
+     d     phy_prcs_in_pool...
+     d                               10u 0
+      * Unallocated processing capacity in the partition group
+     d     una_prc_cap_in_pgp...
+     d                               10u 0
+      * Usable processing capacity
+     d     usable_prc_cap...
+     d                               10u 0
+      * Usable variable processing capacity weight
+     d     usable_var_prc_cap...
+     d                               10u 0
+      * Unallocated variable processing capacity weight -- @here
+     d     una_var_prc_cap...
+     d                               10u 0
+      * Minimum required processing capacity
+     d     min_req_prc_cap...
+     d                               10u 0
+      * Interactive capacity percentage
+     d     int_cap_perctent...
+     d                               10u 0
+      * Partition group ID
+     d     pgp_id                     5u 0
+      * Shared processor pool ID
+     d     shr_prc_pool_id...
+     d                                5u 0
+      * Interactive threshold
+     d     int_threshold...
+     d                                5u 0
+     d                                2a
+      * Unallocated interactive processor capacity in the partition group
+     d     una_int_prc_cap...
+     d                               10u 0
+     d                               12a
+
+     /**
+      * @BIF _MATMIF (Materialize Machine Information (MATMIF))
+      */
+     d matmif          pr                  extproc('_MATMIF')
+     d     receiver                        likeds(matmif_tmpl_t)
+     d     option                     5u 0 value
+
+     /* end -- Machine Interface Support Functions */
+
+      /endif
+     /* eof - mih54.rpgleinc */

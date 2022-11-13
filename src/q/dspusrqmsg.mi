@@ -1,0 +1,220 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file dspusrqmsg.mi
+ *
+ * tool program to display messages in a user queue
+ *
+ * usage: call dspusrqmsg 'Q_NAME'
+ */
+
+/include ptrres.mi;
+
+entry i-main(pl-main) ext;
+
+  /* resolve q */
+  cpybla rslv-option-obj-type, x"0A02";
+  cpyblap rslv-option-obj-name, q-name, " ";
+  rslvsp q, rslv-option-short, *, x'0000';
+
+  /*
+   * first time, get:
+   *  - matqmsg-msg-size
+   *  - matqmsg-key-size
+   */
+  cpynv matqmsg-bytes-in, min-matqmsg-tmpl-len;
+  matqmsg .matqmsg-tmpl, q, matqmsg-selection;
+
+  /**
+   * second time, get;
+   *  - storage needed by all messages include keys and message text
+   *    matqmsg-bytes-needed
+   */
+  calli cal-message-entry-length, *, .cal-message-entry-length;
+  matqmsg .matqmsg-tmpl, q, matqmsg-selection;
+
+  /**
+   * third time:
+   *  - save matqmsg-bytes-needed
+   *  - re-allocate on .matqmsg-tmpl
+   *  - really retrieve messages
+   */
+dcl dd final-receiver-size bin(4) auto;
+  cpynv final-receiver-size, matqmsg-bytes-needed;
+  modasa .matqmsg-tmpl, matqmsg-bytes-needed;
+  cpynv matqmsg-bytes-in, final-receiver-size;
+  matqmsg .matqmsg-tmpl, q, matqmsg-selection;
+
+  /**
+   * now, show what we get to the user
+   */
+  calli display, *, .display;
+
+  rtx *;
+
+/**
+ * @function display
+ *
+ * @pre .matqmsg-tmpl
+ *
+ * @post send q messages to interactive user
+ *
+ * steps
+ *  - walk throught each message entry
+ *  - convert msge-enqueque-time to timestamp
+ *  - display message enqueue time, message key, message text
+ */
+/include when.mi;
+/include sendmsg.mi;
+
+dcl dd len bin(4) auto;
+dcl dd index bin(4) auto;
+dcl spcptr .msg-key auto;
+dcl spcptr .msg-text auto;
+
+dcl dd info char(32) auto;
+dcl dd info-num char(6) def(info) pos(1);
+  dcl dd z-info-num znd(5,0) def(info-num) pos(1);
+  dcl dd * char(1) def(info-num) pos(6) init(" ");
+dcl dd info-text char(26) def(info) pos(7);
+dcl con info-len bin(4) init(32);
+
+/* debug */
+dcl dd buf char(64) bas(*);
+
+dcl insptr .display;
+entry display int;
+
+  cpynv index, 0;
+  addspp .message-entry, .matqmsg-tmpl, min-matqmsg-tmpl-len;
+  setspp .sendmsg-msglen, len;
+loop:
+  addn(s) index, 1;
+  cmpnv(b) index, matqmsg-msgs-on-q / hi(end-loop);
+
+  /* number */
+  cpynv z-info-num, index;
+
+  /* enqueued time */
+  setspp .a-system-clock, msge-enqueque-time;
+  setspp .a-timestamp, info-text;
+  calli 
+    get-local-saa-timestamp,
+    argl-get-local-saa-timestamp,
+    .get-local-saa-timestamp;
+
+  cpynv len, info-len;
+  setspp .sendmsg-msg, info;
+  calli send-msg, argl-sendmsg, .send-msg;
+
+  /* message key */
+  addspp .msg-key, .message-entry, message-entry-header-len;
+  cpynv len, matqmsg-key-size;
+  setsppfp .sendmsg-msg, .msg-key;
+  calli send-msg, argl-sendmsg, .send-msg;
+
+  /* message text */
+  addspp .msg-text, .msg-key, selection-key-bytes;
+  cpynv len, msge-length;
+  setsppfp .sendmsg-msg, .msg-text;
+  calli send-msg, argl-sendmsg, .send-msg;
+
+  addspp .message-entry, .message-entry, message-entry-length; /* debug: 这个算错了 */
+  b loop;
+end-loop:
+
+  b .display;
+
+/**
+ * @function cal-message-entry-length
+ *
+ * @pre matqmsg-msg-size
+ * @pre matqmsg-key-size
+ *
+ * @post selection-key-bytes
+ * @post selection-msg-bytes
+ * @post message-entry-length
+ */
+dcl insptr .cal-message-entry-length auto;
+entry cal-message-entry-length int;
+
+dcl dd quotient bin(4) auto;
+dcl dd remainder bin(4) auto;
+  divrem quotient, matqmsg-msg-size, 16, remainder;
+  cmpnv(b) remainder, 0 / eq(=+2);
+  addn(s) quotient, 1;
+:
+  mult selection-msg-bytes, quotient, 16;
+
+  divrem quotient, matqmsg-key-size, 16, remainder;
+  cmpnv(b) remainder, 0 / eq(=+2);
+  addn(s) quotient, 1;
+:
+  mult selection-key-bytes, quotient, 16;
+
+  addn message-entry-length, selection-msg-bytes, selection-key-bytes;
+  addn(s) message-entry-length, message-entry-header-len;
+
+  b .cal-message-entry-length;
+
+/* variables */
+dcl spcptr .q-name parm;
+dcl ol pl-main(.q-name) parm ext;
+
+dcl dd q-name char(10) bas(.q-name);
+dcl sysptr q auto;
+
+/**
+ * receiver template
+ */
+dcl dd matqmsg-tmpl char(32) auto bdry(16);
+dcl spcptr .matqmsg-tmpl auto init(matqmsg-tmpl);
+dcl spc * bas(.matqmsg-tmpl);
+  dcl dd matqmsg-bytes-in      bin(4) dir;
+  dcl dd matqmsg-bytes-needed  bin(4) dir;
+  dcl dd matqmsg-msgs-returned bin(4) dir;
+  dcl dd matqmsg-msgs-on-q     bin(4) dir;
+  dcl dd matqmsg-msg-size      bin(4) dir;
+  dcl dd matqmsg-key-size      bin(4) dir;
+dcl con min-matqmsg-tmpl-len bin(4) init(32);
+
+/**
+ * selection template
+ */
+dcl dd matqmsg-selection char(16) auto;
+  dcl dd * char(2) def(matqmsg-selection) pos(1) init(x"1000");
+    /* select all messages: 00010000, 00000000 */
+  dcl dd selection-key-bytes bin(4) def(matqmsg-selection) pos(3);
+  dcl dd selection-msg-bytes bin(4) def(matqmsg-selection) pos(7);
+
+/**
+ * message entry
+ *
+ * @see cal-message-entry-length
+ */
+dcl spcptr .message-entry auto;
+dcl spc * bas(.message-entry);
+  dcl dd msge-enqueque-time char(8) dir;
+  dcl dd msge-length bin(4) dir;
+dcl dd message-entry-length bin(4) auto;
+dcl con message-entry-header-len bin(4) init(16);
+
+pend;
+
+/* eof - dspusrqmsg.mi */

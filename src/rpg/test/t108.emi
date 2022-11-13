@@ -1,0 +1,82 @@
+/**
+ * This file is part of i5/OS Programmer's Toolkit.
+ *
+ * Copyright (C) 2010, 2011  Junlei Li.
+ *
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file t108.emi
+ *
+ * Create or destroy mutex needed by t109.rpgle.
+ *
+ * @remark *USRSPC used in this example can be created by the calling QUSCRTUS, e.g.
+ * CALL QUSCRTUS ('MTX       XLIB' 'MTX' x'00001000' x'00' '*CHANGE' 'MTX')
+ */
+
+dcl spcptr flag-ptr parm        ;
+dcl ol pl(flag-ptr) parm ext    ;
+entry *(pl) ext                 ;
+
+/**
+ * flag value that indicate whether to create or destroy target *USRSPC.
+ * 'C' = create
+ * 'D' = destroy
+ */
+dcl dd flag char(1) bas(flag-ptr) ;
+
+        rslvsp mtx-spc, *, *, * ;
+        setsppfp p, mtx-spc     ;
+
+        cmpbla(b) flag, 'C' / neq(=+2) ;
+        calli crt-mtx, *, crt-mtx-ptr  ;
+:       
+        cmpbla(b) flag, 'D' / neq(=+2) ;
+        calli des-mtx, *, des-mtx-ptr  ;
+:       
+        rtx *                   ;
+
+dcl insptr crt-mtx-ptr auto     ;
+entry crt-mtx int               ;
+
+        cpybla mtx-keep-valid-opt, x'01' ; /* create a long-life mutex */
+        crtmtx p, crt-mtx-tmpl-ptr, rtn  ;
+
+        b crt-mtx-ptr           ;
+
+dcl insptr des-mtx-ptr auto     ;
+entry des-mtx int               ;
+
+        desmtx p, des-mtx-opt-ptr, rtn ;
+
+        b des-mtx-ptr           ;
+
+/* globals */
+dcl sysptr mtx-spc auto init (
+        "MTX", type(spc, h'34')
+)                               ;
+dcl spcptr p auto               ;
+dcl dd crt-mtx-tmpl char(32) auto ;
+dcl spcptr crt-mtx-tmpl-ptr auto init(crt-mtx-tmpl) ;
+dcl spc crt-mtx-tmpl-t bas(crt-mtx-tmpl-ptr)        ;
+        dcl dd * char(1) dir                        ;
+        dcl dd mtx-name-opt char(1) dir             ;
+        dcl dd mtx-keep-valid-opt char(1) dir       ;
+        dcl dd mtx-recursive-opt char(1) dir        ;
+dcl dd rtn bin(4) auto          ;
+dcl dd des-mtx-opt bin(4) auto init(0) ;
+dcl spcptr des-mtx-opt-ptr auto init(des-mtx-opt) ;
+
+pend                            ;

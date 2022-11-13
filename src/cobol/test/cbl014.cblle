@@ -1,0 +1,110 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file cbl014.cblle
+      *
+      * Test of:
+      *  - _RSLVSP2 (Resolve System Pointer)
+      *  - _MODS (Modify Space)
+      *
+      * This program changes a USRSPC to an auto-extendable one.
+      *
+      * @pre Remember ot call the QUSCRTUS API like the following to
+      *      create *USRSPC CBL014 before running this program:
+      * CALL PGM(QUSCRTUS)
+      *      PARM('CBL014    LSBIN' 'CBL014' X'00001000' X'00' '*CHANGE' '')
+      */
+
+       process
+           NOSTDTRUNC
+           NOMONOPRC.
+
+       id division.
+       program-id. cbl014.
+
+       environment division.
+       configuration section.
+       special-names.
+           copy mih-lnktyp.
+
+       data division.
+       working-storage section.
+
+           copy mih-comp.
+           copy mih-ptr.
+           copy mih-spc.
+
+       01 spc-obj      usage pointer.
+       01 r-tmpl       type rslvsp-tmpl-t.
+       01 spc-attr     type mats-tmpl-t.
+       01 spc-ptr      usage pointer.
+       01 extend-flag  pic 9(9) usage comp-4.
+       01 bit-offset   pic 9(9) usage comp-4 value 14.
+       01 mods-tmpl    type mods-tmpl-t.
+
+       procedure division.
+       main-program.
+
+      * resolve the system pointer to *USRSPC *LIBL/CBL014
+           move all x"00" to r-tmpl.
+           move x"1934"   to obj-type of r-tmpl.
+           move "CBL014"  to obj-name of r-tmpl.
+           call "_RSLVSP2" using
+                by reference spc-obj
+                by reference r-tmpl.
+
+      * materialize space attributes of USRSPC CBL014
+           move all x"00" to spc-attr.
+           move length of mats-tmpl-t to bytes-in of spc-attr.
+           call "_MATS" using
+                by reference spc-attr
+                by reference spc-obj.
+      * crt-opt of spc-attr is hex 'E00000'
+      *  bit 0 = 1, CBL014 is a PERMANENT object
+      *  bit 1 = 1, CBL014 is variable-length space object. So you can change the size of it via the MODS instruction
+      *  bit 2 = 1, The addressibility of CBL014 was inserted into a context object when created
+      *  bit 14 = 0, CBL014 cannot be extend automatically!
+
+      * change CBL014 to a automatically extend space.
+           call "_TSTBTS" using
+                by reference   crt-opt of spc-attr
+                by value       bit-offset
+                returning into extend-flag.
+           if extend-flag is equal to 0
+              then
+              move all x"00" to mods-tmpl
+              move 6 to bit-offset
+              call "_SETBTS" using
+                   by reference selection of mods-tmpl
+                   by value     bit-offset
+              move 3 to bit-offset
+              call "_SETBTS" using
+                   by reference attr of mods-tmpl
+                   by value     bit-offset
+              call "_MODS2" using
+                   by reference spc-obj
+                   by reference mods-tmpl
+           else
+               display "The space object is already an auto-extendable one."
+           end-if.
+
+
+           stop run.
+       end program cbl014.

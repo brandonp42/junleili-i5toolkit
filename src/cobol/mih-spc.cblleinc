@@ -1,0 +1,147 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-spc.cblleinc
+      *
+      * Space management instructions.
+      */
+
+      *A   B
+
+     /**
+      * Instruction template for the CRTS instruction.
+      *
+      * @remark The obj-type field (MI object type/subtype) must be
+      *         hex 19EF when the CRTS instruction is issued from a
+      *         user state program at security level 40 or above.
+      */
+       01 crts-tmpl-t is typedef.
+          05 bytes-in   pic 9(9) usage comp-4.
+          05 bytes-out  pic 9(9) usage comp-4.
+          05 obj-type   pic x(2).
+          05 obj-name   pic x(30).
+          05 crt-opt    pic x(4).
+          05 filler     pic x(2).
+      * x"0000" for the system ASP
+          05 asp-num    pic x(2).
+          05 spc-size   pic 9(9) usage comp-4.
+          05 init-val   pic x.
+          05 perf-cls   pic x(4).
+          05 filler     pic x.
+          05 pub-auth   pic x(2).
+          05 ext-offset pic 9(9) usage comp-4.
+      * context into which the addressibility of the created space is inserted
+          05 ctx        usage pointer.
+      * access group
+          05 acc-grp    usage pointer.
+
+     /* Instruction template of CRTS with extension */
+       01 crts-tmpl-ex-t is typedef.
+          05 base       type crts-tmpl-t.
+          05 usrprf     usage pointer.
+          05 max-size   pic 9(9) usage comp-4.
+      *
+      * hex 0000 = The domain is chosen by the machine
+      * hex 0001 = user domain
+      * hex 8000 = system domain
+      *
+          05 domain     pic x(2).
+          05 filler     pic x(42).
+
+     /**
+      * @BIF _CRTS (Create Space (CRTS))
+      *
+      * @example test/t165.rpgle
+      */
+      *    call "_CRTS" using
+      *         by reference system-pointer-to-created-space-object
+      *         by reference instruction-template.
+
+     /**
+      * @BIF _DESS (Destroy Space (DESS))
+      *
+      * @example test/t165.rpgle
+      */
+      *    call "_DESS" using
+      *         by reference system-pointer-to-created-space-object
+
+     /* Materialization template for MATS */
+       01 mats-tmpl-t is typedef.
+          05 bytes-in    pic 9(9) usage comp-4.
+          05 bytes-out   pic 9(9) usage comp-4.
+          05 obj-id.
+             10 obj-type pic x(2).
+             10 obj-name pic x(30).
+          05 crt-opt     pic x(4).
+          05 filler      pic x(2).
+          05 asp-num     pic 9(4) usage comp-4.
+          05 spc-size    pic 9(9) usage comp-4.
+          05 init-val    pic x.
+          05 perf-cls    pic x(4).
+          05 filler      pic x(7).
+      * context
+          05 ctx         usage pointer.
+      * access group
+          05 ag          usage pointer.
+          05 filler      pic x(16).
+          05 max-spc-size    pic 9(9) usage comp-4.
+
+     /**
+      * @BIF _MATS (Materialize Space Attributes (MATS))
+      *
+      * @example cbl013.cblle
+      * @example cbl014.cblle
+      */
+      *    call "_MATS" using
+      *         by reference mats-tmpl-t
+      *         by reference system-pointer-to-space-object.
+
+     /**
+      * @BIF _MODS1 (Modify Space Attributes (MODS))
+      *
+      * Change the size of a space object.
+      */
+      *    call "_MODS1" using
+      *         by reference system-pointer-to-space-object
+      *         by reference size-of-space.
+
+     /**
+      * Instruction template of _MODS2
+      */
+       01 mods-tmpl-t is typedef.
+          05 selection   pic x(4).
+          05 attr        pic x(4).
+          05 max-2nd-spc-size pic 9(9) usage comp-4.
+          05 spc-size    pic 9(9) usage comp-4.
+          05 init-val    pic x.
+          05 perf-cls    pic x(4).
+          05 filler      pic x.
+      * number of secondary associated spaces
+          05 num-2nd-spc pic 9(4) usage comp-4.
+          05 filler      pic x(4).
+
+     /**
+      * @BIF _MODS2 (Modify Space Attributes (MODS))
+      *
+      * @example cbl014.cblle
+      */
+      *    call "_MODS2" using
+      *         by reference system-pointer-to-space-object
+      *         by reference mods-tmpl-t.

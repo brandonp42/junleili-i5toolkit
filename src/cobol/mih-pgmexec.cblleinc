@@ -1,0 +1,69 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-pgmexec.cblleinc
+      *
+      * Program execution instructions.
+      *
+      * @remark To use TYPEDEFs declared here, include this file
+      *         in the working-storage or linkage sections of
+      *         your ILE COBOL program.
+      */
+
+      *A   B
+
+     /**
+      * @BIF _MODASA (Modify Automatic Storage Allocation (MODASA))
+      *
+      * _MODASA can be used by ILE HLL programs to allocate storage on
+      * the automatic storage frame (ASF). When the ASF is extended,
+      * the extension is aligned on a 16-byte boundary. An extension
+      * is not initialized.
+      *
+      * @remark Note that unlike MI instruction MODASA, builtin
+      *         _MODASA cannot be used to truncate ASF. Passing a
+      *         negative value to _MODASA will raise a Scalar Value
+      *         Invalid exception (3203)
+      * @example test/cbl005.cblle
+      */
+
+     /**
+      * Opertional descriptors returned by _NPMPARMLISTADDR.
+      */
+       01 op-desc-t is typedef.
+      *   number of arguments passed by a procedure's caller
+          05 argc pic 9(9) usage comp-4.
+          05 filler pic x(28).
+          05 desc pic x(8) occurs 255 times.
+
+     /**
+      * Bound Procedure Parameter List Format
+      */
+       01 npm-plist-t is typedef.
+          05 op-desc-ptr pointer.
+          05 mch-work-area pic x(16).
+          05 arguments pic x(32767).
+
+     /**
+      * @BIF _NPMPARMLISTADDR (NPM Procedure Parameter List Address (NPM_PARMLIST_ADDR))
+      *
+      * @return space pointer to a npm-plist-t structure
+      * @example test/cbl004.cblle
+      */

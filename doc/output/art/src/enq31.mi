@@ -1,0 +1,35 @@
+/*
+ * @file enq31.mi
+ *
+ * enqueue USRQ Q31(keyed, key length = 8, entry lenght=64)
+ *
+ * usage example: CALL ENQ31 PARM('00000003' 'ABCDE...')
+ */
+
+dcl sysptr q auto init("Q34", ctx("LSBIN"), type(q, 02)) ; 
+dcl dd message-prefix char(9) auto ;
+        dcl dd prefix-msglen bin(4) def(message-prefix) pos(1);
+        dcl dd prefix-key char(5) def(message-prefix) pos(5) ; 
+
+dcl spcptr .key parm                ; 
+dcl spcptr .text parm                ; 
+dcl ol pl-main(.key, .text) parm ext        ; 
+
+dcl dd key char(8) bas(.key)    ; 
+dcl dd text char(64) bas(.text) ; 
+
+dcl dd msg char(64) auto bdry(16) ;
+dcl spcptr msg-ptr auto init(msg) ; 
+
+entry *(pl-main) ext;
+
+        /* enq */
+        cpynv prefix-msglen, 64;
+        cpybla prefix-key, key  ;
+        cpybla msg, text        ; 
+        enq q, message-prefix, msg-ptr ; 
+
+        rtx *;
+
+pend;
+/* eof - enq31.mi */

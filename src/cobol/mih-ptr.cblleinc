@@ -1,0 +1,120 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-ptr.cblleinc
+      *
+      * Pointer/name resolution instructions.
+      */
+
+      *A   B
+
+     /**
+      * @BIF _CMPPTRA (Compare Pointer for Object Addressability (CMPPTRA))
+      */
+
+     /**
+      * @BIF _CMPPTRT (Compare Pointer Type (CMPPTRT))
+      *
+      * @return _CMPPTRT returns a 4-byte binary to indicate the test
+      * result. 1 if input-pointer is of specified type, 0 if not.
+      *
+      * @example test/cbl010.cblle
+      */
+      *    call "_CMPPTRT" using
+      *         by value 1-byte-pointer-type
+      *         by value input-pointer
+      *         returning into test-result.
+
+     /**
+      * Instruction template of MATPTRL.
+      *
+      * @remark 8-byte bitmap can be used to test 1024 bytes storage.
+      *         To test larger range of storage, increase the length
+      *         of bitmap.
+      */
+       01 matptrl-tmpl-t is typedef.
+          05 bytes-in    pic 9(9) usage comp-4.
+          05 bytes-out   pic 9(9) usage comp-4.
+          05 bitmap      pic x(8).
+
+     /**
+      * @BIF _MATPTRL (Materialize Pointer Locations (MATPTRL))
+      *
+      * @example test/cbl016.cblle
+      */
+      *    call "_MATPTRL" using
+      *         by reference matptrl-tmpl-t
+      *         by value     space-pointer
+      *         by reference storage-length-in-bytes.
+
+     /**
+      * Basic instruction template of RSLVSP, which is of length 34 bytes.
+      */
+       01 rslvsp-tmpl-t is typedef.
+          05 obj-type      pic x(2).
+          05 obj-name      pic x(30).
+      * required authorization
+          05 req-auth      pic x(2).
+
+     /**
+      * The extended version of instruction template of RSLVSP, of length 128 bytes.
+      *
+      * @remark To indicate the existence of the extended template,
+      *         set the bit 15 of field auth in the basic instruction
+      *         template.
+      */
+       01 rslvsp-tmpl-ex-t is typedef.
+          05 obj-type      pic x(2).
+          05 obj-name      pic x(30).
+      * required authorization
+          05 req-auth      pic x(2).
+      * extended template
+          05 tmpl-ver      pic x.
+          05 search-method pic x.
+          05 opt           pic x.
+          05 filler        pic x(7).
+          05 asp-num       pic 9(4) usage comp-4.
+          05 asp-num-rtn   pic 9(4) usage comp-4.
+          05 ctx-rtn       usage pointer.
+          05 filler        pic x(64).
+
+     /**
+      * @BIF _RSLVSP2 (Resolve System Pointer (RSLVSP))
+      *
+      * @example test/cbl014.cblle
+      */
+      *    call "_RSLVSP2" using
+      *         by reference system-pointer-to-space-object
+      *         by reference instruction-template.
+
+     /**
+      * @BIF _RSLVSP4 (Resolve System Pointer (RSLVSP))
+      */
+      *    call "_RSLVSP4" using
+      *         by reference system-pointer-to-space-object
+      *         by reference instruction-template.
+      *         by reference system-pointer-to-context-object
+
+     /**
+      * @BIF _SETSPPFP (Set Space Pointer from Pointer (SETSPPFP))
+      */
+      *    call "_SETSPPFP" using
+      *         by value data-ptr-or-system-ptr
+      *         returning into space-pointer.

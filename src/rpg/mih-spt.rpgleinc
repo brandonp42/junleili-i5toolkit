@@ -1,0 +1,790 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-spt.rpgleinc
+      *
+      * Machine Interface support functions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_spt)
+      /define i5toolkit_rpg_mih_spt
+
+     /* structure uuid_t */
+     d uuid_t          ds                  qualified
+     d     bytes_in                  10u 0
+     d     bytes_out                 10u 0
+     d                                8a
+     d     rtn_uuid                  16a
+
+     /**
+      * @BIF _GENUUID (Generate Universal Unique Identifier (GENUUID))
+      */
+     d genuuid         pr                  extproc('_GENUUID')
+     d     uuid                            likeds(uuid_t)
+
+     d matmatr_tmpl_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+
+     /**
+      * MATMATR instruction template for option hex 0004.
+      *
+      * The 8-bytes machine serial number is returned.
+      */
+     d matmatr_machine_srlnbr_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     srlnbr                     8a
+
+     /**
+      * MATMATR instruction template for option hex 0101 (Time-of-day
+      * clock with clock-offset).
+      */
+     d matmatr_clock_offset_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     clock                      8a
+     d     offset                     8a
+
+     /**
+      * Load/Dump tape device information DS in MISR information.
+      */
+     d tape_dev_info_t...
+     d                 ds                  qualified
+      * resource name
+     d     rsc_name                  10a
+     d                               38a
+
+     /**
+      * Recovery object DS which is used to represent elements in
+      * the recovery object list in materialized MISR information.
+      */
+     d recovery_obj_t  ds                  qualified
+     d     obj                         *
+     d     obj_type                   1a
+     d     obj_status                15a
+
+     /**
+      * Instruction template for option hex 0108 (MISR) of MATMATR.
+      *
+      * @remark MISR stands for Machine initialization status record.
+      */
+     d matmatr_misr_t  ds                  qualified
+     d                                     based(dummy_ptr)
+      *
+      * MISR status.
+      * Bit 0. Restart IMPL
+      *   0 = IMPL was not initiated by the Terminate instruction
+      *   1 = IMPL was initiated by the Terminate instruction
+      * Bit 1. Manual power on
+      *   0 = Power on NOT due to Manual power on
+      *   1 = Manual power on occurred
+      * Bit 2. Timed power on
+      *   0 = Power on not due to Timed power on
+      *   1 = Timed power on occurred
+      * Bit 3. Remote power on
+      *   0 = Power on not due to remote power on
+      *   1 = Remote power on occurred
+      * Bit 4. Auto-power restart power on
+      *   0 = Power on not due to Auto-power restart power on
+      *   1 = Auto-power restart power on occurred
+      * Bit 5. Uninterrupted power supply (UPS) battery low
+      *   0 = UPS battery not low
+      *   1 = UPS battery low
+      * Bit 6. Uninterrupted power supply (UPS) bypass active
+      *   0 = UPS bypass not active
+      *   1 = UPS bypass active
+      * Bit 7. Utility power failed, running on UPS
+      *   0 = Running on utility power
+      *   1 = Running on UPS
+      * Bit 8. Uninterrupted power supply installed 
+      *   0 = UPS not installed
+      *   1 = UPS installed, ready for use
+      * Bit 9. Operation panel battery failed
+      *   0 = Operation panel battery good
+      *   1 = Operation panel battery failed
+      * Bit 10. Operation panel self test failed
+      *   0 = Operation panel self test successful
+      *   1 = Operation panel self test failed
+      * Bit 11. Console status
+      *   0 = Console is operative
+      *   1 = Console is inoperative
+      * Bit 12. Console state
+      *   0 = Machine and OS version levels match
+      *   1 = Machine and OS version levels mismatch
+      * Bit 14. Reserved
+      * Bit 15. Primary console status
+      *   0 = Not using primary console
+      *   1 = Using primary console
+      * Bit 16. Reserved
+      * Bit 17. ASCII console status
+      *   0 = Not using ASCII console
+      *   1 = Using ASCII console
+      * Bit 18. Termination status 
+      *   0 = Normal (TERMMPR)
+      *   1 = Abnormal
+      * Bit 19. Duplicate user profile (AIPL only)
+      *   0 = Not duplicate, new user profile created
+      *   1 = Duplicate found and used by AIPL
+      * Bit 20. Damaged user profile (AIPL only)
+      *   0 = Not damaged, user profile used
+      *   1 = Damaged user profile, profile deleted and re-created
+      * Bit 21. Damaged machine context
+      *   0 = Not damaged
+      *   1 = Machine context damaged
+      * Bit 22. Object recovery list status
+      *   0 = Complete
+      *   1 = Incomplete
+      * Bit 23. Recovery phase completion
+      *   0 = Complete
+      *   1 = Incomplete
+      * Bit 24. Most recent machine termination
+      *   0 = Objects ensured
+      *   1 = Object(s) not ensured at most recent machine termination
+      * Bit 25. Last MISR reset
+      *   0 = Object(s) ensured on every machine termination
+      *   1 = Object(s) not ensured on every machine termination since last MISR reset
+      * Bit 26-27. Reserved
+      * Bit 28-29. IPL mode
+      *   00 = DST and BOSS in unattended mode
+      *   10 = DST and BOSS is attended mode
+      * Bit 30. Service processor power on 
+      *   0 = Not first service processor power on
+      *   1 = First service processor power on
+      * Bit 31. MISR damage
+      *   0 = MISR not damaged
+      *   1 = MISR damaged, information reset to default values
+      * Bit 32. Auto key mode
+      *   0 = Key mode is not auto
+      *   1 = Key mode is auto
+      * Bit 33. Normal key mode
+      *   0 = Key mode is not normal
+      *   1 = Key mode is normal 
+      * Bit 34. Manual key mode
+      *   0 = Key mode is not manual
+      *   1 = Key mode is manual
+      * Bit 35. Secure key mode
+      *   0 = Key mode is not secure
+      *   1 = Key mode is secure
+      * Bit 36. Tower two presence on 9404 system unit
+      *   0 = Tower two not present
+      *   1 = Tower two present
+      * Bit 37. Battery status for tower one on 9404 system unit
+      *   0 = Battery good for tower one
+      *   1 = Battery low for tower one
+      * Bit 38. Battery status for tower two on 9404
+      *   0 = Battery good for tower two
+      *   1 = Battery low for tower two
+      * Bit 39. Termination due to utility power failure and user specified delay time exceeded
+      *   0 = Delay time not exceeded
+      *   1 = Utility failure and delay time exceeded
+      * Bit 40. Termination due to utility power failure and battery low
+      *   0 = Battery not low
+      *   1 = Utility failure and battery low
+      * Bit 41. Termination due to forced microcode completion
+      *   0 = Not forced microcode completion
+      *   1 = Termination due to forced microcode completion
+      * Bit 42. Auto power restart disabled due to utility failure
+      *   0 = Auto power restart not disabled
+      *   1 = Auto power restart disabled
+      * Bit 43. Reserved
+      * Bit 44. Spread the operating system
+      *   0 = Do not spread the operating system
+      *   1 = Spread the operating system
+      * Bit 45. Install from disk/tape
+      *   0 = Install from tape
+      *   1 = Install from disk
+      * Bit 46. Use primary/alternate PDT
+      *   0 = Use primary process definition template
+      *   1 = Use alternate process definition template
+      * Bit 47. Time/Date source 
+      *   0 = Time/Date is accurate
+      *   1 = Time/Date default value used
+      *
+     d     misr_status...
+     d                                6a
+     d     install_type...
+     d                                5i 0
+     d     number_of_damaged_main_storage_units...
+     d                                5i 0
+     d     national_language_index...
+     d                                5i 0
+     d     number_of_entries_in_object_recovery_list...
+     d                               10i 0
+     d     tape_sequence_number_for_an_aipl...
+     d                               10i 0
+     d     tape_volume_number_for_an_aipl...
+     d                               10i 0
+      * Address of object recovery list
+     d     recovery_list_ptr...
+     d                                 *
+      * Process control space created as the result of IPL or AIPL
+     d     pcs_ipl                     *
+      * Queue space object created as the result of an IPL or AIPL
+     d     qspc_ipl                    *
+      *
+      * Additional MISR status information
+      * Bit 0. Automatic main storage dump IPL occurred
+      *   0 = No
+      *   1 = Yes
+      * Bit 1-2. Power failure (CPM continuous powered mainstore) recovery
+      *   00 = Not set
+      *   01 = Recovery failed after CPM shutdown
+      *   10 = Recovery successful after CPM shutdown
+      *   11 = Reserved
+      * Bit 3. Automatic main storage dump IPL requested
+      *   0 = No
+      *   1 = Yes
+      * Bit 4-5. Power failure (On internal battery).
+      *   00 = Not set
+      *   01 = Shutdown did not complete, not all changed pages written
+      *   10 = Shutdown did complete, all changed pages written
+      *   11 = Reserved
+      * Bit 6. Require full main storage dump copy
+      *   0 = No. When copying a current main storage dump, the system
+      *       is allowed to copy only the subset of the dump data
+      *       deemed necessary for service to solve the problem.
+      *   1 = Yes. When copying a current main storage dump, the
+      *       system must copy all dump data.
+      * Bit 7. Prefer full main storage dump copy
+      *   0 = No. When copying a current main storage dump, the system
+      *       should try to copy only the subset of the dump data
+      *       deemed necessary for service to solve the problem.
+      *   1 = Yes. When copying a current main storage dump, the
+      *       system should copy all the dump data if there is enough
+      *       room for it. Otherwise, the system should try to copy
+      *       only the subset of the dump deemed necessary for service
+      *       to solve the problem.
+      * Bits 8-31. Reserved
+      *
+     d     ex_misr_info...
+     d                                4a
+      * Main storage dump data -- timestamp and SRC
+     d     mstg_dmp                  76a
+     d     mstg_dmp_ts...
+     d                                8a   overlay(mstg_dmp)
+      * SRC words
+     d     mstg_dmp_src_words...
+     d                                4a   overlay(mstg_dmp:9)
+     d                                     dim(9)
+      * Extended SRC word 1
+     d     mstg_dmp_ex_src_word...
+     d                               32a   overlay(mstg_dmp:45)
+     d                              280a
+      * Start of IPL timestamp (local time)
+     d     ipl_start_timestamp...
+     d                                8a
+      * Optical media volume information
+     d     optical_volume_id...
+     d                               32a
+     d     optical_volume_sequence...
+     d                                5i 0
+     d                               13a
+      *
+      * Licensed Internal Code install status
+      * Bit 0. MRI level
+      *   0 = Release level MRI
+      *   1 = Post-release level MRI
+      * Bit 1. Licensed Internal Code PTF install
+      *   0 = Licensed Internal Code normal install
+      *   1 = Licensed Internal Code PTF install
+      * Bits 2-7. Reserved
+      *
+     d     lic_install_status...
+     d                                1a
+      * Load/Dump tape device information list. (1st=LUD information, 2nd=CD information) 
+     d     tape_dev_info_list...
+     d                                     likeds(tape_dev_info_t)
+     d                                     dim(2)
+      * Recovery object list (located by recovery object list pointer).
+      * Elements in this list are of type recovery_obj_t
+
+     /**
+      * MATMATR instruction template for option hex 0130 (network attributes).
+      */
+     d matmatr_net_attr_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     sys_name                   8a
+     d     sys_name_len...
+     d                                5i 0
+     d     new_sys_name...
+     d                                8a
+     d     new_sys_name_len...
+     d                                5i 0
+     d     local_net_id...
+     d                                8a
+     d     local_net_id_len...
+     d                                5i 0
+      *
+      * The end node data compression field controls whether the
+      * machine will allow data compression when it's an end
+      * node. This value is used when the mode description is equal to
+      * *NETATR. If one of the values listed in the table below is not
+      * specified, then the value specified is equal to the maximum
+      * line speed that data should be compressed. Any configuration
+      * with a line speed slower than what is specified here will
+      * cause the data to be compressed. Valid values range from 1
+      * bits-per-second through 2,147,483,647.
+      *   0  = *NONE (default), no data compression will be done.
+      *   -1 = *REQUEST, data compression is requested on the session.
+      *   -2 = *ALLOW, data compression is allowed, but not requested for this session.
+      *   -3 =*REQUIRE, data compression is required on this session.
+      *
+     d     end_node_data_cpr...
+     d                               10i 0
+      *
+      * The intermediate node data compression field controls whether
+      * data compression will be requested by the machine when it's an
+      * intermediate node. This value is used when the mode
+      * description is equal to *NETATR. If one of the values listed
+      * in the table below is not specified, then the value specified
+      * is equal to the maximum line speed that data should be
+      * compressed. Any configuration with a line speed slower than
+      * what is specified here will cause the data to be
+      * compressed. Valid values range from 1 bits-per-second through
+      * 2,147,483,647.
+      *    0 = *NONE (default), no data compression will be done. 
+      *   -1 = *REQUEST, data compression is requested on the session.
+      *
+     d     int_node_data_cpr...
+     d                               10i 0
+     d                                2a
+      * Local system control point name
+     d     local_sys_ctrl_pnt_name...
+     d                                8a
+     d     local_sys_ctrl_pnt_name_len...
+     d                                5i 0
+      * Maximum APPN LUDs on virtual APPN CDs
+     d     max_appn_lud_on_vrt_appc_cd...
+     d                                5u 0
+      *
+      * The path switch timer - network priority traffic default is
+      * 1. The maximum is 10000.  The unit of measure is minutes.
+      *
+     d     path_switch_timer_net...
+     d                                5u 0
+      *
+      * The path switch timer - high priority traffic default is
+      * 2. The maximum is 10000.  The unit of measure is minutes.
+      *
+     d     path_switch_timer_high...
+     d                                5u 0
+      *
+      * The path switch timer - medium priority traffic default is
+      * 4. The maximum is 10000.  The unit of measure is minutes.
+      *
+     d     path_switch_timer_medium...
+     d                                5u 0
+      *
+      * The path switch timer - low priority traffic default is
+      * 4. The maximum is 10000.  The unit of measure is minutes.
+      *
+     d     path_switch_timer_low...
+     d                                5u 0
+      * Default local location name
+     d     dft_local_loc_name...
+     d                                8a
+     d     dft_local_loc_name_len...
+     d                                5i 0
+      *
+      * Default mode name. The mode name default is all blanks and the
+      * default mode length is eight.
+      *
+     d     dft_mode_name...
+     d                                8a
+     d     dft_mode_name_len...
+     d                                5i 0
+      * Maximum number of intermediate sessions
+     d     max_int_session...
+     d                                5i 0
+      * Maximum number of conversations per APPN LUD
+     d     max_conv_per_appn_lud...
+     d                                5i 0
+      * Local system node type. Default is hex 01
+     d     lcl_sys_node_type...
+     d                                1a
+     d                                1a
+      * Route addition resistance
+     d     rut_add_res...
+     d                                5i 0
+      * List of network server network ID's
+     d     network_ids...
+     d                                8a   dim(5)
+      * List of network server network ID lengths
+     d     network_id_lens...
+     d                                5u 0 dim(5)
+      * List of network server control point names
+     d     net_ctrl_pnt_names...
+     d                                8a   dim(5)
+      * List of network server control point name lengths
+     d     net_ctrl_pnt_name_lens...
+     d                                5u 0 dim(5)
+      *
+      * Alert flags.
+      *   bit 0 = 1, alert primary focal point
+      *   bit 1 = 1, alert default focal point
+      *   bits 2-7, reserved
+      *
+     d     alert_flags...
+     d                                1a
+      *
+      * Network attribute flags
+      *   bit 0 = 1, network attributes initialized
+      *   bit 1 = 1, pending system name made current system name
+      *   bit 2 = 1, allow ANYNET support over any transport protocol
+      *   bit 3 = 1, allow APPN traffic to use virtual APPN CDs
+      *   bit 4 = 1, allow HPR tower support to be used for APPN
+      *   bit 5 = 1, local system performs as a branch extender node
+      *   bits 6-7, reserved
+      *
+     d     net_attr_flags...
+     d                                1a
+
+     /**
+      * MATMATR instruction template for option hex 0168 (Panel
+      * status request).
+      */
+     d matmatr_ipl_req_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+      *
+      * The current IPL type is the state of the IPL type at the
+      * operations panel. Possible values are A, B, C, D.
+      *
+     d     cur_ipl_type...
+     d                                1a
+      *
+      * Panel status.
+      *
+      * bit 0, UPS installed indicates that an Uninterrupted Power
+      *        Supply is installed on the system and is available for
+      *        use should the power fail.
+      * bit 1, UPS power failed indicates that a utility failure has
+      *        occurred and the system is currently running on battery
+      *        power.
+      * bit 2, UPS bypass active indicates that the UPS has been
+      *        bypassed. If a utility power failure occurs, the UPS
+      *        will not supply power.
+      * bit 3, UPS battery low indicates that a UPS battery is
+      *        installed on the system and the battery is low.
+      * bit 4, auto key mode indicates that the key mode is currently
+      *        set to auto on the operation panel.
+      * bit 5, normal key mode indicates that the key mode is
+      *        currently set to normal on the operation panel.
+      * bit 6, manual key mode indicates that the key mode is
+      *        currently set to manual on the operation panel.
+      * bit 7, secure key mode indicates that the key mode is
+      *        currently set to secure on the operation panel.
+      * bits 8-15, reserved.
+      *
+     d        pnl_sts                 2a
+     d                                5a
+      * Most recent IPL type. Possible values are A, B, C, D.
+     d        most_recent_ipl_type...
+     d                                1a
+
+     /**
+      * MATMATR instruction template for option hex 01FC (Electronic
+      * licensing identifier).
+      *
+      * The electronic licensing identifier field is the value of
+      * version, release and modification level of the i5/OS to be
+      * installed during the next upgrade whose license is accepted by
+      * the customers. The format of the electronic licensing
+      * identifier is vrmnn where v is the version, r, the release, m,
+      * the modication level, and nn are operating system assigned
+      * values.
+      */
+     d matmatr_elic_id_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     elic_id                    5a
+
+     /**
+      * MATMATR instruction template for option hex 020C (Licensed
+      * Internal Code VRM).
+      */
+     d matmatr_lic_vrm_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     lic_vrm                    6a
+     d                                2a
+
+     /**
+      * MATMATR instruction template for option hex 0204.
+      *
+      * Hardware management console (HMC) information.
+      */
+     d matmatr_hmc_t   ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+      *
+      * The number of entries returned field returns the number of
+      * Hardware Management Console (HMC) information entries
+      * returned. One entry is returned for each HMC attached to the
+      * physical machine. On a non-HMC managed system, the value
+      * returned will be binary 0.
+      *
+     d     num_ent                   10i 0
+     d                                4a
+     d     hmc_info                        likeds(hmc_info_t)
+     d                                     dim(10)
+
+     d hmc_info_t      ds          1036    qualified
+     d     len                        5u 0
+     d     info                    1034
+
+     /**
+      * @BIF _MATMATR (Materialize Machine Attributes (MATMATR))
+      */
+     d matmatr         pr                  extproc('_MATMATR1')
+     d     receiver                        likeds(matmatr_tmpl_t)
+     d     mat_attr                   2a
+
+     /**
+      * @BIF _MATTOD (Materialize Machine Data (MATMDATA))
+      *
+      * _MATTOD materializes time-of-day clock as local time.
+      */
+     d mattod          pr                  extproc('_MATTOD')
+     d     now                       20u 0
+
+     /**
+      * @BIF _MATMDATA (Materialize Machine Data (MATMDATA))
+      *
+      * Valid values of operand option are:
+      * hex 0000 = Materialize time-of-day clock as local time.
+      *            Operand 1 points to a 8-byte scalar.
+      * hex 0001 = Materialize system parameter integrity validation
+      *            flag Operand 1 points to a 1-byte character scalar.
+      *            A value of hex 01 indicates this additional
+      *            checking is being performed. A value of hex 00 is
+      *            returned otherwise.
+      * hex 0002 = Materialize thread execution mode flag
+      *            Operand 1 points to a 1-byte character scalar.  A
+      *            returned value of hex 01 indicates that thread is
+      *            currently executing in kernel mode. A value of hex
+      *            00 is returned otherwise.
+      * hex 0003 = Materialize maximum size of a space object or
+      *            associated space when space alignment is chosen by
+      *            the machine Operand 1 points to a 4-byte unsigned
+      *            binary.
+      * hex 0004 = Materialize time-of-day clock as Coordinated
+      *            Universal Time (UTC) Operand 1 points to a 8-byte
+      *            scalar.
+      *
+      * @example test/t117.rpgle
+      */
+     d matmdata        pr                  extproc('_MATMDATA')
+     d     receiver                    *   value
+     d     option                     2a   value
+
+      /if defined(*V5R4M0)
+     d matmif_tmpl_t   ds                  qualified
+     d     bytes_in                  10u 0
+     d     bytes_out                 10u 0
+
+     /* Materialization template for MATMIF with option x'0001' */
+     d matmif_basic_tmpl_t...
+     d                 ds                  qualified
+     d     bytes_in                  10u 0
+     d     bytes_out                 10u 0
+      *
+      * Maximum memory.  The maximum amount of memory (in units of
+      * megabytes) that can be assigned to this partition.
+      *
+     d     max_mem                   20u 0
+      * Minimum memory
+     d     min_mem                   20u 0
+      * Dispatch wheel rotation period
+     d     dsp_whl_period...
+     d                               20u 0
+     d     partition_id...
+     d                               10u 0
+      *
+      * indicators
+      *   bit 0-29, reserved (binary 0)
+      *   bit 30, bound hardware thread indicator
+      *     0 = Hardware threads are not bound
+      *     1 = Hardware threads are bound
+      *   bit 31, Dedicated processors indicator
+      *     0 = Partition shares processors
+      *     1 = Partition has dedicated processors
+      *
+     d     indicator                  4a
+      * Maximum processors in the physical machine
+     d     max_prc_in_machine...
+     d                               10u 0
+      * Minimum virtual processors
+     d     min_vic_prcs...
+     d                               10u 0
+      * Maximum virtual processors
+     d     max_vic_prcs...
+     d                               10u 0
+      *
+      * Minimum processing capacity (in units of 1/100 of a physical
+      * processor)
+      *
+     d     min_prc_cap...
+     d                               10u 0
+      *
+      * Maximum processing capacity (in units of 1/100 of a physical
+      * processor)
+      *
+     d     max_prc_cap...
+     d                               10u 0
+      *
+      * Processing capacity delta. The delta (in units of 1/100 of a
+      * physical processor) can be added to or removed from this
+      * partition's processing capacity.
+      *
+     d     prc_cap_delta...
+     d                               10u 0
+      * Minimum interactive capacity percentage
+     d     min_int_cap_percent...
+     d                               10u 0
+      * Maximum interactive capacity percentage
+     d     max_int_cap_percent...
+     d                               10u 0
+      * Hardware threads per processor
+     d     hdw_thds_per_prc...
+     d                                5u 0
+     d     partition_name...
+     d                              256a
+     d                                6a
+     d     memory_delta...
+     d                               20u 0
+      * Configured virtual processors
+     d     cfg_vic_prcs...
+     d                               10u 0
+      *
+      * Configured processing capacity.  The processing capacity (in
+      * units of 1/100 of a physical processor) that is configured for
+      * this partition.
+      *
+     d     cfg_prc_cap...
+     d                               10u 0
+      * Configured interactive capacity percentage
+     d     cfg_int_cap_percent...
+     d                               10u 0
+      * Configured variable processing capacity weight
+     d     cfg_var_prc_cap...
+     d                               10u 0
+      * Configured memory
+     d     cfg_memory...
+     d                               20u 0
+
+     /* Materialization template for MATMIF with option x'0002' */
+     d matmif_prc_tmpl_t...
+     d                 ds                  qualified
+     d     bytes_in                  10u 0
+     d     bytes_out                 10u 0
+      * Usable memory
+     d     usable_memory...
+     d                               20u 0
+      * CPU time since IPL
+     d     cpu_time...
+     d                               20u 0
+      * Interactive time since IPL
+     d     int_time...
+     d                               20u 0
+      * Excess interactive time since IPL
+     d     exc_int_time...
+     d                               20u 0
+      * Shared processor pool idle time since IPL
+     d     shr_prc_pool_idl_time...
+     d                               20u 0
+      *
+      * indicators.
+      *   bits 0-27, reserved (binary 0)
+      *   bit 28, Service aggregation point indicator
+      *     0 = This partition has a service aggregation point
+      *     1 = Another partition or HMC has a service aggregation point
+      *   bit 29, Capped partition indicator
+      *     0 = Uncapped partition
+      *     1 = Capped partition
+      *   bit 30, Hardware multi-threading indicator
+      *     0 = Hardware multi-threading is not enabled
+      *     1 = Hardware multi-threading is enabled
+      *   bit 31, shared processor pool idle time since IPL indicator
+      *     0 = Shared processor pool idle time since IPL was not materialized
+      *     1 = Shared processor pool idle time since IPL was materialized
+      *
+     d     indicator                  4a
+      * Processors in the physical machine
+     d     physical_prcs...
+     d                               10u 0
+      * Usable virtual processors
+     d     usable_vic_prcs...
+     d                               10u 0
+      * Physical processors in the shared processor pool
+     d     phy_prcs_in_pool...
+     d                               10u 0
+      * Unallocated processing capacity in the partition group
+     d     una_prc_cap_in_pgp...
+     d                               10u 0
+      * Usable processing capacity
+     d     usable_prc_cap...
+     d                               10u 0
+      * Usable variable processing capacity weight
+     d     usable_var_prc_cap...
+     d                               10u 0
+      * Unallocated variable processing capacity weight -- @here
+     d     una_var_prc_cap...
+     d                               10u 0
+      * Minimum required processing capacity
+     d     min_req_prc_cap...
+     d                               10u 0
+      * Interactive capacity percentage
+     d     int_cap_perctent...
+     d                               10u 0
+      * Partition group ID
+     d     pgp_id                     5u 0
+      * Shared processor pool ID
+     d     shr_prc_pool_id...
+     d                                5u 0
+      * Interactive threshold
+     d     int_threshold...
+     d                                5u 0
+     d                                2a
+      * Unallocated interactive processor capacity in the partition group
+     d     una_int_prc_cap...
+     d                               10u 0
+     d                               12a
+
+     /**
+      * @BIF _MATMIF (Materialize Machine Information (MATMIF))
+      */
+     d matmif          pr                  extproc('_MATMIF')
+     d     receiver                        likeds(matmif_tmpl_t)
+     d     option                     5u 0 value
+      * defined(*V5R4M0)
+      /endif
+
+      /endif

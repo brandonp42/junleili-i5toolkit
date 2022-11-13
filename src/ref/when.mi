@@ -1,0 +1,151 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2009, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file when.mi
+ *
+ * routines implemented here:
+ *  - get-local-saa-timestamp
+ *  - current-timestamp
+ *
+ * usage: see t.when.mi
+ */
+
+/**
+ * @function current-timestamp
+ *
+ * @param .cur-timestamp, spcptr pointed to a char(26) scalar
+ *
+ * usage:
+ * @code
+ * @endcode
+ */
+dcl dd clock-buf char(8) auto init(" ");
+
+/* used by caller */
+dcl spcptr .a-cur-timestamp auto;
+dcl ol argl-current-timestamp(
+  .a-cur-timestamp
+) arg;
+
+dcl spcptr .p-cur-timestamp parm;
+dcl ol pl-current-timestamp(.p-cur-timestamp) parm int;
+
+dcl insptr .current-timestamp auto;
+entry current-timestamp(pl-current-timestamp) int;
+
+  matmdata clock-buf, x'0000';
+
+  setspp .a-system-clock, clock-buf;
+  setsppfp .a-timestamp, .p-cur-timestamp;
+  calli
+    get-local-saa-timestamp,
+    argl-get-local-saa-timestamp,
+    .get-local-saa-timestamp;
+
+  b .current-timestamp;
+
+/**
+ * @function get-local-saa-timestamp
+ *
+ * @param[in]  .a-system-clock, spcptr pointed to a 8-bytes system clock buffer
+ * @param[out] .a-timestamp, returned timestamp string
+ */
+dcl spcptr .cvtts-t auto init(cvtts-t);
+dcl dd cvtts-t char(298) auto;
+  dcl dd t-size bin(4) def(cvtts-t) pos(1) init(298);
+  dcl dd target-ddat-num bin(2) unsgnd def(cvtts-t) pos(5) init(1);
+  dcl dd source-ddat-num bin(2) unsgnd def(cvtts-t) pos(7) init(2);
+  dcl dd * char(2) def(cvtts-t) pos(9) init(x'0000');
+  dcl dd target-length bin(2) unsgnd def(cvtts-t) pos(11) init(26);
+  dcl dd source-length bin(2) unsgnd def(cvtts-t) pos(13) init(8);
+  dcl dd * char(2) def(cvtts-t) pos(15) init(x'0000');
+  dcl dd * bin(2) def(cvtts-t) pos(17) init(0);
+  dcl dd * char(1) def(cvtts-t) pos(19) init(x'00'); /* Preferred/Found date separator */
+  dcl dd * char(1) def(cvtts-t) pos(20) init(x'00'); /* Preferred/Found time separator */
+  dcl dd * char(22) def(cvtts-t) pos(21) init(x'00000000000000000000000000000000000000000000');
+  /* DDAT list */
+  dcl dd ddat-list-size bin(4) unsgnd def(cvtts-t) pos(43) init(256); /* 16 + 4*2 + 116*2 */
+  dcl dd num-ddat bin(2) unsgnd def(cvtts-t) pos(47) init(2);
+  dcl dd * char(10) def(cvtts-t) pos(49) init(x'00000000000000000000');
+
+  dcl dd ddat-offsets(2) bin(4) unsgnd def(cvtts-t) pos(59) init((1)24, *(2)(1)140);
+  dcl dd target-ddat-buf char(116) def(cvtts-t) pos(67);
+  dcl dd source-ddat-buf char(116) def(cvtts-t) pos(183);
+
+/* temp ddat */
+dcl dd ddat char(116);
+  dcl dd * bin(2) unsgnd def(ddat) pos(1) init(0);
+  dcl dd format-code bin(2) unsgnd def(ddat) pos(3);                      /* :) */
+  dcl dd * char(2) def(ddat) pos(5);  /* Separator definition,  init(x'0000') */
+  dcl dd hour-zone bin(2) unsgnd def(ddat) pos(7) init(24);
+  dcl dd minute-zone bin(2) unsgnd def(ddat) pos(9) init(60);
+  dcl dd * bin(2) unsgnd def(ddat) pos(11) init(0);  /* month duration */
+  dcl dd * bin(2) unsgnd def(ddat) pos(13) init(0);  /* year duration */
+  dcl dd * bin(4) unsgnd def(ddat) pos(15) init(0);  /* current century */
+  dcl dd * bin(4) unsgnd def(ddat) pos(19) init(0);  /* century diviion */
+  dcl dd caltable-offset bin(4) unsgnd def(ddat) pos(23) init(82); /* 32 + era(50) */
+  dcl dd * char(6) def(ddat) pos(27) init(x'000000000000');
+  /* era table */
+  dcl dd num-era bin(2) unsgnd def(ddat) pos(33) init(1);
+  dcl dd era-origin-date bin(4) unsgnd def(ddat) pos(35) init(1721426);
+  dcl dd era-name char(32) def(ddat) pos(39) init("AD");
+  dcl dd * char(12) def(ddat) pos(71) init(x'000000000000000000000000');
+  /* calendar table */
+  dcl dd cal-num bin(2) unsgnd def(ddat) pos(83) init(2);
+  dcl dd cal-effect-date-begin bin(4) unsgnd def(ddat) pos(85) init(1721426);
+  dcl dd cal-type-begin bin(2) unsgnd def(ddat) pos(89) init(h'0001');
+  dcl dd * char(10) def(ddat) pos(91) init(x'00000000000000000000');
+  dcl dd cal-effect-date-end bin(4) unsgnd def(ddat) pos(101) init(5373485);
+  dcl dd cal-type-end bin(2) unsgnd def(ddat) pos(105) init(h'0000');
+  dcl dd * char(10) def(ddat) pos(107) init(x'00000000000000000000');
+
+dcl spcptr .a-system-clock auto;
+dcl spcptr .a-timestamp auto;
+dcl ol argl-get-local-saa-timestamp(
+  .a-system-clock,
+  .a-timestamp
+) arg;
+
+dcl spcptr .p-system-clock parm;
+dcl dd p-system-clock char(8) bas(.p-system-clock);
+dcl spcptr .p-timestamp parm;
+dcl dd p-timestamp char(26) bas(.p-timestamp);
+dcl ol pl-get-local-saa-timestamp(
+  .p-system-clock,
+  .p-timestamp
+) parm int;
+
+/* internal entry point: get-local-saa-timestamp */
+dcl insptr .get-local-saa-timestamp;
+entry get-local-saa-timestamp(pl-get-local-saa-timestamp) int;
+
+  /* target DDAT: 0x001E - *YYYYMMDDhhmmss, 0x0009 - SAA timestamp */
+  cpynv format-code, h'0009';
+  cpybla target-ddat-buf, ddat;
+  /* source DDAT */
+  cpynv format-code, h'001C';
+  cpybla source-ddat-buf, ddat;
+
+  /* cvtts */
+  cvtts p-timestamp, p-system-clock, .cvtts-t;
+
+  brk 'SUBR_SAA_TS';
+  b .get-local-saa-timestamp;
+
+/* eof - when.mi */

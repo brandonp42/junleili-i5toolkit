@@ -1,0 +1,3 @@
+             PGM        PARM(&RTN &VAL)
+             ADD        SUM(&RTN) ADDENT1(&VAL) ADDENT2(1.5)
+             ENDPGM

@@ -1,0 +1,169 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/* *
+ * @file indidx.emi
+ */
+
+dcl spcptr .idx parm            ;
+dcl spcptr .ent parm            ;
+dcl spcptr .ent-len parm        ;
+dcl spcptr .replace parm        ;
+
+dcl ol pl-main(
+        .idx,
+        .ent,
+        .ent-len,
+        .replace
+) ext parm                      ;
+
+entry *(pl-main) ext            ;
+
+dcl dd idx char(20) bas(.idx)   ;
+dcl dd ent-len bin(4) bas(.ent-len) ;
+dcl dd replace char(8) bas(.replace) ;
+
+dcl dd buf char(64) bas(*)      ; /* debug */
+
+brk 'RSLV'                      ;
+
+dcl sysptr index auto           ;
+        calli resolve-index, *, .resolve-index ;
+
+brk 'IDXATTR'                   ;
+        calli get-idxd, *, .get-idxd ;
+
+brk 'INSERT'                    ;
+        calli do-insert, *, .do-insert ;
+
+farewell:       
+        rtx *                   ;
+
+/* do-insert */
+dcl insptr .do-insert auto      ;
+entry do-insert int             ;
+
+        /* determine insert type */
+        cmpbla(b) emi-qusruiat-idxa0100-keyed, '0' / neq(=+3) ;
+        cpynv emi-qusaddui-ins-type, 1 ; /* for non-keyd index */
+        b chk-ent-len-attr             ;
+:
+        cmpbla(b) replace, '1' / neq(=+3) ;
+        cpynv emi-qusaddui-ins-type, 2 ; /* replace */
+        b chk-ent-len-attr             ;
+:       
+        cpynv emi-qusaddui-ins-type, 3 ; /* do NOT replace */
+
+chk-ent-len-attr:
+
+dcl dd lens-offsets char(8) auto ;
+        dcl dd lens-offsets-length bin(4) def(lens-offsets) pos(1) ;
+        dcl dd lens-offsets-offset bin(4) def(lens-offsets) pos(5) init(0) ;
+
+        /* in case that ent-len is too large  */
+        cmpnv(b) ent-len, emi-qusruiat-idxa0100-max-ent-len / nhi(=+2) ;
+        cpynv ent-len, emi-qusruiat-idxa0100-max-ent-len ;
+:       
+        setsppfp .emi-qusaddui-entries, .ent         ;
+        cpynv emi-qusaddui-ent-len, ent-len ;
+        setspp .emi-qusaddui-lens-offs, lens-offsets ;
+        cpynv lens-offsets-length, ent-len          ;
+        /* for fixed-length-entry *usridx */
+        cmpbla(b) emi-qusruiat-idxa0100-len-attr, 'F' / neq(insert-usridx) ;
+dcl dd fixed-length-entry char(2000) auto ;
+dcl spcptr .fixed-length-entry auto init(fixed-length-entry) ;
+        cpynv emi-qusaddui-ent-len,
+          emi-qusruiat-idxa0100-ent-len ;
+        cpybrep fixed-length-entry, ' ' ; /* init with WSs */
+        %memcpy(.fixed-length-entry, .ent, ent-len) ;
+        setsppfp .emi-qusaddui-entries, .fixed-length-entry ;
+
+insert-usridx:        
+        /* ... */
+        cpybla emi-qusaddui-idx, idx ;
+        cpynv emi-qusaddui-num-ent, 1 ;
+
+        setspp .emi-qusaddui-ec, emi-qusec     ;
+        cpynv emi-ec-bytes-in, emi-qusec-len   ;
+        callx emi-qusaddui, emi-qusaddui-al, * ;
+brk 'INS-RTN'                   ;
+        b .do-insert            ;
+
+/**
+ * resolve index
+ *
+ * @post sysptr index
+ */
+dcl insptr .resolve-index auto  ;
+entry resolve-index int         ;
+
+dcl con con-libl char(10) init('*LIBL') ;
+dcl dd idx-name char(10) bas(.idx) pos(1) ;
+dcl dd idx-lib char(10) bas(.idx) pos(11) ;
+
+        /* check idx-lib */
+        cmpbla(b) idx-lib, con-libl / eq(resolve-2) ;
+
+dcl sysptr ctx auto             ;
+        cpybla emi-rslvsp-obj-type, x"0401" ;
+        cpyblap emi-rslvsp-obj-name, idx-lib, ' ' ;
+        rslvsp ctx,
+          emi-rslvsp-option-short,
+          *,
+          x'0000'               ;
+
+        cpybla emi-rslvsp-obj-type, x"0E0A" ;
+        cpyblap emi-rslvsp-obj-name, idx-name, ' ' ;
+        rslvsp index,
+          emi-rslvsp-option-short,
+          ctx,
+          x'0000'               ;
+
+        b end-resolve           ;
+resolve-2:      /* resolve object in *LIBL */
+
+        cpybla emi-rslvsp-obj-type, x"0E0A" ;
+        cpyblap emi-rslvsp-obj-name, idx-name, ' ' ;
+        rslvsp index,
+          emi-rslvsp-option-short,
+          *,
+          x'0000'               ;
+
+end-resolve:    
+        b .resolve-index        ;
+
+/* get *usridx attributes */
+dcl insptr .get-idxd auto                           ;
+entry get-idxd int                                  ;
+
+        cpynv emi-ec-bytes-in, emi-qusec-len ;
+        setsppfp .emi-qusruiat-ec, emi-qusec-ptr ;
+        cpybla emi-qusruiat-idx, idx      ;
+        callx emi-qusruiat, emi-qusruiat-al, *      ;
+
+brk 'IDXATTTR'                  ;
+        b .get-idxd             ;
+
+/include ptr.emi                ;
+/include qusec.emi              ;
+/include qusruiat.emi           ;
+/include qusaddui.emi           ;
+
+pend                            ;
+/* eof - indidx.emi */

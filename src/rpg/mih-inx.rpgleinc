@@ -1,0 +1,203 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-inx.rpgleinc
+      *
+      * Independent index management instructions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_inx)
+      /define i5toolkit_rpg_mih_inx
+
+     /* template of CRTINX */
+     d crtinx_tmpl_t   ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     obj_type                   2a
+     d     obj_name                  30a
+      * creation option
+     d     crt_opt                    4a
+      * recovery option
+     d     rcvy_opt                   4a
+     d     spc_size                  10i 0
+     d     init_spc_val...
+     d                                1a
+      * performance class
+     d     perf_cls                   4a
+     d                                3a
+      * extension offset
+     d     ext_offset                10i 0
+     d     ctx                         *
+     d     acc_grp                     *
+     d     inx_attr                   1a
+      * argument length
+     d     arg_len                    5i 0
+      * key length
+     d     key_len                    5i 0
+      * longer template
+     d                               12a
+      * template version, must be hex 00
+     d     tmpl_ver                   1a
+      * index format,
+      *   0=maximum object size of 4G bytes
+      *   1=maximum object size of 1T bytes
+     d     inx_fmt                    1a
+     d                               61a
+
+      * template extension of CRTINX
+     d crtinx_tmpl_ext_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     usrprf                      *
+     d                                4a
+      * domain assigned to created object
+      *   hex 0000=the domain will be choosed by the machine
+      *   hex 0001=user domain
+     d     obj_domain                 2a
+     d                               42a
+
+     /* template of MATINXAT */
+     d matinxat_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     obj_type                   2a
+     d     obj_name                  30a
+      * creation option
+     d     crt_opt                    4a
+      * recovery option
+     d     rcvy_opt                   4a
+     d     spc_size                  10i 0
+     d     init_spc_val...
+     d                                1a
+      * performance class
+     d     perf_cls                   4a
+     d                                3a
+      * extension offset
+     d     ext_offset                10i 0
+     d     ctx                         *
+     d     acc_grp                     *
+     d     inx_attr                   1a
+      * argument length
+     d     arg_len                    5i 0
+      * key length
+     d     key_len                    5i 0
+      * index statistics
+     d     entries_inserted...
+     d                               10u 0
+     d     entries_removed...
+     d                               10u 0
+     d     find_operations...
+     d                               10u 0
+
+     /**
+      * @BIF _CRTINX (Create Independent Index (CRTINX))
+      */
+     d crtinx          pr                  extproc('_CRTINX')
+     d     index                       *
+     d     tmpl                        *   value
+     d
+
+     /**
+      * @BIF _DESINX (Destroy Independent Index (DESINX))
+      */
+     d desinx          pr                  extproc('_DESINX')
+     d     index                       *
+
+     /**
+      * @BIF _MATINXAT (Materialize Independent Index Attributes (MATINXAT))
+      */
+     d matinxat        pr                  extproc('_MATINXAT')
+     d     attr                        *   value
+     d     index                       *
+
+     /* option list structure used by INSINXEN and FNDINXEN */
+     d inx_option_list_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     rule_opt                   2a
+     d     arg_len                    5u 0
+     d     arg_offset                 5i 0
+     d     occ_cnt                    5i 0
+     d     rtn_cnt                    5i 0
+      * offset 10
+      * returned index entries: entry length 5u0, offset 5i0
+
+     d inx_entry_length_offset_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     length                     5u 0
+     d     offset                     5i 0
+
+     /**
+      * @BIF _INSINXEN (Insert Independent Index Entry (INSINXEN))
+      */
+     d insinxen        pr                  extproc('_INSINXEN')
+     d     index                       *
+     d     argument                    *   value
+     d     opt_list                    *   value
+
+     /**
+      * @BIF _FNDINXEN (Find Independent Index Entry (FNDINXEN))
+      */
+     d fndinxen        pr                  extproc('_FNDINXEN')
+     d     receiver                    *   value
+     d     index                       *
+     d     opt_list                    *   value
+     d     argument                    *   value
+
+     /**
+      * @BIF _RMVINXEN1 (Remove Independent Index Entry (RMVINXEN))
+      */
+     d rmvinxen        pr                  extproc('_RMVINXEN1')
+     d     receiver                    *   value
+     d     index                       *
+     d     opt_list                    *   value
+     d     argument                    *   value
+
+     /* template of MODINX */
+     d modinx_tmpl_t   ds                  qualified
+      * bit 1, immediate update
+      *   0=do not modify
+      *   1=modify
+      * bit 2, index coherency tracking
+      *   0=do not modify
+      *   1=modify
+     d     mod_sel                    1a
+      * bit 1, immediate update
+      *   0=no immediate update
+      *   1=immediate update
+      * bit 2, index coherency tracking
+      *   0=do not track index coherency
+      *   1=track index coherency
+     d     new_attr                   1a
+     d     reserved                   2a
+
+     /**
+      * @BIF _MODINX (Modify Independent Index (MODINX))
+      */
+     d modinx          pr                  extproc('_MODINX')
+     d     index                       *
+     d     opt                         *   value
+
+      /endif
+

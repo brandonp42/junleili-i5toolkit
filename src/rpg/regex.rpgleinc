@@ -1,0 +1,161 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file regex.rpgleinc
+      *
+      * This file provides prototypes for regular expression routines
+      * and definitions of related data structures and constants.  For
+      * more information about how to use regex routines in ILE RPG,
+      * please refer to documentations available at the projects's web
+      * site, http://i5toolkit.sourceforge.net/
+      */
+
+      /if not defined(i5toolkit_rpg_regex)
+      /define i5toolkit_rpg_regex
+
+      * Constants
+
+     /* regcomp() cflags */
+     d REG_BASIC       c                   x'00'
+     d REG_EXTENDED    c                   x'01'
+     d REG_ICASE       c                   x'02'
+     d REG_NEWLINE     c                   x'04'
+     d REG_NOSUB       c                   x'08'
+     d REG_ALT_NL      c                   x'10'
+
+     /* regexec() eflags */
+     d REG_NOTBOL      c                   x'0100'
+     d REG_NOTEOL      c                   x'0200'
+
+     /**
+      * regex pattern buffer.
+      */
+     d regex_t         ds                  qualified
+     d     re_nsub                   10u 0
+     d                               12a
+     d     re_comp                     *
+     d     re_cflags                 10i 0
+     d     re_erroff                 10u 0
+     d     re_len                    10u 0
+     d     re_ucoll                  10i 0 dim(2)
+     d                               12a
+     d     re_lsub                     *
+     d     lsub_ar                   10u 0 dim(16)
+     d     esub_ar                   10u 0 dim(16)
+     d     reserved1                   *
+     d     re_esub                     *
+     d     re_specchar...
+     d                                 *
+     d     re_phdl                     *
+     d     comp_spc                 112a
+     d     re_map                   256a
+     d     re_shift                   5i 0
+     d     re_dbcs                    5i 0
+     d                               12a
+
+     /**
+      * Substring locations returned by regexec().
+      *
+      * A group in a regular expression can match a (posssibly empty)
+      * substring of the string that regular expression as a whole
+      * matched.  The matcher remembers the beginning and end of the
+      * substring matched by each group.
+      */
+     d regmatch_t      ds                  qualified
+     d     rm_so                     10i 0
+     d     rm_ss                      5i 0
+     d                                2a
+     d     rm_eo                     10i 0
+     d     rm_es                      5i 0
+     d                                2a
+
+     /**
+      * @fn regcomp()
+      *
+      * The regcomp() function compiles the source regular expression
+      * pointed to by pattern into an executable version and stores it
+      * in @var reg. You can then use the regexec() function to
+      * compare the regular expression to other strings.
+      *
+      * @return If the regcomp() function is successful, it returns
+      *         0. Otherwise, it returns an error code that you can
+      *         use in a call to the regerror() function, and the
+      *         content of preg is undefined.
+      */
+     d regcomp         pr            10i 0 extproc('regcomp')
+     d     reg                             likeds(regex_t)
+     d     pattern                    1a   options(*varsize)
+     d     cflags                    10i 0 value
+
+     /**
+      * @fn regexec()
+      *
+      * The regexec() function compares the null-ended string against
+      * the compiled regular expression @var reg to find a match
+      * between the two.
+      *
+      * The @var nmatch value is the number of substrings in string
+      * that the regexec() function should try to match with
+      * subexpressions in @var reg. The array you supply for @var
+      * match must have at least @var nmatch elements.
+      *
+      * @return If a match is found, the regexec() function returns
+      *         0. If no match is found, the regexec() function
+      *         returns REG_NOMATCH. Otherwise, it returns a nonzero
+      *         value indicating an error. A nonzero return value can
+      *         be used in a call to the regerror() function.
+      */
+     d regexec         pr            10i 0 extproc('regexec')
+     d     reg                             likeds(regex_t)
+     d     string                     1a   options(*varsize)
+     d     nmatch                    10u 0 value
+     d     match                           likeds(regmatch_t)
+     d                                     options(*varsize)
+     d                                     dim(128)
+     d     eflags                    10i 0 value
+
+     /**
+      * @fn regfree()
+      *
+      * The regfree() function frees any memory that was allocated by
+      * the regcomp() function to implement the regular expression
+      * @var reg.
+      */
+     d regfree         pr                  extproc('regfree')
+     d     reg                             likeds(regex_t)
+
+     /**
+      * @fn regerror()
+      *
+      * The regerror() function finds the description for the error
+      * code @var errcode for the regular expression preg. The
+      * description for @var errcode is assigned to @var errbuf. The
+      * @var errbuf_size value specifies the maximum message size that
+      * can be stored (the size of @var errbuf).
+      */
+     d regerror        pr                  extproc('regerror')
+     d     errcode                   10i 0 value
+     d     reg                             likeds(regex_t) const
+     d     errbuf                     1a   options(*varsize)
+     d     errbuf_size...
+     d                               10u 0 value
+
+      * not defined(i5toolkit_rpg_regex)
+      /endif

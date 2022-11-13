@@ -1,0 +1,527 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih.rpgleinc
+      *
+      * Computation instructions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_comp)
+      /define i5toolkit_rpg_mih_comp
+
+     /**
+      * @BIF _CMPSWP1 (Compare and Swap (CMPSW))
+      */
+     d cmpswp1         pr            10i 0 extproc('_CMPSWP1')
+     d     cmp_op1                    1a
+     d     cmp_op2                    1a
+     d     swap_op                    1a   value
+      * Perform storage synchronization or not
+      *  0 = (Default) Storage synchronization is performed both
+      *      before and after a successful store of the swap operand.
+      *  1 = No storage synchronization is performed.
+     d     cntl                      10i 0 options(*nopass)
+     d                                     value
+
+     /**
+      * @BIF _CMPSWP2 (Compare and Swap (CMPSWP))
+      */
+     d cmpswp2         pr            10i 0 extproc('_CMPSWP2')
+     d     cmp_op1                    2a
+     d     cmp_op2                    2a
+     d     swap_op                    2a   value
+     d     cntl                      10i 0 options(*nopass)
+     d                                     value
+
+     /**
+      * @BIF _CMPSWP4 (Compare and Swap (CMPSWP))
+      */
+     d cmpswp4         pr            10i 0 extproc('_CMPSWP4')
+     d     cmp_op1                    4a
+     d     cmp_op2                    4a
+     d     swap_op                    4a   value
+     d     cntl                      10i 0 options(*nopass)
+     d                                     value
+
+     /**
+      * @BIF _CMPSWP8 (Compare and Swap (CMPSWP))
+      */
+     d cmpswp8         pr            10i 0 extproc('_CMPSWP8')
+     d     cmp_op1                    8a
+     d     cmp_op2                    8a
+     d     swap_op                    8a   value
+     d     cntl                      10i 0 options(*nopass)
+     d                                     value
+
+     /**
+      * CPRDATA template
+      */
+     d cprdata_tmpl_t  ds                  qualified
+     d                                     based(dummy_ptr)
+     d     source_len                10i 0
+     d     target_len                10i 0
+     d     returned_target_len...
+     d                               10i 0
+     d     algorithm                  5i 0
+     d                               18a
+     d     source                      *
+     d     target                      *
+
+     /* length of cprdata_tmpl_t */
+     d CPRDATA_TMPL_LENGTH...
+     d                 c                   64
+
+     /**
+      * @BIF _CPRDATA (Compress Data (CPRDATA))
+      */
+     d cprdata         pr                  extproc('_CPRDATA')
+     d    tmpl                         *   value
+
+     /* DCPDATA template */
+     d dcpdata_tmpl_t  ds                  qualified
+     d                                     based(dummy_ptr)
+     d                                4a
+     d     result_len                10i 0
+     d     returned_result_len...
+     d                               10i 0
+     d                               20a
+     d     source                      *
+     d     target                      *
+
+     /* length of dcpdata_tmpl_t */
+     d DCPDATA_TMPL_LENGTH...
+     d                 c                   64
+
+     /**
+      * @BIF _DCPDATA (Decompress Data (DCPDATA))
+      */
+     d dcpdata         pr                  extproc('_DCPDATA')
+     d    tmpl                         *   value
+
+     /**
+      * @BIF _TSTBTS (Test Bit in String (TSTBTS))
+      *
+      * @return 1 if bit is set, otherwise 0.
+      */
+     d tstbts          pr            10i 0 extproc('_TSTBTS')
+     d     str                         *   value
+     d     offset                    10u 0 value
+
+     /**
+      * @BIF _CLRBTS (Clear Bit in String (CLRBTS))
+      */
+     d clrbts          pr                  extproc('_CLRBTS')
+     d     str                         *   value
+     d     offset                    10u 0 value
+
+     /**
+      * @BIF _SETBTS (Set Bit in String (SETBTS))
+      */
+     d setbts          pr                  extproc('_SETBTS')
+     d     str                         *   value
+     d     offset                    10u 0 value
+
+     /**
+      * @BIF _CVTEFN (Convert External Form to Numeric Value (CVTEFN))
+      */
+     d cvtefn          pr                  extproc('_CVTEFN')
+     d     receiver                    *   value
+     d     rcv_attr                   7a
+     d     source                      *   value
+     d     src_length                10u 0
+     d     mask                       3a
+
+     /* data structure used as CPYECLAP's operand 3 */
+     d cpyeclap_pad_t  ds                  qualified
+     d     single_byte_pad_value...
+     d                                1a
+     d     double_byte_pad_value...
+     d                                2a
+
+     /**
+      * @BIF _CPYECLAP (Copy Extended Characters Left-Adjusted With Pad (CPYECLAP))
+      */
+     d cpyeclap        pr                  extproc('_CPYECLAP')
+     d     receiver                    *
+     d     source                      *
+     d     pad                             likeds(cpyeclap_pad_t)
+
+     /**
+      * @BIF _LBCPYNV (Copy Numeric Value (CPYNV))
+      */
+     d lbcpynv         pr                  extproc('_LBCPYNV')
+     d     receiver                    *   value
+     d     receiver_attr...
+     d                                7a
+     d     source                      *   value
+     d     source_attr...
+     d                                7a
+
+     /**
+      * @BIF _LBCPYNVR (Copy Numeric Value (CPYNV))
+      *
+      * @remark _LBCPYNVR copy numeric value and round the result half adjusted.
+      */
+     d lbcpynvr        pr                  extproc('_LBCPYNVR')
+     d     receiver                    *   value
+     d     receiver_attr...
+     d                                7a
+     d     source                      *   value
+     d     source_attr...
+     d                                7a
+
+     /* end -- computation instructions */
+
+     /* bound program calculation builtins */
+
+     /**
+      * @BIF _ACOS (Arc Cosine (ACOS))
+      */
+     d acos            pr             8f   extproc('_ACOS')
+     d     x                          8f   value
+
+     /**
+      * @BIF _ANDCSTR (And Complemented String (ANDCSTR))
+      */
+     d andcstr         pr                  extproc('_ANDCSTR')
+     d     receiver                   1a   options(*varsize)
+     d     str1                       1a   options(*varsize)
+     d     str2                       1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _ANDCSTR (AND String (ANDSTR))
+      */
+     d andstr          pr                  extproc('_ANDSTR')
+     d     receiver                   1a   options(*varsize)
+     d     str1                       1a   options(*varsize)
+     d     str2                       1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _ASIN (Arc Sine (ASIN))
+      */
+     d asin            pr             8f   extproc('_ASIN')
+     d     x                          8f   value
+
+     /**
+      * @BIF _ATAN (Arc Tangent (ATAN))
+      */
+     d atan            pr             8f   extproc('_ATAN')
+     d     x                          8f   value
+
+     /**
+      * @BIF _ATANH (Arc Tangent Hyperbolic (ATANH))
+      */
+     d atanh           pr             8f   extproc('_ATANH')
+     d     x                          8f   value
+
+     /**
+      * @BIF _STRLENNULL (Compute Length of Null-Terminated String (STRLENNULL))
+      */
+     d strlennull      pr            10u 0 extproc('__strlen')
+     d     str                        1a   options(*varsize)
+
+     /**
+      * @BIF _STRCMPNULL (Compare Null-Terminated Strings (STRCMPNULL))
+      */
+     d strcmpnull      pr            10i 0 extproc('__strcmp')
+     d     str1                       1a   options(*varsize)
+     d     str2                       1a   options(*varsize)
+
+     /**
+      * @BIF _STRNCMPNULL (Compare Null-Terminated Strings Constrained (SRNCMPNULL))
+      */
+     d strncmpnull     pr            10i 0 extproc('_STRNCMPNULL')
+     d     str1                       1a   options(*varsize)
+     d     str2                       1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _CMPTOPAD (Compare To Pad (CMPTOPAD))
+      */
+     d cmptopad        pr            10i 0 extproc('_CMPTOPAD')
+     d     str                        1a   options(*varsize)
+     d     pad                        1a   value
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _COMSTR (Complement String (COMSTR))
+      */
+     d comstr          pr                  extproc('_COMSTR')
+     d     receiver                   1a   options(*varsize)
+     d     source                     1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _COS (Cosine (COS))
+      */
+     d cos             pr             8f   extproc('_COS')
+     d     x                          8f   value
+
+     /**
+      * @BIF _COSH (Cosine Hyperbolic (COSH))
+      */
+     d cosh            pr             8f   extproc('_COSH')
+     d     x                          8f   value
+
+     /**
+      * @BIF _COT (Cotangent (COT))
+      */
+     d cot             pr             8f   extproc('_COT')
+     d     x                          8f   value
+
+     /**
+      * @BIF _CPYBYTES (Copy Bytes (CPYBYTES))
+      */
+     d cpybytes        pr                  extproc('_CPYBYTES')
+     d     target                      *   value
+     d     source                      *   value
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _CPYBO (Copy Bytes Overlapping (CPYBO))
+      */
+     d cpybo           pr                  extproc('_CPYBO')
+     d     target                      *   value
+     d     source                      *   value
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _STRCPYNULL (Copy Null-Terminated String (STRCPYNULL))
+      */
+     d strcpynull      pr              *   extproc('__strcpy')
+     d     target                     1a   options(*varsize)
+     d     source                     1a   options(*varsize)
+
+     /**
+      * @BIF _STRNCPYNULL (Copy Null-Terminated String Constrained (STRNCPYNULL))
+      */
+     d strncpynull     pr              *   extproc('_STRNCPYNULL')
+     d     target                     1a   options(*varsize)
+     d     source                     1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _STRNCPYNULLPAD (Copy Null-Terminated String Constrained, Null Padded (STRNCPYNULLPAD))
+      */
+     d strncpynullpad  pr              *   extproc('_STRNCPYNULLPAD')
+     d     target                     1a   options(*varsize)
+     d     source                     1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _EEXP (Exponential Function of E (EEXP))
+      */
+     d exp             pr             8f   extproc('_EEXP')
+     d     x                          8f   value
+
+     /**
+      * @BIF _FINDBYTE (Find Byte (FINDBYTE))
+      */
+     d findbyte        pr              *   extproc('_FINDBYTE')
+     d     source                      *   value
+     d     to_search                  1a   value
+
+     /**
+      * @BIF _MEMCHR (Find Character Constrained (MEMCHR))
+      */
+     d memchr          pr              *   extproc('_MEMCHR')
+     d     source                      *   value
+     d     to_search                  1a   value
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _STRCHRNULL (Find Character in Null-Terminated String (STRCHRNULL))
+      */
+     d strchrnull      pr              *   extproc('_STRCHRNULL')
+     d     source                      *   value
+     d     to_search                  1a   value
+
+     /**
+      * @BIF _LN (Logarithm Base E (Natural Logarithm) (LN))
+      */
+     d log             pr             8f   extproc('_LN')
+     d     x                          8f   value
+
+     /**
+      * @BIF _MEMCMP (Memory Compare (MEMCMP))
+      */
+     d memcmp          pr            10i 0 extproc('__memcmp')
+     d     addr1                       *   value
+     d     addr2                       *   value
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _MEMCPY (Memory Copy (MEMCPY))
+      */
+     d memcpy          pr              *   extproc('__memcpy')
+     d     target                      *   value
+     d     source                      *   value
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _MEMMOVE (Memory Move (MEMMOVE))
+      */
+     d memmove         pr              *   extproc('_MEMMOVE')
+     d     target                      *   value
+     d     source                      *   value
+     d     length                    10u 0 value
+
+      /if defined(*V5R4M0)
+     /**
+      * @BIF _MPYADD (Multiply-Add (MPYADD))
+      */
+     d mpyadd          pr             8f   extproc('_MPYADD')
+     d   multiplicand                 8f   value
+     d   multiplier                   8f   value
+     d   addend                       8f   value
+
+     /**
+      * @BIF _MPYSUB (Multiply-Subtract (MPYSUB))
+      */
+     d mpysub          pr             8f   extproc('_MPYSUB')
+     d   multiplicand                 8f   value
+     d   multiplier                   8f   value
+     d   addend                       8f   value
+      /endif
+
+     /**
+      * @BIF _ORSTR (OR String (ORSTR))
+      */
+     d orstr           pr                  extproc('_ORSTR')
+     d     receiver                   1a   options(*varsize)
+     d     str1                       1a   options(*varsize)
+     d     str2                       1a   options(*varsize)
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _POWER (X To The Y Power (POWER))
+      */
+     d power           pr             8f   extproc('_POWER')
+     d     x                          8f   value
+     d     x                          8f   value
+
+     /**
+      * @BIF _PROPB (Propagate Byte (PROPB))
+      */
+      /if defined(*V5R4M0)
+     d propb           pr              *   extproc('_PROPB')
+      /else
+     d propb           pr              *   extproc('__memset')
+      /endif
+     d     target                      *   value
+     d     src_byte                   1a   value
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _RETCA (Retrieve Computational Attributes (RETCA))
+      *
+      * @remark the selector operand can be either a ubin(4) or an
+      *         char(1). Note that only the rightmost byte of it is used.
+      */
+     d retca           pr            10u 0 extproc('_RETCA')
+     d     selector                   1a   value
+
+     /**
+      * @BIF _SETCA (Set Computational Attributes (SETCA))
+      */
+     d setca           pr                  extproc('_SETCA')
+     d     new_ca                    10u 0 value
+     d     selector                   1a   value
+
+     /**
+      * @BIF _SCANX (Scan Extended (SCANX))
+      */
+     d scanx           pr            10i 0 extproc('_SCANX')
+     d     base_...
+     d       locator                   *
+     d     controls                    *   value
+     d     options                    4a   value
+
+     /**
+      * @BIF _SIN (Sine (SIN))
+      */
+     d sin             pr             8f   extproc('_SIN')
+     d     x                          8f   value
+
+     /**
+      * @BIF _SINH (Sine Hyperbolic (SINH))
+      */
+     d sinh            pr             8f   extproc('_SINH')
+     d     x                          8f   value
+
+     /**
+      * @BIF _TAN (Tangent (TAN))
+      */
+     d tan             pr             8f   extproc('_TAN')
+     d     x                          8f   value
+
+     /**
+      * @BIF _TANH (Tangent Hyperbolic (TANH))
+      */
+     d tanh            pr             8f   extproc('_TANH')
+     d     x                          8f   value
+
+     /**
+      * @BIF _TESTRPL (Test and Replace Bytes (TESTRPL))
+      */
+     d testrpl         pr                  extproc('_TESTRPL')
+     d     source                      *   value
+     d     src_len                   10u 0 value
+     d     cmp_str                     *   value
+     d     rpl_str                     *   value
+     d     other_len                 10u 0 value
+
+     /**
+      * @BIF _TESTSUBSET (Test Subset (TESTSUBSET))
+      */
+     d testsubset      pr            10u 0 extproc('_TESTSUBSET')
+     d     src1                        *   value
+     d     src2                        *   value
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _XLATEB (Translate Bytes (XLATEB))
+      */
+     d xlateb          pr                  extproc('_XLATEB')
+     d     source                      *   value
+     d     table                       *   value
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _XLATEB1 (Translate Bytes One Byte at a Time (XLATEB1))
+      */
+     d xlateb1         pr                  extproc('_XLATEB1')
+     d     receiver                    *   value
+     d     source                      *   value
+     d     table                       *   value
+     d     length                    10u 0 value
+
+     /**
+      * @BIF _XORSTR (XOR (Exclusive Or) String (XORSTR))
+      */
+     d xorstr          pr                  extproc('_XORSTR')
+     d     receiver                   1a   options(*varsize)
+     d     str1                       1a   options(*varsize)
+     d     str2                       1a   options(*varsize)
+     d     length                    10u 0 value
+
+      /endif

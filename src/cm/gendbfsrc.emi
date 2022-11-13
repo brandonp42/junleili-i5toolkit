@@ -1,0 +1,238 @@
+/**
+ * @file gendbfsrc.emi
+ *
+ * @param [out] mbr-path: srcpf/lib/mbr
+ * @param [in] stmf-path
+ * @param [in] source-type
+ *
+ * @remark 使用 srcpf QTEMP／DBFSRC 存放库文件系统源码
+ * @remark 使用 space object QTEMP/DBFSRC 存 当前使用的 member 名, e.g. #000000001
+ *
+ * @todo 如果细致的话, 应该考虑输入的 stmf-path 的长度的问题!
+ * @todo Options for command CRTSRCPF is temporarily set to 'RCDLEN(198) IGCDTA(*YES)'
+ */
+
+dcl spcptr mbr-path-ptr parm    ;
+dcl spcptr stmf-path-ptr parm   ;
+dcl spcptr src-type-ptr parm    ; /* src-type should be at least 10 characters */
+dcl ol pl-main(
+        mbr-path-ptr,
+        stmf-path-ptr,
+        src-type-ptr
+) parm ext                      ;
+entry *(pl-main) ext            ;
+
+/* mbr-path is supposed to be used by STRSEU */
+dcl spc mbr-path bas(mbr-path-ptr)                 ;
+        dcl dd mbrp-srcpf-name char(10) dir        ;
+        dcl dd mbrp-srcpf-lib char(10) dir         ;
+        dcl dd mbrp-srcmbr-name char(10) dir       ;
+
+dcl spc stmf-path-t bas(stmf-path-ptr)             ;
+        dcl dd stmf-path-len bin(2) dir            ;
+        dcl dd stmf-path char(5000) dir            ;
+
+dcl dd src-type char(10) bas(src-type-ptr) ;
+dcl dd ifs-mbr-path char(60) auto          ; /* in IFS format; e.g. /qsys.lib/.... */
+
+        /* check and optionally create srcpf */
+        calli crt-srcpf, *, crt-srcpf-ptr ;
+
+        /* determine source member name: mbrp-srcmbr-name */
+        calli determine-mbr-name, *, determine-mbr-name-ptr ;
+
+        /* create srcpf member and set SRCTYPE: ADDPFM */
+        cpybla mbrp-srcpf-name, SRCPF-10 ;
+        cpyblap mbrp-srcpf-lib, "QTEMP", ' ' ;
+        cpyblap ifs-mbr-path, "/qsys.lib/QTEMP.LIB/DBFSRC.FILE/#000000000.MBR", ' ' ;
+        cpybla ifs-mbr-path(33:10), mbrp-srcmbr-name ;
+brk "1"                               ;
+        cpyblap cmd, mbrp-srcmbr-name, ' ' ;
+        cpyblap cmd,
+          "ADDPFM FILE(QTEMP/DBFSRC) MBR(#000000000) SRCTYPE(0123456789)",
+          ' '                   ;
+        cpybla cmd(31:10), mbrp-srcmbr-name ;
+        cmpbla(b) src-type, "*SAME     " / eq(=+3) ;
+        cpybla cmd(51:10), src-type         ;
+        b addpfm-src-type                   ;
+:       
+        cpybla cmd(51:10), "*NONE     " ;
+addpfm-src-type:        
+brk "2"                               ;
+        triml cmd-len, cmd, ' '       ;
+        callx ept(QCMDEXC-INX), al-qcmdexc, * ;
+
+        /* copy stmf: CPYFRMSTMF mbropt(*replace) */
+        cpyblap cmd,
+          "CPYFRMSTMF FROMSTMF('", /* len=21 */
+          ' '                   ;
+dcl dd pos-ch char(1) bas(pos)  ;
+dcl spcptr pos auto             ;
+dcl dtaptr pos-dta auto         ;
+dcl dd dta-attr char(7) auto    ;
+dcl spcptr dta-attr-ptr auto init(dta-attr) ;
+dcl spc * bas(dta-attr-ptr)     ;
+        dcl dd dta-attr-type char(1) dir ;
+        dcl dd dta-attr-len bin(2) dir   ;
+
+        setspp pos, cmd         ;
+        addspp pos, pos, 21     ;
+        setdp  pos-dta, pos-ch  ;
+        cpybla dta-attr-type, x'04' ; /* character */
+        cpynv  dta-attr-len, stmf-path-len ;
+        setdpat pos-dta, dta-attr ;
+        cpybla pos-dta, stmf-path ; /* len=21 + stmf-path-len */
+
+        /* ') TOMBR(' */
+        addspp pos, pos, stmf-path-len ;
+        setdp pos-dta, pos-ch   ;
+        cpynv dta-attr-len, 10  ;
+        setdpat pos-dta, dta-attr ;
+        cpybla pos-dta, "') TOMBR('" ; /* len = 21 + stmf-path-len + 10 */
+
+        /* ifs-mbr-path */
+        addspp pos, pos, 10     ;
+        setdp pos-dta, pos-ch   ;
+        triml dta-attr-len, ifs-mbr-path, ' ' ;
+        setdpat pos-dta, dta-attr             ;
+        cpybla pos-dta, ifs-mbr-path          ;
+
+        addspp pos, pos, dta-attr-len ;
+        setdp pos-dta, pos-ch         ;
+        cpynv dta-attr-len, 80        ; /* length of ') MBROPT ... TABEXPN(*NO) */
+        setdpat pos-dta, dta-attr     ;
+        cpybla pos-dta,
+          "') MBROPT(*REPLACE) CVTDTA(*AUTO) STMFCODPAG(*STMF) DBFCCSID(*FILE) TABEXPN(*NO)"
+                                ;
+        triml cmd-len, cmd, ' ' ;
+        callx ept(QCMDEXC-INX), al-qcmdexc, * ;
+
+brk "END"                       ;
+        rtx *                   ;
+
+dcl insptr recovery-cpf9801     ;
+dcl excm ex-cpf9801 excid(h'9801') bp(on-cpf9801) imd cv("CPF") ;
+on-cpf9801:     
+
+	b recovery-cpf9801      ;
+
+/**
+ * 看 QTEMP/DBFSRC 在不在
+ *
+ * @post srcpf-exists
+ */
+dcl insptr crt-srcpf-ptr auto   ;
+entry crt-srcpf int             ;
+
+        setip recovery-cpf9801, srcpf-not-found ;
+
+        /* chkobj ... */
+        cpyblap cmd, "CHKOBJ ", " " ;
+        cpybla cmd(11:21), SRCPF    ;
+        cpybla cmd(33:10), *FILE  ;
+        triml cmd-len, cmd, ' '   ;
+        callx ept(QCMDEXC-INX), al-qcmdexc, * ;
+
+        b end-crt-srcpf         ;
+
+srcpf-not-found:
+        cpyblap cmd, "CRTSRCPF ", ' ' ;
+        cpybla cmd(12:21), SRCPF      ;
+        cpybla cmd(33:24), "RCDLEN(198) IGCDTA(*YES)" ; /* @todo */
+        triml cmd-len, cmd, ' ' ;
+ brk "1"                              ;
+        callx ept(QCMDEXC-INX), al-qcmdexc, * ;
+
+end-crt-srcpf:  
+        b crt-srcpf-ptr         ;
+
+/**
+ * @post member name (mbrp-srcmbr-name)
+ */
+dcl insptr determine-mbr-name-ptr auto     ;
+entry determine-mbr-name int               ;
+
+        setip recovery-cpf9801, usrspc-not-found ;
+
+        cpyblap cmd, "CHKOBJ ", " " ;
+        cpybla cmd(11:21), USRSPC   ;
+        cpybla cmd(33:10), *USRSPC  ;
+        triml cmd-len, cmd, ' '     ;
+        callx ept(QCMDEXC-INX), al-qcmdexc, * ;
+        b inc-mbr-inx           ;
+
+usrspc-not-found:
+        /* create user space using QUSCRTUS */
+        cpybla usrspc-name, USRSPC-20 ;
+/*        setallen al-quscrtus, 6       ;*/
+        callx ept(QUSCRTUS-INX), al-quscrtus, * ;
+inc-mbr-inx:        
+dcl sysptr inx-spc auto         ;
+dcl dd rslvsp-opt char(34)      ;
+dcl spcptr inx-spc-ptr auto     ;
+dcl dd mbr-inx znd(9, 0) bas(inx-spc-ptr)   ;
+        cpyblap rslvsp-opt, x'1934', x'00' ;
+        cpybla rslvsp-opt(3:30), USRSPC-30 ;
+        rslvsp inx-spc, rslvsp-opt, qtemp, *   ;
+        setsppfp inx-spc-ptr, inx-spc      ;
+        addn(s) mbr-inx, 1      ;
+
+        cpybla mbrp-srcmbr-name(1:1), '#' ;
+        cpybla mbrp-srcmbr-name(2:9), mbr-inx ;
+
+end-determine-mbr-name:    
+        b determine-mbr-name-ptr           ;
+
+/* globals */
+/* sept */
+dcl spc pco-obj baspco          ;
+        dcl spcptr ept-ptr dir  ;
+        dcl sysptr wcbt dir     ;
+        dcl sysptr dmcq dir     ;
+        dcl sysptr devd dir     ;
+        dcl sysptr qtemp dir    ;
+dcl sysptr ept(7001) bas(ept-ptr) ;
+
+dcl con QCMDEXC-INX bin(2) init(h'07C5')     ;
+dcl con QUSCRTUS-INX bin(2) init(h'150F')    ;
+dcl con SRCPF char(21) init("QTEMP/DBFSRC")  ;
+dcl con SRCPF-10 char(10) init("DBFSRC")  ;
+dcl con USRSPC char(21) init("QTEMP/DBFSRC") ;
+dcl con USRSPC-30 char(30) init("DBFSRC") ;
+dcl con USRSPC-20 char(20) init("DBFSRC    QTEMP") ;
+dcl con *FILE char(10) init("*FILE")         ;
+dcl con *USRSPC char(10) init("*USRSPC")     ;
+dcl dd cmd char(4096) auto                   ;
+dcl spcptr cmd-ptr auto init(cmd)            ;
+dcl dd cmd-len pkd(15,5) auto                ;
+dcl spcptr cmd-len-ptr auto init(cmd-len)    ;
+dcl dd igc char(3) auto init("IGC")          ;
+dcl spcptr igc-ptr auto init(igc)            ;
+dcl ol al-qcmdexc (
+        cmd-ptr,
+        cmd-len-ptr,
+        igc-ptr
+) arg                           ;
+
+dcl dd usrspc-name char(20) auto ;
+dcl spcptr usrspc-name-ptr auto init(usrspc-name) ;
+dcl dd usrspc-attr char(10) auto init("UU")       ;
+dcl spcptr usrspc-attr-ptr auto init(usrspc-attr) ;
+dcl dd usrspc-init-size bin(4) auto init(h'1000') ;
+dcl spcptr usrspc-init-size-ptr auto init(usrspc-init-size) ;
+dcl dd usrspc-init-val char(1) auto init(x'F0')   ; /* @remark zoned zeros */
+dcl spcptr usrspc-init-val-ptr auto init(usrspc-init-val) ;
+dcl dd usrspc-pub-auth char(10) auto init("*CHANGE")      ;
+dcl spcptr usrspc-pub-auth-ptr auto init(usrspc-pub-auth)     ;
+dcl dd usrspc-text auto char(50) auto init(' ')    ;
+dcl spcptr usrspc-text-ptr auto init(usrspc-text)     ;
+dcl ol al-quscrtus (
+        usrspc-name-ptr,
+        usrspc-attr-ptr,
+        usrspc-init-size-ptr,
+        usrspc-init-val-ptr,
+        usrspc-pub-auth-ptr,
+        usrspc-text-ptr
+) arg                           ;
+
+pend                            ;

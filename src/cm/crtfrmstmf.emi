@@ -1,0 +1,276 @@
+/**
+ * @file crtfrmstmf.emi
+ *
+ * CPP program of CL command CRTFRMSTMF
+ *
+ */
+
+dcl spcptr obj-lib-ptr parm     ;
+dcl spcptr cmd-name-ptr parm    ;
+dcl spcptr stmf-path-ptr parm   ;
+dcl spcptr cmd-parm-ptr parm    ;
+dcl ol pl-main(
+        obj-lib-ptr,
+        cmd-name-ptr,
+        stmf-path-ptr,
+        cmd-parm-ptr
+) parm ext       ;
+
+entry *(pl-main) ext            ;
+
+dcl dd obj-lib char(20) bas(obj-lib-ptr)   ;
+        dcl dd obj-name char(10) def(obj-lib) pos(1) ;
+        dcl dd lib-name char(10) def(obj-lib) pos(11) ;
+dcl dd cmd-name char(10) bas(cmd-name-ptr) ;
+
+dcl spc stmf-path-t bas(stmf-path-ptr)  ;
+        dcl dd stmf-path-len bin(2) dir ;
+        dcl dd stmf-path char(5000) dir ;
+
+dcl spc cmd-parm-t bas(cmd-parm-ptr)   ;
+        dcl dd cmd-parm-len bin(2) dir ;
+        dcl dd cmd-parm char(2000) dir ;
+
+brk 'GEN'                  ;
+
+        /* generate srcpf member for stmf source */
+        callx gen-pgm, al-gen, * ;
+
+brk 'CMD'                       ;
+/*
+CRTXXXNNNI XXX(-----/-----) SRCFILE(----/----) SRCMBR(--10--) other-params
+           11               11+34=45           45+31=76       76+20=96
+*/
+        cpyblap cmd, cmd-name, ' '  ;
+        search index, valid-cmds, cmd-name, 1 ;
+        cpybla cmd(12:10), valid-obj-types(index) ;
+        triml len, cmd, ' '         ;  /* obj(lib/name) */
+        setspp pos-ptr, cmd         ;
+        addspp pos-ptr, pos-ptr, len ;
+        cpybla pos-ch1, '('          ;
+        addspp pos-ptr, pos-ptr, 1   ;
+        cpybla pos-ch10, lib-name    ;
+        triml len, cmd, ' '         ;
+        setspp pos-ptr, cmd         ;
+        addspp pos-ptr, pos-ptr, len ;
+        cpybla pos-ch1, '/'          ;
+        addspp pos-ptr, pos-ptr, 1   ;
+        cpybla pos-ch10, obj-name    ;
+        addspp pos-ptr, pos-ptr, 10   ;
+        cpybla pos-ch1, ')'          ;
+        setspp pos-ptr, cmd          ;
+        addspp pos-ptr, pos-ptr, 45  ; /* srcfile(lib/name) */
+        cpybla pos-ch10, "SRCFILE("  ;
+        addspp pos-ptr, pos-ptr, 8   ;
+        cpybla pos-ch10, mbrp-srcpf-lib ;
+        triml len, cmd, ' '         ;
+        setspp pos-ptr, cmd         ;
+        addspp pos-ptr, pos-ptr, len ;
+        cpybla pos-ch1, '/'          ;
+        addspp pos-ptr, pos-ptr, 1   ;
+        cpybla pos-ch10, mbrp-srcpf-name ;
+        addspp pos-ptr, pos-ptr, 10   ;
+        cpybla pos-ch1, ')'          ;
+        setspp pos-ptr, cmd          ;
+        addspp pos-ptr, pos-ptr, 76  ; /* srcfile(lib/name) */
+        cpybla pos-ch10, "SRCMBR("   ;
+        addspp pos-ptr, pos-ptr, 7   ;
+        cpybla pos-ch10, mbrp-srcmbr-name ;
+        addspp pos-ptr, pos-ptr, 10   ;
+        cpybla pos-ch1, ')'          ;
+        setspp pos-ptr, cmd          ;
+        addspp pos-ptr, pos-ptr, 96  ; /* other params */
+        setdp dta-ptr, pos-ch1         ;
+        cpynv dta-len, cmd-parm-len   ;
+        cmpnv(b) dta-len, 0 / eq (=+3) ;
+        setdpat dta-ptr, dta-attr      ;
+        cpybla dta-ptr, cmd-parm      ;
+:       
+        /* invoke CL command */
+        triml cmd-len, cmd, ' '       ;
+        callx ept(QCMDEXC-INX), al-qcmdexc, * ;
+
+brk 'END'                       ;
+see-you:        
+        rtx *                   ;
+
+/* in case that the called CL command fails with *escape message */
+dcl excm ex-cpf0000 excid(h'0000') bp(on-cpf0000) imd cv('CPF') ;
+on-cpf0000:     
+dcl dd exc-info char(256) auto bdry(16) ;
+dcl spcptr exc-info-ptr auto init(exc-info) ;
+dcl spc exc-info-t bas(exc-info-ptr)        ;
+        dcl dd exc-bytes-in bin(4) dir      ;
+        dcl dd exc-bytes-out bin(4) dir     ;
+        dcl dd exc-id char(2) dir           ;
+        dcl dd exc-cv-len bin(2) dir        ;
+        dcl dd exc-cv char(32) dir          ;
+        dcl dd exc-msg-ref-key char(4) dir  ;
+        dcl dd exc-data char(208) dir       ;
+
+        cpynv exc-bytes-in, 256 ;
+        retexcpd exc-info-ptr, x'00' ; /* BP */
+
+        /* send error message */
+        cpyblap err-msg, cmd-name, ' ' ;
+        cpybla err-msg(11:24),
+          "FAILED on *STMF source '" ;
+/* available stmf source length in err-msg field: 256 - 34 -2 */
+dcl con HOW-LONG bin(2) init(220)    ;
+        cmpnv(b) stmf-path-len, HOW-LONG / lo(=+3) ;
+        cpynv dta-len, HOW-LONG                    ;
+        b compare-with-how-long                    ;
+:
+        cpynv dta-len, stmf-path-len ;
+compare-with-how-long:
+        setspp pos-ptr, err-msg ;
+        addspp pos-ptr, pos-ptr, 34 ;
+        setdp dta-ptr, pos-ch1      ;
+        setdpat dta-ptr, dta-attr   ;
+        cpybla dta-ptr, stmf-path   ;
+        addspp pos-ptr, pos-ptr, dta-len ;
+        cpybla pos-ch1, "'"         ;
+
+        cpynv sendmsg-ec-bytes-in, SENDMSG-USECLEN;
+        triml err-msglen, err-msg, ' '            ;
+        callx ept(QMHSNDPM-INX), argl-sndpm, *    ;
+
+brk "EXC"                       ;
+        b see-you               ;
+
+/* globals ... */
+dcl dd mbr-path char(30) auto            ;
+dcl spcptr mbr-path-ptr auto init(mbr-path)  ;
+dcl spc mbr-path-t bas(mbr-path-ptr)         ;
+        dcl dd mbrp-srcpf-name char(10) dir  ;
+        dcl dd mbrp-srcpf-lib char(10) dir   ;
+        dcl dd mbrp-srcmbr-name char(10) dir ;
+dcl dd srctype char(10) auto init(' ')       ;
+dcl spcptr srctype-ptr auto init(srctype)    ;
+
+dcl ol al-gen (
+        mbr-path-ptr,
+        stmf-path-ptr,
+        srctype-ptr
+) arg                           ;
+
+dcl sysptr gen-pgm auto init (
+        "GENDBFSRC",
+        ctx("I5TOOLKIT"),
+        type(pgm)
+)                               ;
+
+dcl dd len bin(2) auto          ;
+dcl dd index bin(2) auto        ;
+dcl spcptr pos-ptr auto         ;
+dcl dd pos-ch10 char(10) bas(pos-ptr) ;
+dcl dd pos-ch11 char(11) bas(pos-ptr) ;
+dcl dd pos-ch1 char(1) bas(pos-ptr)   ;
+dcl dd pos-ch6 char(6) bas(pos-ptr)   ;
+dcl dtaptr dta-ptr auto         ;
+dcl dd dta-attr char(7) auto    ;
+        dcl dd dta-type char(1) def(dta-attr) pos(1) init(x'04') ;
+        dcl dd dta-len bin(2) unsgnd def(dta-attr) pos(2)        ;
+
+/*
+currently supported cl commands:
+CRTBNDCL 
+CRTCLPGM 
+CRTCLMOD 
+CRTRPGPGM
+CRTCBLPGM
+CRTPF    
+CRTLF    
+CHGLF    
+CRTCMD   
+*/
+dcl dd valid-cmds(10) char(10) auto init(
+        *(1)"CRTBNDCL",
+        "CRTCLPGM",
+        "CRTCLMOD",
+        "CRTRPGPGM",
+        "CRTCBLPGM",
+        "CRTPF",
+        "CHGPF",
+        "CRTLF",
+        "CRTCMD",
+        "CRTPNLGRP"
+)                               ;
+dcl dd valid-obj-types(10) char(10) auto init(
+        *(1)"PGM",
+        "PGM",
+        "MODULE",
+        "PGM",
+        "PGM",
+        "FILE",
+        "FILE",
+        "FILE",
+        "CMD",
+        "PNLGRP"
+)                               ;
+
+dcl spc pco-obj baspco          ;
+        dcl spcptr ept-ptr dir  ;
+        dcl sysptr wcbt dir     ;
+        dcl sysptr dmcq dir     ;
+        dcl sysptr devd dir     ;
+        dcl sysptr qtemp dir    ;
+dcl sysptr ept(7001) bas(ept-ptr) ;
+dcl con QCMDEXC-INX bin(2) init(h'07C5')     ;
+
+dcl dd cmd char(5000) auto      ;
+dcl spcptr cmd-ptr auto init(cmd)            ;
+dcl dd cmd-len pkd(15,5) auto                ;
+dcl spcptr cmd-len-ptr auto init(cmd-len)    ;
+dcl dd igc char(3) auto init("IGC")          ;
+dcl spcptr igc-ptr auto init(igc)            ;
+dcl ol al-qcmdexc (
+        cmd-ptr,
+        cmd-len-ptr,
+        igc-ptr
+) arg                           ;
+
+dcl dd sendmsg-ec char(128) auto;
+dcl spcptr .sendmsg-ec auto init(sendmsg-ec);
+dcl spc * bas(.sendmsg-ec);
+  dcl dd sendmsg-ec-bytes-in bin(4) dir;
+  dcl dd sendmsg-ec-bytes-out bin(4) dir;
+  dcl dd sendmsg-ec-exid char(7) dir;
+  dcl dd * char(1) dir;
+  dcl dd sendmsg-ec-exdata char(112) dir;
+dcl con SENDMSG-USECLEN bin(4) init(128);
+
+dcl dd sndpm-msgid char(7) auto init('CPF9898');
+dcl spcptr .sndpm-msgid auto init(sndpm-msgid);
+dcl dd sndpm-msgf char(20) auto init('QCPFMSG   QSYS');
+dcl spcptr .sndpm-msgf auto init(sndpm-msgf);
+
+dcl dd err-msg char(256) auto init(' ') ;
+dcl spcptr .sndpm-msg auto init(err-msg) ;
+dcl dd err-msglen bin(4) auto            ;
+dcl spcptr .sndpm-msglen auto init(err-msglen) ;
+
+dcl dd sndpm-msgtype char(10) auto init("*ESCAPE");
+dcl spcptr .sndpm-msgtype auto init(sndpm-msgtype);
+dcl dd sndpm-callstack-entry char(10) auto init("*");
+dcl spcptr .sndpm-callstack-entry auto init(sndpm-callstack-entry);
+dcl dd sndpm-callstack-counter bin(4) auto init(1);
+dcl spcptr .sndpm-callstack-counter auto init(sndpm-callstack-counter);
+dcl dd sndpm-msgkey char(4) auto init(" ");
+dcl spcptr .sndpm-msgkey auto init(sndpm-msgkey);
+
+dcl ol argl-sndpm (
+        .sndpm-msgid,
+        .sndpm-msgf,
+        .sndpm-msg,
+        .sndpm-msglen,
+        .sndpm-msgtype,
+        .sndpm-callstack-entry,
+        .sndpm-callstack-counter,
+        .sndpm-msgkey,
+        .sendmsg-ec
+) arg ;
+dcl sysptr .qmhsndpm auto init("QMHSNDPM", type(pgm));
+dcl con QMHSNDPM-INX bin(2) init(h'10AD') ;
+
+pend                            ;

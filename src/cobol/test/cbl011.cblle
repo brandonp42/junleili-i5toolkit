@@ -1,0 +1,91 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file cbl011.cblle
+      *
+      * Test of:
+      *  - _SETDP (Set Data Pointer)
+      */
+
+       process
+           NOSTDTRUNC
+           NOMONOPRC.
+
+       id division.
+       program-id. cbl011.
+
+       environment division.
+       configuration section.
+       special-names.
+           copy mih-lnktyp.
+
+       data division.
+       working-storage section.
+           copy mih-comp.
+           copy mih-dtaptr.
+
+       01 str pic x(3) value x"99867D".
+      * scalar attributes of packed(5,2)
+       01 scalar-attr pic x(7) value x"03020500000000".
+       01 ptr-grp.
+          05 dta-ptr usage pointer.
+       01 rtn pic 9(9) usage binary.
+
+       procedure division.
+       main-pgm.
+           call "_SETDP" using
+                by reference str
+                by value     scalar-attr
+                returning into dta-ptr.
+
+      * eval ptr-grp:x
+      * C3000000 02050000 DDCAEDF9 0D002140
+      *  bits 0-3 of byte 0 = hex C, this is a data pointer
+      *  bits 4-7 of byte 0 = hex 3, the scalar data type attribute is packed decimal
+      *  byte 4-5: scalar length attribute
+      *  lower 8-byte stores the addressibility of the data pointer
+
+           move x"09000500000000" to scalar-attr.
+           call "_SETDP" using
+                by reference str
+                by value     scalar-attr
+                returning into dta-ptr.
+
+      * eval ptr-grp:x
+      * C9000000 00050000 DDCAEDF9 0D002140
+      *  bits 0-3 of byte 0 = hex C, this is a data pointer
+      *  bits 4-7 of byte 0 = hex 9, the scalar data type attribute is open character
+      *  byte 4-5: scalar length attribute
+      *  lower 8-byte stores the addressibility of the data pointer
+
+      * am i a data pointer?
+           call "_CMPPTRT" using
+                by value       x"03"
+                by value       dta-ptr
+                returning into rtn.
+           if rtn equal to 1
+              then
+              display "i'm a data pointer :p"
+           else
+              display "Oops?!"
+           end-if.
+
+           stop run.
+       end program cbl011.

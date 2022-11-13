@@ -1,0 +1,311 @@
+/*
+ * This file is part of i5/OS Programmer's Toolkit.
+ * 
+ * Copyright (C) 2010, 2011  Junlei Li (李君磊).
+ * 
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file stmfseu.emi
+ *
+ * function desciption
+ *  - accept input params from CL command STMFSEU
+ *    - stmf-path
+ *    - srctype
+ *    - option: ' ', '2', '5', '6'
+ *      @remark option ' ' is equal to '2'
+ *  - invoke GENDBFSRC to create a new source member in QTEMP/DBFSRC
+ *  - invoke SEU to let the user edit, view, or print target stmf source
+ *  - copy changed source member back to stmf
+ */
+
+dcl spcptr stmf-path-ptr parm   ;
+dcl spcptr srctype-ptr parm     ;
+dcl spcptr seu-opt-ptr parm     ;
+dcl spcptr stmf-ccsid-ptr parm  ;
+dcl spcptr end-line-ptr parm    ;
+dcl ol pl-main (
+        stmf-path-ptr,
+        srctype-ptr,
+        seu-opt-ptr,
+        stmf-ccsid-ptr,
+        end-line-ptr
+) parm ext                      ;
+entry welcome(pl-main) ext      ;
+
+dcl spc stmf-path-t bas(stmf-path-ptr) ;
+        dcl dd stmf-path-len bin(2) dir ;
+        dcl dd stmf-path char(5000) dir ;
+dcl dd srctype char(10) bas(srctype-ptr) ;
+dcl dd seu-opt char(1) bas(seu-opt-ptr)  ;
+dcl dd stmf-ccsid bin(2) bas(stmf-ccsid-ptr) ;
+dcl dd end-line char(10) bas(end-line-ptr)   ;
+
+        /* if seu-opt ==  ' ' or '2', touch target stmf */
+        cmpbla(b) seu-opt, '5' / eq(after-touch) ;
+        cmpbla(b) seu-opt, '6' / eq(after-touch) ;
+
+        cpybla stmf-path-null, stmf-path ;
+        triml len, stmf-path-null, ' '   ;
+        setspp pos-ptr, stmf-path-null   ;
+        addspp pos-ptr, pos-ptr, len     ;
+        cpybla pos-ch, x'00'             ;
+
+        setspp mtime-path-ptr, stmf-path-null ;
+        callx mtime, al-mtime, *              ;
+        cmpnv(b) mtime-rtn-val, 0 / eq(=+2)   ;
+        cpybla newly-created, '1' ;
+:       
+        callx touch, al-touch, * ; /* @todo 如果 touch-rtn-val 非0就该返回了! */
+        cmpnv(b) touch-rtn-val, 0 / eq(after-touch) ;
+        cpyblap msg,
+          "Failed to open stream file: ",
+          ' ' ;
+        cpybla msg(31:34), stmf-path ;
+        triml msg-len, msg, ' '      ;
+        %sendmsg (msg, msg-len)      ;
+
+        b see-you               ;
+after-touch:    
+brk '0'                          ;
+        /* generate source member in QTEMP/DBFSRC */
+        callx gen-pgm, al-gen, * ;
+brk '1'                          ;
+        /* record source member's last modification time */
+dcl dd begin-time bin(4) auto   ;
+dcl dd end-time bin(4) auto     ;
+        cpyblap mtime-path,
+          QTEMP-DBFSRC-PATH, /* @todo 这里应该由 getdbfsrc 的输出参数求, 不应该写死 */
+          x'00' ;
+        setspp mtime-path-ptr, mtime-path          ;
+        cpybla mtime-path(33:10), mbrp-srcmbr-name ;
+        callx mtime, al-mtime, * ;
+        cpynv begin-time, stmf-mtime ;
+brk '2'                              ;
+        /* determine SRCTYPE */
+        cmpbla(b) srctype, "*SAME     " / neq(=+2) ;
+        calli set-srctype, *, set-srctype-ptr      ;
+:       
+brk '3'                         ;
+        /* invoke SEU */
+        /* strseu srcfile(mbrp-srcpf-lib/mbrp-srcpf-name) srcmbr(mbrp-srcmbr-name) srctype(ext-name) option(seu-opt) */
+dcl dd srcfile char(21) auto    ;
+        cpyblap srcfile, mbrp-srcpf-lib, ' ' ;
+        triml len, srcfile, ' '              ;
+        setspp pos-ptr, srcfile              ;
+        addspp pos-ptr, pos-ptr, len         ;
+        cpybla pos-ch, '/'                   ;
+        addspp pos-ptr, pos-ptr, 1           ;
+        cpybla pos-ch10, mbrp-srcpf-name     ;
+
+        cpyblap cmd,
+          "STRSEU SRCFILE(",
+          ' '                   ;
+        cpybla cmd(16:21), srcfile ;
+        cpybla cmd(37:9), ") SRCMBR(" ;
+        cpybla cmd(46:10), mbrp-srcmbr-name ;
+        cpybla cmd(56:7), ") TYPE("     ;
+        cpybla cmd(63:10), srctype      ;
+        cpybla cmd(73:11), ") OPTION(+)"      ;
+        cpybla cmd(82:1), seu-opt             ;
+brk '4'                                       ;
+        triml cmd-len, cmd, ' ' ;
+        callx ept(QCMDEXC-INX), al-qcmdexc, * ;
+
+        /* record source member's last modification time */
+        callx mtime, al-mtime, * ;
+        cpynv end-time, stmf-mtime ;
+        cmpnv(b) end-time, begin-time / eq(=+3) ;
+        cpybla newly-created, '0'               ; /* if srcmbr changed, clear the newly-created flag */
+        calli cpy-stmf-back, *, cpy-stmf-back-ptr ;
+:       
+brk '99'                        ;
+        /* if target stmf is created by TOUCH, but the SEU user doesn't save it, delete target stmt created by TOUCH. */
+        cmpbla(b)
+          newly-created,
+          '1' / neq(=+2)    ;
+        callx unlink, al-unlink, * ;
+brk 'END'                       ;
+see-you:        
+        rtx *                   ;
+
+/**
+ * @pre mtime-path
+ * @pre stmf-path
+ */
+dcl insptr cpy-stmf-back-ptr auto ;
+entry cpy-stmf-back int           ;
+
+        cpyblap cmd,
+          "CPYTOSTMF FROMMBR('",
+          ' '                   ;
+        cpybla cmd(20:48), QTEMP-DBFSRC-PATH ;
+        cpybla cmd(52:10), mbrp-srcmbr-name  ;
+        cpybla cmd(66:11), "') TOSTMF('"     ;
+        setspp pos-ptr, cmd                  ;
+        triml len, cmd, ' '                  ;
+        addspp pos-ptr, pos-ptr, len         ;
+        setdp  dta-ptr, pos-ch               ;
+        cpybla dta-attr-type, x'04'          ;
+        cpynv  dta-attr-len, stmf-path-len   ;
+        setdpat dta-ptr, dta-attr            ;
+        cpybla dta-ptr, stmf-path            ;
+
+        triml len, cmd, ' '     ;
+        setspp pos-ptr, cmd     ;
+        addspp pos-ptr, pos-ptr, len ;
+        setdp dta-ptr, pos-ch        ;
+        cpynv dta-attr-len, 38       ;
+        setdpat dta-ptr, dta-attr    ;
+        cpybla dta-ptr, "') STMFOPT(*REPLACE) ENDLINFMT(*LF   )" ;
+        addspp pos-ptr, pos-ptr, 31 ;
+        setdp dta-ptr, pos-ch        ;
+        cpynv dta-attr-len, 6        ;
+        setdpat dta-ptr, dta-attr    ;
+        cpybla dta-ptr, end-line     ;
+
+invoke-cpytostmf:
+brk '5'                         ;
+
+        triml cmd-len, cmd, ' ' ;
+        callx ept(QCMDEXC-INX), al-qcmdexc, * ;
+
+        b cpy-stmf-back-ptr     ;
+
+/**
+ * set-srctype
+ *
+ * Invoked when user doesn't specifies SRCTYPE parm.
+ * If @var srctype provided by the user is *blank,
+ * set the @var srctype to stream file's extension file
+ * name.
+ */
+dcl insptr set-srctype-ptr auto ;
+entry set-srctype int           ;
+
+dcl dd dot-pos(16) bin(2) auto  ;
+dcl dd bin2-zero bin(2) auto init(0) ;
+dcl dd where bin(2) auto        ;
+dcl dd ext-name char(10) auto init(' ') ;
+
+        /* search for all `.' characters in stmf-path */
+        scan(b) dot-pos, stmf-path, '.' / zer(end-set-srctype) ;
+        search index, dot-pos, bin2-zero, 1 ;
+        cmpnv(b) index, 0 / eq(end-set-srctype) ;
+        subn(s) index, 1        ;
+        cpynv where, dot-pos(index) ;
+
+        /* save file extension name */
+        setspp pos-ptr, stmf-path ;
+        addspp pos-ptr, pos-ptr, where ;
+        cpybla ext-name, pos-ch10 ;
+        cpybla srctype, ext-name  ;
+
+end-set-srctype:        
+        b set-srctype-ptr       ;
+
+/* globals ... */
+dcl sysptr gen-pgm auto init (
+        "GENDBFSRC",
+        ctx("I5TOOLKIT"),
+        type(pgm)
+)                               ;
+
+dcl dd mbr-path char(30) auto            ;
+dcl spcptr mbr-path-ptr auto init(mbr-path)  ;
+dcl spc mbr-path-t bas(mbr-path-ptr)         ;
+        dcl dd mbrp-srcpf-name char(10) dir  ;
+        dcl dd mbrp-srcpf-lib char(10) dir   ;
+        dcl dd mbrp-srcmbr-name char(10) dir ;
+
+dcl ol al-gen (
+        mbr-path-ptr,
+        stmf-path-ptr,
+        srctype-ptr
+) arg                           ;
+
+dcl dd mtime-path char(61) auto ; /* --here, 要是 null-terminated */
+dcl spcptr mtime-path-ptr auto init(mtime-path) ;
+dcl dd stmf-mtime bin(4) auto   ;
+dcl spcptr stmf-mtime-ptr auto init(stmf-mtime) ;
+dcl dd mtime-rtn-val bin(4) auto                ;
+dcl spcptr mtime-rtn-val-ptr auto init(mtime-rtn-val) ;
+dcl ol al-mtime (
+        mtime-path-ptr,
+        stmf-mtime-ptr,
+        mtime-rtn-val-ptr
+) arg                           ;
+dcl sysptr mtime auto init (
+        "MTIME",
+        ctx("I5TOOLKIT"),
+        type(pgm)
+)                               ;
+/* null-terminated stream file path */
+dcl dd stmf-path-null char(5000) auto                   ;
+dcl spcptr stmf-path-null-ptr auto init(stmf-path-null) ;
+dcl dd touch-rtn-val bin(4) auto ;
+dcl spcptr touch-rtn-val-ptr auto init(touch-rtn-val) ;
+dcl ol al-touch (
+        stmf-path-null-ptr,
+        stmf-ccsid-ptr,
+        touch-rtn-val-ptr
+) arg                           ;
+dcl sysptr touch auto init (
+        "TOUCH",
+        ctx("I5TOOLKIT"),
+        type(pgm)
+)                               ;
+dcl ol al-unlink (
+        stmf-path-null-ptr
+) arg                           ;
+dcl sysptr unlink auto init (
+        "UNLINK",
+        ctx("I5TOOLKIT"),
+        type(pgm)
+)                               ;
+dcl spcptr pos-ptr auto         ;
+dcl dd pos-ch char(1) bas(pos-ptr)  ;
+dcl dd pos-ch10 char(10) bas(pos-ptr) ;
+dcl dtaptr dta-ptr auto         ;
+dcl dd index bin(2) unsgnd auto ;
+dcl dd len bin(2) unsgnd auto   ;
+dcl dd cmd char(4096) auto                   ;
+dcl spcptr cmd-ptr auto init(cmd)            ;
+dcl dd cmd-len pkd(15,5) auto                ;
+dcl spcptr cmd-len-ptr auto init(cmd-len)    ;
+dcl dd igc char(3) auto init("IGC")          ;
+dcl spcptr igc-ptr auto init(igc)            ;
+dcl ol al-qcmdexc (
+        cmd-ptr,
+        cmd-len-ptr,
+        igc-ptr
+) arg                           ;
+dcl con QCMDEXC-INX bin(2) init(h'07C5')     ;
+/* sept */
+dcl spc pco-obj baspco          ;
+        dcl spcptr ept-ptr dir  ;
+dcl sysptr ept(7001) bas(ept-ptr) ;
+dcl con QTEMP-DBFSRC-PATH char(48) init("/qsys.lib/QTEMP.LIB/DBFSRC.FILE/#000000000.MBR") ;
+dcl dd dta-attr char(7) auto    ;
+dcl spcptr dta-attr-ptr auto init(dta-attr) ;
+dcl spc * bas(dta-attr-ptr)     ;
+        dcl dd dta-attr-type char(1) dir ;
+        dcl dd dta-attr-len bin(2) dir   ;
+dcl dd msg char(64) auto        ;
+dcl dd msg-len bin(2) auto      ;
+dcl dd newly-created char(1) auto init('0') ;
+
+pend                            ;

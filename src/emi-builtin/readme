@@ -1,0 +1,6 @@
+steps to fill EMI builtin *usridx (i5toolkit/emibuiltin)
+
+ - upload heaer-file and builtin-files to a IFS dir
+ - chdir 'ifs-dir'
+ - call i5toolkit/fill_inx parm('header-file' 'b-file-1' 'b-file-2' ... )
+   * e.g. fill-inx header*7 memcpy sendmsg stmf-creat stmf-close stmf-write

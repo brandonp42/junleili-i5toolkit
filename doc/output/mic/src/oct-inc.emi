@@ -1,0 +1,21 @@
+/* *
+ * @file oct-inc.emi
+ */
+
+/ifndef __oct_inc__             ;
+/define __oct_inc__             ;
+
+dcl dd oct-err char(32) auto    ;
+dcl dd oct-len bin(2) auto      ;
+
+/ifdef __chinese__          ;
+dcl con oct-greeting char(16)
+        init(x"0E56755655569C55C64DC254CA0F") ;
+/else                           ;
+dcl con oct-greeting char(32)
+        init("Soe said he's a kind man.") ;
+/endif                          ;
+
+/endif                          ;
+
+/* eof - oct-inc.emi */

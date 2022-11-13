@@ -1,0 +1,9 @@
+     /*                                                    */
+     /* @file experts.lf                                   */
+     /*                                                    */
+     /* based on PF TEAMATES                               */
+     /*                                                    */
+
+     A          R REC                       PFILE(TEAMATES)
+     A          K LNAM
+     A          S AGE                       COMP(GT 15)

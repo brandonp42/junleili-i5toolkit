@@ -1,0 +1,159 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-ctx.rpgleinc
+      *
+      * Context management instructions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_ctx)
+      /define i5toolkit_rpg_mih_ctx
+
+     /**
+      * Symbolic object identification
+      *
+      * This form of 32-byte object ID is used by MI instructions to
+      * represent the name of a MI object symbolicly.
+      */
+     d sym_object_id_t...
+     d                 ds                  qualified
+      * object type code, for example x'0A02' for a *USRQ object
+     d     type                       2a
+     d     type_code                  1a   overlay(type)
+     d     subtype_code...
+     d                                1a   overlay(type:2)
+     d     name                      30a
+
+     /**
+      * Context object entry returned by MATCTX with
+      * matctx_option_t.sel_flag x'03', x'07', or x'0B'.
+      */
+     d context_entry_full_t...
+     d                 ds                  qualified
+     d     objid                           likeds(sym_object_id_t)
+     d     ptr                         *
+
+     /**
+      * Materialization options for MATCTX.
+      *
+      * @remark When materializing object entries in a context, bits 6-7 determine the format of the returned object entries:
+      *   - Bit 6 = 1, bit 7 = 1: object entries are returned as an array of DSs of type context_entry_full_t.
+      *   - Bit 6 = 1, bit 7 = 0: object entries are returned as an array of system pointers.
+      *   - Bit 6 = 0, bit 7 = 1: object entries are returned as an array of DSs of type sym_object_id_t.
+      */
+     d matctx_option_t...
+     d                 ds            46    qualified
+      *
+      * Information requirements (1 = materialize).
+      *   Bits 0-3, reserved (binary 0)
+      *   Bit 4, materialize extended context attribute
+      *   Bit 5, validation
+      *     0 = Validate system pointers
+      *     1 = No validation
+      *   Bit 6, materialize system pointers to objects reside in target context
+      *   Bit 7, materialize symbolic identification of objects reside in target context
+      *
+     d     sel_flag                   1a                                        selection flag
+     d     sel_criteria...
+     d                                1a                                        selection criteria
+     d     name_len                   5i 0                                      selection name length
+     d     obj_type                   1a                                        object type code
+     d     obj_subtype...
+     d                                1a                                        object sub-type code
+     d     name                      30a                                        object name
+     d     timestamp...
+     d                                8a                                        selection timestamp
+     d     asp_num                    2a                                        indepedent ASP number
+
+     /* length of MATCTX option structure */
+     d matctx_option_length...
+     d                 c                   46
+
+     /* Receiver template for MATCTX. */
+     d matctx_receiver_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0                                      bytes provided
+     d     bytes_out                 10i 0                                      bytes available
+     d     ctx_type                   2a                                        context type/sub-type
+     d     ctx_name                  30a                                        context name
+     d     ctx_opt                    4a                                        context options
+     d     rcvy_opt                   4a                                        recovery options
+     d     spc_size                  10i 0                                      space size
+     d     spc_init_val...
+     d                                1a                                        initial value of space
+     d     perf_cls                   4a                                        performance class
+     d                               23a                                        reserved
+     d     acc_grp                     *                                        access group
+      * selected context entries
+
+     /* Receiver template for MATCTX with extension. */
+     d matctx_receiver_ext_t...
+     d                 ds                  qualified
+     d     base                            likeds(matctx_receiver_t)
+     d     ext_attr                   1a
+     d                                7a
+     d     cur_time                   8a
+      * selected context entries
+
+      * @deprecated Calculate the size of receiver template by BIF %size()
+     d matctx_offset1...
+     d                 c                   96
+
+     /**
+      * @BIF _MATCTX1 (Materialize Context (MATCTX))
+      *
+      * @example test/t031.rpgle
+      */
+     d matctx1         pr                  extproc('_MATCTX1')
+     d     receiver                        likeds(matctx_receiver_t)
+     d     option                    46a
+
+     /**
+      * @BIF _MATCTX2 (Materialize Context (MATCTX)).
+      *
+      * Different from _MATCTX1, _MATCTX2 accepts an additional ctx
+      * operand which is a system pointer to the context object whose
+      * attributes and/or object entries is to be materialized.
+      *
+      * @example test/t129.rpgle
+      */
+     d matctx2         pr                  extproc('_MATCTX2')
+     d     receiver                        likeds(matctx_receiver_t)
+     d     ctx                         *
+     d     option                          likeds(matctx_option_t)
+
+     /**
+      * Sytem state wrapper for MATCTX -- the QusMaterializeContext API
+      *
+      * QusMaterializeContext materialize object entries in a specific context, in either user domain or system domain.
+      *
+      * @remark exported by SRVPGM QUSMIAPI.
+      *
+      * @attention Different from MATCTX, ctx parameter is passed by value
+      *
+      * @example test/t130.rpgle
+      */
+     d QusMaterializeContext...
+     d                 pr                  extproc('QusMaterializeContext')
+     d     receiver                        likeds(matctx_receiver_t)
+     d     ctx                         *   value procptr
+     d     option                          likeds(matctx_option_t)
+
+      /endif

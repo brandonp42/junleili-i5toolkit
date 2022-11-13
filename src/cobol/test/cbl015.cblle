@@ -1,0 +1,220 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file cbl015.cblle
+      *
+      * Test of:
+      *  - _MATS (Create Space)
+      *
+      * This program materialize the create-option of a *USRSPC.
+      */
+
+       process
+           NOSTDTRUNC
+           NOMONOPRC.
+
+       id division.
+       program-id. cbl015.
+
+       environment division.
+       configuration section.
+       special-names.
+           copy mih-lnktyp.
+
+       input-output section.
+       file-control.
+           select spcattr-report assign to printer-QSYSPRT.
+
+       data division.
+       file section.
+       fd spcattr-report.
+       01 report-rec.
+          05 attr-name  pic x(28).
+          05 filler     pic x(2).
+          05 attr-value pic x(50).
+
+       working-storage section.
+
+       01 r-tmpl type rslvsp-tmpl-t.
+       01 usrspc usage pointer.
+       01 spc-attr type mats-tmpl-t.
+       01 offset pic 9(9) usage comp-4.
+       01 flag   pic 9(9) usage comp-4.
+       01 mask     pic x(4) value x"01800000".
+       01 str-flag pic x(4).
+
+       linkage section.
+           copy mih-comp.
+           copy mih-spc.
+           copy mih-ptr.
+
+       77 usrspc-name pic x(10).
+
+       procedure division using usrspc-name.
+       main-program.
+
+       resolve-syp.
+           move all x"00" to r-tmpl.
+           move x"1934" to obj-type of r-tmpl.
+           move usrspc-name to obj-name of r-tmpl.
+           call "_RSLVSP2" using
+                by reference usrspc
+                by reference r-tmpl.
+
+           move length of mats-tmpl-t to bytes-in of spc-attr.
+           call "_MATS" using
+                by reference spc-attr
+                by reference usrspc.
+
+       generate-report.
+           open output spcattr-report.
+           move "Attribute Name" to attr-name.
+           move "Attribute Value" to attr-value.
+           write report-rec.
+           move "---------------" to attr-name.
+           move "----------------" to attr-value.
+           write report-rec.
+
+           move 0 to offset.
+           call "_TSTBTS" using
+                by reference   crt-opt of spc-attr
+                by value       offset
+                returning into flag.
+           if flag is equal to 1
+              then
+              move "Permanent" to attr-value
+           else
+              move "Temporary" to attr-value
+           end-if.
+           move "Existence attribute" to attr-name.
+           write report-rec.
+
+           move 1 to offset.
+           call "_TSTBTS" using
+                by reference   crt-opt of spc-attr
+                by value       offset
+                returning into flag.
+           if flag is equal to 1
+              then
+              move "Variable-length" to attr-value
+           else
+              move "Fixed-length" to attr-value
+           end-if.
+           move "Space attribute" to attr-name.
+           write report-rec.
+
+           move 2 to offset.
+           call "_TSTBTS" using
+                by reference   crt-opt of spc-attr
+                by value       offset
+                returning into flag.
+           if flag is equal to 1
+              then
+              move "Addressability in context" to attr-value
+           else
+              move "Addressability not in context" to attr-value
+           end-if.
+           move "Context" to attr-name.
+           write report-rec.
+
+           move 13 to offset.
+           call "_TSTBTS" using
+                by reference   crt-opt of spc-attr
+                by value       offset
+                returning into flag.
+           if flag is equal to 1
+              then
+              move "Do not initialize" to attr-value
+           else
+              move "Initialize" to attr-value
+           end-if.
+           move "Initialize space" to attr-name.
+           write report-rec.
+
+           move 14 to offset.
+           call "_TSTBTS" using
+                by reference   crt-opt of spc-attr
+                by value       offset
+                returning into flag.
+           if flag is equal to 1
+              then
+              move "Yes" to attr-value
+           else
+              move "No" to attr-value
+           end-if.
+           move "Automatically extend space" to attr-name.
+           write report-rec.
+
+       Bits_15-16.
+           call "_ANDSTR" using
+                by reference str-flag
+                by reference crt-opt of spc-attr
+                by reference mask
+                by value     4.
+           evaluate str-flag
+               when x"00000000"
+                    move "Reference and modify allowed for user state PGMs"
+                         to attr-value
+               when x"00800000"
+                    move "Only reference allowed for user state programs"
+                         to attr-value
+               when x"01000000"
+                    move "A value hex 10 is invalid for bits 15-16"
+                         to attr-value
+               when x"01800000"
+                    move "No reference or modify allowed for user state PGMs"
+                         to attr-value
+           end-evaluate.
+           move "Hardware storage protection" to attr-name.
+           write report-rec.
+
+           move 21 to offset.
+           call "_TSTBTS" using
+                by reference   crt-opt of spc-attr
+                by value       offset
+                returning into flag.
+           if flag is equal to 1
+              then
+              move "At all times"
+                   to attr-value
+           else
+              move "When hardware protection is enforced for all STG"
+                   to attr-value
+           end-if.
+           move "Enforce hardware protection" to attr-name.
+           write report-rec.
+
+       see-you.
+           stop run.
+       end program cbl015.
+
+      * Call CBL015 like the following
+      *   CALL CBL015 CBL014
+      *
+      * The output might like the following:
+      *   Attribute Name                Attribute Value
+      *   ---------------               ----------------
+      *   Existence attribute           Permanent                                       
+      *   Space attribute               Variable-length                                 
+      *   Context                       Addressability in context                       
+      *   Initialize space              Initialize                                      
+      *   Automatically extend space    Yes                                             
+      *   Hardware storage protection   Reference and modify allowed for user state PG  
+      *   Enforce hardware protection   When hardware protection is enforced for all STG

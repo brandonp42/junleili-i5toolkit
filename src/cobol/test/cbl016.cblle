@@ -1,0 +1,104 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file cbl016.cblle
+      *
+      * Test of:
+      *  - _MATPTRL (Materialize Pointer Locations)
+      *
+      * Looks for pointers in the content of a space object.
+      * @see ...
+      */
+
+       process
+           NOSTDTRUNC
+           NOMONOPRC.
+
+       id division.
+       program-id. cbl016.
+
+       environment division.
+       configuration section.
+       special-names.
+           copy mih-lnktyp.
+
+       data division.
+       working-storage section.
+
+       01 r-tmpl     type rslvsp-tmpl-t.
+       01 spc-obj    usage pointer.
+       01 spp-ptr    usage pointer.
+      * Size of *USRSPC U_POINTERS is 512 bytes
+       01 dta-len    pic 9(9) usage comp-4 value 512.
+       01 test-tmpl  type matptrl-tmpl-t.
+       01 bitmap-len pic 9(9) usage comp-4.
+       01 i          pic 9(9) usage comp-4.
+       01 bit-flag   pic 9(9) usage comp-4.
+       01 ptr-pos    pic 9(9) usage comp-4.
+
+       linkage section.
+           copy mih-ptr.
+
+       procedure division.
+       main.
+           move all x"00" to r-tmpl.
+           move x"1934" to obj-type of r-tmpl.
+           move "U_POINTERS" to obj-name of r-tmpl.
+           call "_RSLVSP2" using
+                by reference spc-obj
+                by reference r-tmpl.
+
+           call "_SETSPPFP" using
+                by value       spc-obj
+                returning into spp-ptr.
+
+           move all x"00" to test-tmpl.
+           move length of test-tmpl to bytes-in of test-tmpl.
+           call "_MATPTRL" using
+                by reference test-tmpl
+                by value     spp-ptr
+                by reference dta-len.
+
+      * set bitmap-len to number of bits to returned by MATPTRL
+           compute bitmap-len = (bytes-out of test-tmpl - 8) * 8.
+           perform test-for-ptr
+                   test before
+                   varying i from 0 by 1
+                   until   i >= bitmap-len.
+
+       see-you.
+           stop run.
+
+       test-for-ptr.
+           call "_TSTBTS" using
+                by reference   bitmap of test-tmpl
+                by value       i
+                returning into bit-flag.
+           if bit-flag is equal to 1
+              then
+              compute ptr-pos = i * 16
+              display "Pointer detected at offset: "
+                      ptr-pos
+           end-if.
+
+       end program cbl016.
+
+      * Call CBL016, the output might be like the following:
+      * Pointer detected at offset: 0000000032

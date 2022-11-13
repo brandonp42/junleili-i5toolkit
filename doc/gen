@@ -1,0 +1,23 @@
+#! /bin/sh
+
+if [ $# -eq 0 ]
+    then
+
+# generate index.html
+    doxygen
+
+# generate docs for q, mic, ...
+    doxygen Doxyfile.q
+    doxygen Doxyfile.mic
+    doxygen Doxyfile.art
+    doxygen Doxyfile.idx
+    doxygen Doxyfile.qsh
+    doxygen Doxyfile.rpg
+    doxygen Doxyfile.cm
+    doxygen Doxyfile.spc
+    doxygen Doxyfile.mip
+
+    return 0
+fi
+
+doxygen "Doxyfile.$1"

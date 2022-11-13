@@ -1,0 +1,35 @@
+/* *
+ * @file sep19.emi
+ *
+ * usage example of EMI builtin %system
+ */
+
+entry * ext                     ;
+
+dcl dd cmd char(64) auto        ;
+dcl dd rtn bin(4) auto          ;
+
+        cpyblap cmd,
+          "CRTLIB LIB(HUHUHAHA) TEXT('Sun Wukong and Juliet')",
+          x'00'                 ;
+        cpynv rtn, %system(cmd) ;
+
+        /* has the library been created? */
+        cmpnv(b) rtn, 0 / neq(failed) ;
+        cpyblap cmd,
+          "WRKLIB HUHUHAHA",
+          x"00"                 ;
+        %system(cmd)            ;
+        b farewell              ;
+failed:
+        cpyblap cmd,
+          "CRTLIB command failed.",
+          ' '                   ;
+dcl dd len bin(2) auto          ;
+        triml len, cmd, ' '     ;
+        %sendmsg(cmd, len)      ;
+
+farewell:       
+        rtx *                   ;
+pend                            ;
+/* eof */

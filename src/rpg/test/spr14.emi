@@ -1,0 +1,67 @@
+/**
+ * This file is part of i5/OS Programmer's Toolkit.
+ *
+ * Copyright (C) 2010, 2011  Junlei Li.
+ *
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file spr14.emi
+ *
+ * call t067
+ */
+
+dcl dd mtx-area char(32) auto   ;
+dcl spcptr mtx-ptr auto init(mtx-area) ;
+dcl spc mtx-t bas(mtx-ptr)      ;
+        dcl ptr syn-ptr dir     ;
+        dcl dd mtx-name char(16) dir ;
+
+dcl dd crt-tmpl char(32) auto   ;
+dcl spcptr crt-tmpl-ptr auto init(crt-tmpl) ;
+dcl spc * bas(crt-tmpl-ptr)     ;
+        dcl dd * char(1) dir    ;
+        dcl dd crt-name-opt char(1) dir ;
+        dcl dd crt-keep-valid char(1) dir ;
+        dcl dd crt-rcs-opt char(1) dir    ;
+
+        /* create mutex */
+	cpybla crt-name-opt, x'00' ; /* unnamed mutex */
+        cpybla crt-keep-valid, x'01' ;
+        cpybla crt-rcs-opt, x'01'    ;
+/*        cpybla mtx-name, "the May Day"    ; */
+        crtmtx mtx-ptr, crt-tmpl-ptr, rtn ;
+brk "CRT"                       ;
+        /* call t067 */
+dcl sysptr t067 auto init(
+        "T067", type(pgm)
+)                               ;
+dcl ol al-t067(
+        mtx-ptr
+) arg                           ;
+
+        rslvsp t067, *, *, *    ;
+        callx t067, al-t067, * ;
+brk "1"                          ;
+
+dcl dd des-opt bin(4) auto      ;
+dcl spcptr des-opt-ptr auto init(des-opt) ;
+        desmtx mtx-ptr, des-opt-ptr, rtn ;
+brk "END"                       ;
+        rtx *                   ;
+
+dcl dd rtn bin(4) auto          ;
+
+pend                            ;

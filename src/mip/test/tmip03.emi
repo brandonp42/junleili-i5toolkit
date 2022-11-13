@@ -1,0 +1,158 @@
+/**
+ * This file is part of i5/OS Programmer's Toolkit.
+ *
+ * Copyright (C) 2010, 2011  Junlei Li.
+ *
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file tmip03.emi
+ *
+ * Parse the BOM of an OPM MI program template.
+ */
+
+entry *(pl-main) ext            ;
+
+dcl spcptr .pgm-name parm       ;
+dcl spcptr .pgm-type parm       ;
+dcl ol pl-main(
+        .pgm-name,
+        .pgm-type
+) parm ext ;
+
+dcl dd pgm-name char(10) bas(.pgm-name) ;
+dcl dd pgm-type char(2) bas(.pgm-type)  ;
+
+dcl dd rt char(34) auto         ;
+dcl sysptr pgm auto             ;
+        cpybrep rt, x'00'       ;
+        cpybla  rt(1:2), pgm-type ;
+        cpyblap rt(3:30),
+          pgm-name, ' ' ;
+        rslvsp  pgm, rt, *, *   ;
+brk '1'                         ;
+
+dcl spcptr p auto               ;
+dcl dd len bin(4) auto          ;
+        modasa p, 8             ;
+        cpynv p->matpg?bytes-in, 8 ;
+        matpg p, pgm               ;
+
+        cpynv len, p->matpg?bytes-out ;
+        modasa p, -8                  ;
+        modasa p, len                 ;
+        cpynv p->matpg?bytes-in, len  ;
+        matpg  p, pgm                 ;
+brk '2'                               ;
+
+        /* does tmpl-extension exists? */
+        tstbts(b) p->matpg?pgm-attr, 10 / zer(see-you) ;
+
+        /* determine BOM format */
+dcl dd new-bom-fmt char(1) auto ;
+        tstbts(i) p->matpg?bom-flag, 0
+          / nzer(new-bom-fmt) ;
+
+        /* determin length of a BOM entry */
+dcl dd bom-len bin(2) auto     ;
+        cmpbla(b) new-bom-fmt, '1'
+          / eq(=+3) ;
+        addn(s) bom-len, 2     ;
+        b =+2                   ;
+:
+        addn(s) bom-len, 3     ;
+:
+        addn(s) bom-len, p->matpg?bom-len ;
+
+        /* locate the BOM component */
+dcl spcptr pos auto             ;
+        addspp pos, p,
+          p->matpg?bom-off      ;
+dcl dd n bin(4) auto            ;
+        cpynv n, 0              ;
+bom-loop:
+        /* determine breakpoint format */
+dcl dd char-fmt char(1) auto    ;
+        cmpbla(b) new-bom-fmt, '1'
+          / eq(=+3)             ;
+        tstbts(i) pos->bom0?mi-inst, 0
+          / eq(char-fmt)      ; /* old BOM format */
+        b =+2                   ;
+:
+        tstbts(i) pos->bom1?fmt, 0
+          / eq(char-fmt)        ;
+:
+        /* print a BOM entry */
+        calli print-bom-entry, *, print-bom-entry-ptr ;
+
+        addn(s) n, bom-len     ;
+        cmpnv(b) n, p->matpg?bom-len
+          / nlo(end-bom-loop)   ;
+        addspp pos, pos, bom-len ;
+        b bom-loop              ;
+end-bom-loop:       
+
+see-you:        
+        neg(s) len              ;
+        modasa p, len           ;
+        rtx *                   ;
+
+dcl dd msg char(64) auto        ;
+        dcl dd msg-inst znd(6) def(msg) pos(1)    ;
+        dcl dd msg-bkp  char(10) def(msg) pos(26) ;
+
+/**
+ * print-bom-entry
+ *
+ * @pre char-fmt, pos, p->matpg?bom-len
+ */
+dcl insptr print-bom-entry-ptr auto ;
+entry print-bom-entry int           ;
+
+dcl spcptr hll-stmt-ptr auto    ;
+dcl dd hll-stmt-num char(2) bas(hll-stmt-ptr) ;
+dcl spcptr msg-bkp-ptr auto                  ;
+
+        cpybrep msg, " "        ;
+
+        cmpbla(b) new-bom-fmt, '1'
+          / eq(=+5)             ;
+        setspp hll-stmt-ptr, pos->bom0?hll-stmt-str ;
+        clrbts pos->bom0?mi-inst, 0                 ;
+        cpynv msg-inst, pos->bom0?mi-inst           ;
+        b =+3                   ;
+:
+        setspp hll-stmt-ptr, pos->bom1?hll-stmt-str ;
+        cpynv msg-inst, pos->bom1?mi-inst           ;
+:
+        /* breakpoint name or number */
+        cmpbla(b) char-fmt, '1'
+          / neq(numeric-bkp) ;
+        setspp msg-bkp-ptr, msg-bkp ;
+        %memcpy(msg-bkp-ptr,
+                hll-stmt-ptr,
+                p->matpg?bom-len) ;
+        b end-bkp         ;
+numeric-bkp:
+        cvthc msg-bkp, hll-stmt-num ;
+end-bkp:
+
+        %sendmsg(msg, 64)       ;
+
+        b print-bom-entry-ptr   ;
+
+/include mip-h.emi              ;
+
+pend                            ;

@@ -1,0 +1,95 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file cbl007.cblle
+      *
+      * Test of:
+      *  - _CTD (Compute Time Duration)
+      */
+
+       process
+           NOSTDTRUNC
+           NOMONOPRC.
+
+       id division.
+       program-id. cbl007.
+
+       environment division.
+       configuration section.
+       special-names.
+           copy mih-lnktyp.
+
+       data division.
+       working-storage section.
+       01 ddat type ddat-t.
+       01 len  pic 9(9).
+
+       01 tmpl type compute-dattim-t.
+       01 time-dur-ddat type time-duration-ddat-value.
+       01 iso-time-ddat type iso-time-ddat-value.
+       01 time-dur      pic 9(6) usage comp-3.
+
+       linkage section.
+           copy mih-comp.
+           copy mih-dattim.
+
+       77 begin-time pic x(8).
+       77 end-time   pic x(8).
+
+       procedure division using
+           begin-time
+           end-time.
+       main-pgm.
+           compute len = function length(ddat);
+           display "length of ddat-t = " len.
+
+           call "_PROPB" using
+                by reference tmpl
+                by value x"00"
+                by value 298.
+           move 298 to tmpl-size of tmpl.
+           move 1   to op1-ddat-num of tmpl.
+           move 2   to op2-ddat-num of tmpl.
+           move 2   to op3-ddat-num of tmpl.
+           move 8   to op2-len      of tmpl.
+           move 8   to op3-len      of tmpl.
+           move 256 to ddat-list-len of tmpl.
+           move 2   to ddats        of tmpl.
+           move 24  to off-ddat1    of tmpl.
+           move 140 to off-ddat2    of tmpl.
+
+           move time-dur-ddat to ddat1 of tmpl.
+           move iso-time-ddat to ddat2 of tmpl.
+
+           call "_CTD" using
+                by reference time-dur
+                by reference end-time
+                by reference begin-time
+                by reference tmpl.
+
+           display "Time duration: " time-dur.
+
+           stop run.
+       end program cbl007.
+
+      * output:
+      * call cbl007 ('15.15.15' '16.16.16')
+      * length of ddat-t = 000000116       
+      * Time duration: 010101              

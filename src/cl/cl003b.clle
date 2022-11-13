@@ -1,0 +1,49 @@
+/******************************************************************************/
+/* This file is part of i5/OS Programmer's Toolkit.                           */
+/*                                                                            */
+/* Copyright (C) 2010, 2011  Junlei Li.                                       */
+/*                                                                            */
+/* i5/OS Programmer's Toolkit is free software: you can redistribute          */
+/* it and/or modify it under the terms of the GNU General Public              */
+/* License as published by the Free Software Foundation, either               */
+/* version 3 of the License, or (at your option) any later version.           */
+/* i5/OS Programmer's Toolkit is distributed in the hope that it will         */
+/* be useful, but WITHOUT ANY WARRANTY; without even the implied              */
+/* warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           */
+/* See the GNU General Public License for more details.                       */
+/*                                                                            */
+/* You should have received a copy of the GNU General Public License          */
+/* along with i5/OS Programmer's Toolkit.  If not, see                        */
+/* <http://www.gnu.org/licenses/>.                                            */
+/******************************************************************************/
+
+/******************************************************************************/
+/* @file cl003b.clle                                                          */
+/*                                                                            */
+/* Test of the following system builtins:                                     */
+/*  - _NPMPARMLISTADDR                                                        */
+/*                                                                            */
+/* @remark CL003B is called by CL003                                          */
+/******************************************************************************/
+
+             PGM        PARM(&STR &RTS &PKD)
+             DCL        VAR(&STR) TYPE(*CHAR) LEN(18)
+             DCL        VAR(&RTS) TYPE(*CHAR) LEN(18)
+             DCL        VAR(&PKD) TYPE(*DEC) LEN(5 2)
+
+             DCL        VAR(&PLPTR) TYPE(*PTR)
+             DCL        VAR(&TMPL) TYPE(*CHAR) STG(*BASED) LEN(128) +
+                          BASPTR(&PLPTR)
+             DCL        VAR(&OPDESC_PTR) TYPE(*PTR) STG(*DEFINED) +
+                          DEFVAR(&TMPL)
+             DCL        VAR(&NUM_PTR) TYPE(*PTR)
+             DCL        VAR(&NUM_PARM) TYPE(*CHAR) STG(*BASED) +
+                          LEN(4) BASPTR(&NUM_PTR)
+             DCL        VAR(&CH) TYPE(*CHAR) LEN(8)
+
+             CALLPRC    PRC('_NPMPARMLISTADDR') RTNVAL(&PLPTR)
+             CHGVAR     VAR(&NUM_PTR) VALUE(&OPDESC_PTR)
+             CHGVAR     VAR(&CH) VALUE(%BIN(&NUM_PARM))
+
+             SNDPGMMSG  MSGID(CPF9898) MSGF(QCPFMSG) MSGDTA(&CH)
+             ENDPGM

@@ -1,0 +1,55 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2009  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file stmf.rpgleinc
+      *
+      * Header of stream file APIs for ILE RPG.
+      *
+      * This file is a member of the open source project
+      * i5/OS Programmer's Toolkit.
+      *
+      * For details please refer to the project's web site,
+      * http://i5toolkit.sourceforge.net/
+      *
+      */
+
+      /if not defined(i5toolkit_rpg_stmf)
+      /define i5toolkit_rpg_stmf
+
+     d stmf_creat      pr            10i 0 extproc('creat')
+     d     path                        *   value
+     d     mode                      10i 0 value
+
+     d stmf_open       pr            10i 0 extproc('open')
+     d     path                        *   value
+     d     flag                      10i 0 value
+
+     d O_RDONLY        c                   1
+
+     d stmf_write      pr            10u 0 extproc('write')
+     d     fd                        10i 0 value
+     d     buf                         *   value
+     d     bytes                     10u 0 value
+
+     d stmf_close      pr            10i 0 extproc('close')
+     d     fd                        10i 0 value
+
+      /endif
+     /* eof - stmf.rpgleinc */

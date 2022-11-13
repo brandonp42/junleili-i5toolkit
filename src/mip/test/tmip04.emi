@@ -1,0 +1,223 @@
+/**
+ * This file is part of i5/OS Programmer's Toolkit.
+ *
+ * Copyright (C) 2010, 2011  Junlei Li.
+ *
+ * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file tmip04.emi
+ *
+ * Parses the OMT component in an OPM MI program template.
+ */
+
+dcl spcptr .pgm-name parm       ;
+dcl spcptr .pgm-type parm       ;
+dcl ol pl-main(
+        .pgm-name,
+        .pgm-type
+) parm ext                      ;
+
+entry *(pl-main) ext            ;
+
+dcl dd pgm-name char(10) bas(.pgm-name) ;
+dcl dd pgm-type char(2) bas(.pgm-type)  ;
+
+dcl dd rt char(34) auto         ;
+dcl sysptr pgm auto             ;
+        cpybrep rt, x'00'       ;
+        cpybla  rt(1:2), pgm-type ;
+        cpyblap rt(3:30),
+          pgm-name, ' ' ;
+        rslvsp  pgm, rt, *, *   ;
+brk '1'                         ;
+
+dcl spcptr p auto               ;
+dcl dd len bin(4) auto          ;
+        modasa p, 8             ;
+        cpynv p->matpg?bytes-in, 8 ;
+        matpg p, pgm               ;
+
+        cpynv len, p->matpg?bytes-out ;
+        modasa p, -8                  ;
+        modasa p, len                 ;
+        cpynv p->matpg?bytes-in, len  ;
+        matpg  p, pgm                 ;
+brk '2'                               ;
+
+        /* is the OMT materializable? */
+        tstbts(b) p->matpg?obsv-attr, 5 / zer(see-you) ;
+
+dcl spcptr pos auto             ;
+dcl dd inx bin(4) auto          ;
+dcl dd odv-num bin(4) auto      ;
+dcl dd b4 bin(4) auto           ;
+        cpynv(b) odv-num, p->matpg?num-odv1 / nzer(=+2) ;
+        cpynv odv-num, p->matpg?num-odv2                ;
+:       
+        addspp pos, p, p->matpg?omt-off ;
+        cpynv inx, 1                    ;
+        cpybrep msg, " "                ;
+        cpybla msg, "ODV Num Based on            Offset" ;
+        %sendmsg(msg, 64)                                ;
+
+omt-loop:
+        cmpnv(b) inx, odv-num / hi(end-omt-loop) ;
+
+        cpybrep msg, " "        ;
+        cpynv rec?odv-num, inx  ;
+
+        cmpbla(b) pos->omt?addr-type, x'00' / neq(=+3) ;
+        cpybla rec?addr-type, "Static storage"         ;
+        b select-type                                  ;
+:       
+        cmpbla(b) pos->omt?addr-type, x'01' / neq(=+3) ;
+        cpybla rec?addr-type, "Automatic storage"      ;
+        b select-type                                  ;
+:       
+        cmpbla(b) pos->omt?addr-type, x'02' / neq(=+3) ;
+        cpybla rec?addr-type, "Space pointer"          ;
+        b select-type                                  ;
+:       
+        cmpbla(b) pos->omt?addr-type, x'03' / neq(=+3) ;
+        cpybla rec?addr-type, "Parameter"              ;
+        b select-type                                  ;
+:       
+        cmpbla(b) pos->omt?addr-type, x'04' / neq(=+3) ;
+        cpybla rec?addr-type, "PCO object"             ;
+        b select-type                                  ;
+:       
+        cmpbla(b) pos->omt?addr-type, x'FF' / neq(=+2) ;
+        cpybla rec?addr-type, "Not specified"          ;
+select-type:
+
+        cpybra b4, pos->omt?offset ;
+        cpynv rec?offset, b4    ;
+        %sendmsg(msg, 64)       ;
+
+        addn(s) inx, 1          ;
+        addspp pos, pos, omt-entry-len ;
+        b omt-loop              ;
+end-omt-loop:   
+
+see-you:        
+        neg(s) len              ;
+        modasa p, len           ;
+        rtx *                   ;
+
+/* globals */
+dcl dd msg char(64) auto         ;
+        dcl dd rec?odv-num znd(6,0) def(msg) pos(1) ;
+        dcl dd rec?addr-type char(20) def(msg) pos(9) ;
+        dcl dd rec?offset znd(6,0) def(msg) pos(29)   ;
+
+/include mip-h.emi              ;
+
+pend                            ;
+
+/*
+4 > call tmip04 (tmip01  x'0201')     
+    ODV Num Based on            Offset
+    000001  Automatic storage   000000
+    000002  Automatic storage   000016
+    000003  Automatic storage   000272
+    000004  Space pointer       000000
+    000005  Space pointer       000000
+    000006  Space pointer       000004
+    000007  Space pointer       000008
+    000008  Space pointer       000008
+    000009  Space pointer       000010
+    000010  Space pointer       000040
+    000011  Space pointer       000044
+    000012  Space pointer       000048
+    000013  Space pointer       000052
+    000014  Space pointer       000053
+    000015  Space pointer       000057
+    000016  Space pointer       000064
+    000017  Space pointer       000080
+    000018  Space pointer       000096
+    000019  Space pointer       000098
+    000020  Space pointer       000099
+    000021  Space pointer       000100
+    000022  Space pointer       000104
+    000023  Space pointer       000108
+    000024  Space pointer       000110
+    000025  Space pointer       000112
+    000026  Space pointer       000116
+    000027  Space pointer       000120
+    000028  Space pointer       000124
+    000029  Space pointer       000128
+    000030  Space pointer       000132
+    000031  Space pointer       000136
+    000032  Space pointer       000140
+    000033  Space pointer       000144
+    000034  Space pointer       000148
+    000035  Space pointer       000152
+    000036  Space pointer       000156
+    000037  Space pointer       000160
+    000038  Space pointer       000164
+    000039  Space pointer       000166
+    000040  Space pointer       000167
+    000041  Space pointer       000174
+    000042  Space pointer       000176
+    000043  Space pointer       000177
+    000044  Space pointer       000000
+    000045  Space pointer       000000
+    000046  Space pointer       000004
+    000047  Space pointer       000000
+    000048  Space pointer       000000
+    000049  Space pointer       000004
+    000050  Space pointer       000006
+    000051  Space pointer       000007
+    000052  Space pointer       000008
+    000053  Space pointer       000000
+    000054  Space pointer       000000
+    000055  Space pointer       000002
+    000056  Space pointer       000002
+    000057  Space pointer       000000
+    000058  Space pointer       000000
+    000059  Space pointer       000002
+    000060  Space pointer       000003
+    000061  Space pointer       000003
+    000062  Automatic storage   000288
+    000063  Automatic storage   000304
+    000064  Static storage      000000
+    000065  Not specified       000000
+    000066  Automatic storage   000308
+    000067  Automatic storage   000576
+    000068  Space pointer       000000
+    000069  Space pointer       000000
+    000070  Space pointer       000004
+    000071  Space pointer       000008
+    000072  Space pointer       000015
+    000073  Space pointer       000016
+    000074  Automatic storage   000592
+    000075  Automatic storage   000608
+    000076  Automatic storage   000624
+    000077  Automatic storage   000656
+    000078  Automatic storage   000672
+    000079  Automatic storage   000688
+    000080  Automatic storage   000704
+    000081  Automatic storage   000720
+    000082  Automatic storage   000736
+    000083  Automatic storage   000752
+    000084  Automatic storage   000768
+    000085  Automatic storage   000784
+    000086  Automatic storage   000800
+    000087  Automatic storage   000816
+    000088  Automatic storage   000832
+    000089  Not specified       000000
+    000090  Automatic storage   000848
+*/

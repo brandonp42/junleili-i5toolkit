@@ -1,0 +1,588 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-lock.rpgleinc
+      *
+      * Lock management instructions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_lock)
+      /define i5toolkit_rpg_mih_lock
+
+     /**
+      * lock request template with extension.
+      *
+      * @remark This template is also used by _LOCKSL2 and _UNLOCKSL2,
+      *         _LOCKTSL, and _UNLOCKTSL.  When used by _LOCKSL2,
+      *         ext_opt is not used and should be set to binary
+      *         0. When used by _UNLOCKSL2, time_out, lock_opt, and
+      *         ext_opt are not used and should be set to binary 0.
+      */
+     d lock_request_tmpl_ext_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     num_requests...
+     d                               10i 0
+     d     offset_lock_state...
+     d                                5i 0
+      *
+      * @remark 20u 0 is more convenient to operate with in RPG
+      *         in contrast with 8a.
+      *
+     d     time_out                  20u 0
+     /*
+      * @remark Bits in lock_opt parameter have different meaning when
+      *         used to invoke _LOCK, _UNLOCK, _LOCKSL2, _UNLOCKSL2,
+      *         _LOCKTSL, or _UNLOCKTSL.  Refer to MI documentation in
+      *         i5/OS Information Cenetr for details.
+      */
+     d     lock_opt                   2a
+     d     lock_type                  1a   overlay(lock_opt:1)
+     d     lock_scope                 1a   overlay(lock_opt:2)
+      *
+      * 16-byte lock object template extension.
+      * @remark this 16-byte extension exists only when
+      *         bit 7 of lock_opt is set to 1.
+      *
+      * Bit 0, Modify thread event mask option.
+      *   0 = Do not modify thread event mask.
+      *   1 = Modify thread event mask
+      *
+      * Bits 1-7, Reserved (binary 0).
+      *
+     d     ext_opt                    1a
+     d     new_thread_event_mask...
+     d                                5u 0
+     d     previous_thread_event_mask...
+     d                                5u 0
+      * Reserved (binary 0)
+     d                               11a
+     /*
+      * Offset by now: 16 or 32 (if template extension exists).
+      *
+      * objects-to-lock: array of system pointers
+      */
+
+     /*
+      * Lock state selections, array of char(1);
+      * repeated for each pointer in the template.
+      *   Bits 0-4, Requested lock state.
+      *     Bit 0. LSRD lock.
+      *     Bit 1. LSRO lock.
+      *     Bit 2. LSUP lock.
+      *     Bit 3. LEAR lock.
+      *     Bit 4. LENR lock.
+      *
+      *   Bits 5-6, Reserved (binary 0).
+      *
+      *   Bit 7, Entry active indicator.
+      *     0 = Entry not active - This entry is not used.
+      *     1 = Entry active - Obtain this lock.
+      */
+
+     /**
+      * lock request template WITHOUT extension.
+      *
+      * @remark This template can also be used by _UNLOCK.
+      */
+     d lock_request_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     num_requests...
+     d                               10i 0
+     d     offset_lock_state...
+     d                                5i 0
+     d     time_out                  20u 0
+     d     lock_opt                   2a
+     d     lock_type                  1a   overlay(lock_opt:1)
+     d     lock_scope                 1a   overlay(lock_opt:2)
+      *
+      * objects-to-lock: array of system pointers.
+      *
+      * Lock state selections: array of char(1).
+      *
+
+     /* minimal length of lock request template, WITHOUT extension */
+     d min_lock_request_tmpl_length...
+     d                 c                   16
+
+     /* minimal length of lock request template, WITH extension */
+     d min_lock_request_tmpl_length_ext...
+     d                 c                   32
+
+     /**
+      * @BIF _LOCK (Lock Object (LOCK))
+      */
+     d lockobj         pr                  extproc('_LOCK')
+     d     lock_request...
+     d                                     likeds(lock_request_tmpl_t)
+
+     /**
+      * @BIF _UNLOCK (Unlock Object (UNLOCK))
+      */
+     d unlockobj       pr                  extproc('_UNLOCK')
+     d     unlock_request...
+     d                                     likeds(lock_request_tmpl_t)
+
+     /**
+      * @BIF _LOCKSL1 (Lock Space Location (LOCKSL))
+      *
+      * @remark _LOCKSL1 locks one space location.
+      */
+     d locksl1         pr                  extproc('_LOCKSL1')
+     d     space_location...
+     d                                 *
+     d     request                    1a
+
+     /**
+      * @BIF _LOCKSL2 (Lock Space Location (LOCKSL))
+      *
+      * @param lock_request, pointer to DS lock_request_tmpl_ext_t.
+      * @remark _LOCKSL2 accepts address of spcptr rather than a
+      *         spcptr to instruction template as what _LOCKSL1
+      *         behaves.  So it's necessary to pass a pointer to
+      *         pointer to it.  This also applies to _UNLOCKSL2,
+      *         _LOCKTSL, and _UNLCKTSL.
+      */
+     d locksl2         pr                  extproc('_LOCKSL2')
+     d     lock_request...
+     d                                     likeds(
+     d                                       lock_request_tmpl_ext_t)
+
+     /**
+      * @BIF _UNLOCKSL1 (Unlock Space Location (UNLOCKSL))
+      *
+      * @remark _UNLOCKSL1 unlocks one space location.
+      */
+     d unlocksl1       pr                  extproc('_UNLOCKSL1')
+     d     space_location...
+     d                                 *
+     d     request                    1a
+
+     /**
+      * @BIF _UNLOCKSL2 (Unlock Space Location (UNLOCKSL))
+      *
+      * @param lock_request, pointer to DS lock_request_tmpl_ext_t.
+      */
+     d unlocksl2       pr                  extproc('_UNLOCKSL2')
+     d     lock_request...
+     d                                 *
+
+     /**
+      * @BIF _LOCKTSL (Lock Teraspace Storage Location (LOCKTSL))
+      */
+     d locktsl         pr                  extproc('_LOCKTSL')
+     d     lock_request...
+     d                                 *
+
+     /**
+      * @BIF _UNLCKTSL (Unlock Teraspace Storage Location (UNLCKTSL))
+      */
+     d unlcktsl        pr                  extproc('_UNLCKTSL')
+     d     lock_request...
+     d                                 *
+
+     /**
+      * Materailization template of _MATAOL.
+      */
+     d mataol_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     cur_lock_state...
+     d                                1a
+     d                                3a
+     d     num_lockd                  5i 0
+     d                                2a
+
+     /**
+      * Offset from the start of mataol_tmpl_t to lock description
+      * templates.
+      */
+     d mataol_lockd_offset...
+     d                 c                   16
+
+     /* Length of lock-description of MATAOL */
+     d mataol_lockd_length...
+     d                 c                   32
+
+     /**
+      * Lock description structure.
+      */
+     d mataol_lock_desc_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     lock_holder...
+     d                                 *
+     d     lock_type                  1a
+     d     lock_status...
+     d                                1a
+     d     lock_status_2...
+     d                                1a
+     d                                1a
+     d     unopend_thread_handle...
+     d                               10u 0
+     d     thread_id                  8a
+
+     /**
+      * @BIF _MATAOL (Materialize Allocated Object Locks (MATAOL))
+      */
+     d mataol          pr                  extproc('_MATAOL')
+     d     receiver                        likeds(mataol_tmpl_t)
+     d     syp_or_spp                  *
+
+     /**
+      * Materailization template of _MATOBJLK.
+      */
+     d matobjlk_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     cur_lock_state...
+     d                                1a
+     d                                3a
+     d     num_lockd                  5i 0
+     d                                2a
+
+     /**
+      * Offset from the start of matobjlk_tmpl_t to lock description
+      * templates.
+      */
+     d matobjlk_lockd_offset...
+     d                 c                   16
+
+     /* Length of lock-description of MATOBJLK */
+     d matobjlk_lockd_length...
+     d                 c                   32
+
+     /**
+      * Lock description structure.
+      */
+     d matobjlk_lock_desc_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     lock_holder...
+     d                                 *
+     d     lock_type                  1a
+     d     lock_status...
+     d                                1a
+     d     lock_status_2...
+     d                                1a
+     d                                1a
+     d     unopend_thread_handle...
+     d                               10u 0
+     d     thread_id                  8a
+
+     /**
+      * @BIF _MATOBJLK (Materialize Object Locks (MATOBJLK))
+      *
+      * @remark The key difference between MATAOL and MATOBJLK is that
+      *         MATAOL only materializes locks already allocated on a
+      *         lockable object, while MATOBJLK also materializes
+      *         locks being requested to allocate on a lockable
+      *         object, either synchronously or asynchronously.
+      */
+     d matobjlk        pr                  extproc('_MATOBJLK')
+     d     receiver                        likeds(matobjlk_tmpl_t)
+     d     syp_or_spp                  *
+
+     /* Materialization template of MATPRLK. */
+     d matprlk_tmpl_t  ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     num_lockd                  5i 0
+     d     expanded_num_lockd...
+     d                               10i 0
+     d                                2a
+
+     /* Lock description template of MATPRLK. */
+     d matprlk_lock_desc_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     syp_or_spp                  *
+     d     lock_type                  1a
+     d     process_lock_status...
+     d                                1a
+     d     lock_info                  1a
+     d                                1a
+     d     unopened_thread_handle...
+     d                               10u 0
+     d     thread_id                  8a
+
+     /**
+      * Offset from the start of matprlk_tmpl_t to
+      * lock description templates.
+      */
+     d matprlk_lockd_offset...
+     d                 c                   16
+
+     /**
+      * Length of lock description template for MATPRLK.
+      */
+     d matprlk_lockd_length...
+     d                 c                   32
+
+     /**
+      * @BIF _MATPRLK1 (Materialize Process Locks (MATPRLK))
+      */
+     d matprlk1        pr                  extproc('_MATPRLK1')
+     d     receiver                        likeds(matprlk_tmpl_t)
+
+     /**
+      * @BIF _MATPRLK2 (Materialize Process Locks (MATPRLK))
+      *
+      * _MARPRLK2 accept a system pointer to a PCS object
+      * as its second operand.
+      */
+     d matprlk2        pr                  extproc('_MATPRLK2')
+     d     receiver                        likeds(matprlk_tmpl_t)
+     d     pcs                         *
+
+     /* Materialization template of MATSELLK. */
+     d matsellk_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     cur_lock_states...
+     d                                1a
+     d                                3a
+     d     num_lockd                  5i 0
+      *
+      * Return format.
+      * @remark This is an output field!
+      *   Bits 0-3, reserved (Binary 0).
+      *   Bit 4, if expanded results are returned (this flag is set to
+      *          binary 1) 2-byte lock descriptions are returned;
+      *          otherwise 32-byte lock descriptions are returned.
+      *   Bit 5, do not return locks held by a transaction.
+      *   Bit 6, do not return locks held by a process.
+      *   Bit 7, do not return locks held or waited on by a thread.
+      *
+     d     return_fmt                 1a
+     d                                1a
+
+     /* Lock description template of MATSELLK. */
+     d matsellk_lock_desc_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     lock_type                  1a
+     d     lock_status...
+     d                                1a
+     d                               14a
+     d                                1a
+     d     suspend_ptr...
+     d                                 *
+
+     /**
+      * Offset from the start of matsellk_tmpl_t to
+      * lock description templates.
+      */
+     d matsellk_lockd_offset...
+     d                 c                   16
+
+     /**
+      * Lengths of lock description template for MATSELLK.
+      */
+     d matsellk_lockd_length...
+     d                 c                   2
+     d matsellk_lockd_length_exp...
+     d                 c                   32
+
+     /**
+      * @BIF _MATSELLK (Materialize Materialize Selected Locks (MATSELLK))
+      *
+      * @remark In contrast with MATAOL, who materializes locks
+      *         currently allocated on a designated lockable object,
+      *         the locks materialized by MATSELLK are the thread
+      *         scoped locks held by the current thread and the
+      *         process scoped locks held by the process containing
+      *         the current thread.
+      */
+     d matsellk        pr                  extproc('_MATSELLK')
+     d     receiver                        likeds(matsellk_tmpl_t)
+     d     syp_or_spp                  *
+
+     /**
+      * Process selection template of MATPRECL.
+      */
+     d matprecl_process_tmpl_t...
+     d                 ds                  qualified
+     d     pcs                         *
+      *
+      * Lock selection
+      *
+      * Bit 0: Materialize held locks
+      *   0 = Do not materialize
+      *   1 = Materialize
+      *
+      * Bit 1: Materialize locks waited for
+      *   0 = Do not materialize
+      *   1 = Materialize
+      *
+      * Bits 2-7: Reserved
+      *
+     d     lock_sel                   1a
+      *
+      * Template options
+      *
+      * Bit 0: Format of number of locks
+      *   0 = Use Bin(4) for number of locks
+      *   1 = Use Bin(2) for number of locks
+      *
+      * Bits 1-7: Reserved
+      *
+     d     format_opt                 1a
+     d                               14a
+
+     /* Materialization template of MATPRECL. */
+     d mat_record_lock_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     nums                       8a
+     d     locks_held_4...
+     d                               10i 0 overlay(nums:1)
+     d     lcoks_waited_4...
+     d                               10i 0 overlay(nums:5)
+     d     locks_held_2...
+     d                                5i 0 overlay(nums:1)
+     d     lcoks_waited_2...
+     d                                5i 0 overlay(nums:3)
+      *
+      * Locks held descriptions.
+      * Repeated number of lock held descriptions times.
+      *
+      * Lock waited for descriptions.
+      * Repeated number of lock waited for descriptions times.
+      *
+
+     /* Minimal length of materialization template of MATPRECL and MATDRECL. */
+     d min_reclock_tmpl_length...
+     d                 c                   16
+
+     /* Length of a record lock description */
+     d record_lockd_length...
+     d                 c                   32
+
+     /* Lock description for record locks. */
+     d record_lock_desc_t...
+     d                 ds                  qualified
+      *
+      * When returned by instruction MATPRECL, obj
+      * refers to a data space object (hex 0B90). When returned
+      * by instruction MATDRECL, obj refers to a PCS object (hex 1AEF).
+      *
+     d     obj                         *
+      * Relative record number
+     d     rrn                       10u 0
+      *
+      * Lock state or lock state requested.
+      *
+      * Hex 30 = DLWK (Database lock weak) lock state.
+      * Hex C0 = DLRD (Database lock read) lock state.
+      * Hex F8 = DLUP (Database lock update) lock state.
+      *
+     d     lock_state                 1a
+      *
+      * Lock holder/waiter information
+      *
+      * Bit 0: Lock scope object type.
+      * 0 = Process control space.
+      * 1 = Transaction control structure.
+      *
+      * Bit 1: Lock scope.
+      * 0 = Lock is scoped to the lock scope object type.
+      * 1 = Lock is scoped to the thread.
+      *
+      * Bits 2-7: Reserved (binary 0).
+      *
+     d     lock_info                  1a
+     d     thread_id                  8a
+
+     /**
+      * @BIF _MATPRECL (Materialize Process Record Locks (MATPRECL))
+      */
+     d matprecl        pr                  extproc('_MATPRECL')
+     d     receiver                        likeds(mat_record_lock_tmpl_t)
+     d     process                         likeds(
+     d                                       matprecl_process_tmpl_t)
+
+     /**
+      * Process selection template of MATDRECL.
+      */
+     d matdrecl_record_tmpl_t...
+     d                 ds                  qualified
+      * System pointer to target data space
+     d     dds                         *
+      *
+      * The record number is a relative record number within that data
+      * space. If the record number is zero then all locks on the
+      * specified data space will be materialized.
+      *
+     d     rrn                       10i 0
+     d                                4a
+      *
+      * Lock selection
+      *
+      * Bit 0: Materialize data space locks held
+      *   0 = Do not materialize
+      *   1 = Materialize
+      *
+      * Bit 1: Materialize data space locks waited for
+      *   0 = Do not materialize
+      *   1 = Materialize
+      *
+      * Bits 2-7: Reserved
+      *
+     d     lock_sel                   1a
+      *
+      * Template options
+      *
+      * Bit 0: Format of number of locks
+      *   0 = Use Bin(4) for number of locks
+      *   1 = Use Bin(2) for number of locks
+      *
+      * Bits 1-7: Reserved
+      *
+     d     format_opt                 1a
+     d                               14a
+
+     /**
+      * @BIF _MATDRECL (Materialize Data Space Record Locks (MATDRECL))
+      */
+     d matdrecl        pr                  extproc('_MATDRECL')
+     d     receiver                        likeds(mat_record_lock_tmpl_t)
+     d     dds                             likeds(
+     d                                       matdrecl_record_tmpl_t)
+
+     /**
+      * @BIF _XFRLOCK (Transfer Object Lock (XFRLOCK))
+      */
+     d xfrlock         pr                  extproc('_XFRLOCK')
+     d     pcs                         *
+     d     lock_request...
+     d                                     likeds(lock_request_tmpl_t)
+
+      /endif

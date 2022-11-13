@@ -1,0 +1,187 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file uim.rpgleinc
+      *
+      * ILE RPG header for UIM APIs.  For details please refer to the
+      * project's web site, http://i5toolkit.sourceforge.net/
+      */
+
+      /if not defined(i5toolkit_rpg_uim)
+      /define i5toolkit_rpg_uim
+
+      /copy apiec
+
+     /* UIM Application APIs */
+     /* Close Application (QUICLOA) API */
+     d quicloa         pr                  extpgm('QUICLOA')
+     d     app_handle...
+     d                                8a
+     d     close_option...
+     d                                1a
+     d     ec                              likeds(qusec_t)
+
+     /* Open Display Application (QUIOPNDA) API */
+     d quiopnda        pr                  extpgm('QUIOPNDA')
+     d     app_handle...
+     d                                8a
+     d     panel_group_name...
+     d                               20a
+     d     app_scope...
+     d                               10i 0
+     d     exit_pgm_interface...
+     d                               10i 0
+     d     full_screen_help...
+     d                                1a
+     d     ec                              likeds(qusec_t)
+      * Optional Parameter Group
+     d     open_result...
+     d                                     likeds(uim_open_result_t)
+     d                                     options(*nopass)
+     d     result_len                10i 0 options(*nopass)
+     d     result_available...
+     d                               10i 0 options(*nopass)
+
+     /**
+      * uim_open_result_t
+      */
+     d uim_open_result_t...
+     d                 ds                  qualified
+     d     conv_error                 1a
+     d     data_loss                  1a
+
+     /* Open Print Application (QUIOPNPA) API */
+     d quiopnpa        pr                  extpgm('QUIOPNPA')
+     d     app_handle...
+     d                                8a
+     d     panel_group_name...
+     d                               20a
+     d     app_scope...
+     d                               10i 0
+     d     exit_pgm_interface...
+     d                               10i 0
+     d     prtf_name                 20a
+     d     splf_name                 10a
+      * 'Y', the ODP is shared
+      * 'N', the ODP is not shared
+      * 'F', use the share value of the printer file
+     d     share_odp                  1a
+     d     user_data                 10a
+     d     ec                              likeds(qusec_t)
+      * Optional Parameter Group
+     d     open_result...
+     d                                     likeds(uim_open_result_t)
+     d                                     options(*nopass)
+     d     result_len                10i 0 options(*nopass)
+     d     result_available...
+     d                               10i 0 options(*nopass)
+
+     /* end -- UIM Application APIs */
+
+     /* UIM Display APIs */
+     /* Display Panel (QUIDSPP) API */
+     d quidspp         pr                  extpgm('QUIDSPP')
+     d     app_handle...
+     d                                8a
+     d     return_val                10i 0
+     d     panel_name...
+     d                               10a
+     d     redisplay_option...
+     d                                1a
+     d     ec                              likeds(qusec_t)
+      * Optional Parameter Group 1
+      * 'N' = the panel is the logical start of a new user task
+      * 'O' = the panel is not the start of a new user task
+     d     user_task                  1a   options(*nopass)
+     d     call_stack_counter...
+     d                               10i 0 options(*nopass)
+     d     call_msgq                  1a   options(*nopass)
+     d     msg_ref_key...
+     d                                4a   options(*nopass)
+     d     cursor_position_option...
+     d                                1a   options(*nopass)
+     d     last_list_entry...
+     d                                4a   options(*nopass)
+     d     error_list_entry...
+     d                                4a   options(*nopass)
+     d     wait_time                 10i 0 options(*nopass)
+      * optional parameter group 2
+     d     call_msgq_len...
+     d                               10i 0 options(*nopass)
+     d     call_qualification...
+     d                               20a   options(*nopass)
+
+     /* end -- UIM Display APIs */
+
+     /**
+      * Dummy structure type used by QUIGETV and QUIGETV.
+      */
+     d uim_dummy_t     ds
+
+     /* UIM Variable Pool APIs */
+     /* Get Dialog Variable (QUIGETV) API */
+     d quigetv         pr                  extpgm('QUIGETV')
+     d     app_handle...
+     d                                8a
+     d     varbuf                          likeds(uim_dummy_t)
+     d     varbuf_len...
+     d                               10i 0
+     d     varrcd_name...
+     d                               10a
+     d     ec                              likeds(qusec_t)
+
+     /* Set Dialog Variable (QUIPUTV) API */
+     d quiputv         pr                  extpgm('QUIPUTV')
+     d     app_handle...
+     d                                8a
+     d     varbuf                          likeds(uim_dummy_t)
+     d     varbuf_len...
+     d                               10i 0
+     d     varrcd_name...
+     d                               10a
+     d     ec                              likeds(qusec_t)
+
+     /* end -- UIM Variable Pool APIs */
+
+     /* Parameter structures for UIM exit programs */
+
+     /* common parameters of all UIM exit pgm */
+     d qui_common_t...
+     d                 ds                  qualified
+     d     structure_level...
+     d                               10i 0
+     d                                8a
+     d     call_type                 10i 0
+     d     apph                       8a
+
+     /**
+      * Structure qui_fkc_t. Parm structure for a UIM CALL program for
+      * a function key
+      */
+     d qui_fkc_t       ds                  qualified
+     d     basic                           likeds(qui_common_t)
+     d     panel_name                10a
+     d     func_key                  10i 0
+
+     /* end -- Parameter structures for UIM exit programs */
+
+      * not defined(i5toolkit_rpg_uim)
+      /endif
+     /* eof -- uim.rpgleinc */

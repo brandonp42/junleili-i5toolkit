@@ -1,0 +1,74 @@
+/**
+ * @file may12.mi
+ *
+ * 向一个dtaq里面放个pointer(spcptr, sysptr)试下，
+ * 看deq出来还能用不
+ *
+ * 我用的Q: q101, fifo, entry length=64
+ */
+
+entry * ext                     ;
+
+dcl spcptr eptr auto                ; 
+dcl spc e-t bas(eptr)           ; 
+        dcl dd words char(16) dir ;
+        dcl spcptr p1 dir       ;
+        dcl sysptr p2 dir       ;
+
+dcl dd buf char(32) auto        ;
+dcl spcptr buf-ptr auto init(buf) ;
+
+        setspp eptr, q-entry    ; 
+        cpyblap words, x"83819540C96F400E57D14A6949BA0F6F", " " ;
+        cpyblap buf, "123abc", " " ; 
+        setsppfp p1, buf-ptr    ; 
+
+enqueue:
+        setallen al-qsnddtaq, 4 ; 
+        callx sept(h'0B51'), al-qsnddtaq, * ; 
+
+dequeue:
+dcl dd deq-entry char(64) auto bdry(16) ;
+
+        setspp eptr, deq-entry  ;
+        setsppfp .q-entry, eptr ; 
+        setallen al-qrcvdtaq, 5 ;
+        callx sept(h"0B50"), al-qrcvdtaq, * ;
+
+        /* check dequeue pointers:       结论是不成 */
+dcl dd dbg char(32) bas(*)        ; 
+brk "1"                         ; 
+        rtx *                   ; 
+
+dcl spcptr sept-ptr baspco                ;
+dcl sysptr sept(0:7000) bas(sept-ptr); 
+        
+/* operand list used by QSNDDTAQ */        
+dcl dd q-name char(10) auto init("Q101") ; 
+dcl spcptr .q-name auto init(q-name);
+dcl dd q-lib char(10) auto init("LSBIN") ; 
+dcl spcptr .q-lib auto init(q-lib);
+dcl dd q-entry-len pkd(5,0) auto init(p'64') ; 
+dcl spcptr .q-entry-len auto init(q-entry-len);
+dcl dd q-entry char(64) auto bdry(16) ; 
+dcl spcptr .q-entry auto init(q-entry);
+dcl ol al-qsnddtaq(
+        .q-name,
+        .q-lib,
+        .q-entry-len,
+        .q-entry
+) arg min(4)                     ; /* sept number: 0B51 */
+
+
+/*operand list for QRCVDTAQ */
+dcl dd timeout pkd(5,0) auto init(p"-1") ;
+dcl spcptr .timeout auto init(timeout) ; 
+dcl ol al-qrcvdtaq(
+        .q-name,
+        .q-lib,
+        .q-entry-len,
+        .q-entry,
+        .timeout
+) arg min(5) ; 
+
+pend                            ; 

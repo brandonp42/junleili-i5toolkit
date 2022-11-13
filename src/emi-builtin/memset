@@ -1,0 +1,18 @@
+11       3       4       13      MEMSET  Memory set
+SETSPPFP @000B-#1, :1  ;
+CPYBLA @000B-#2, :2    ;
+CPYNV    @000B-#3, :3  ;
+CALLI @000B, *, .@000B ;
+/* builtin MEMSET */ DCL SPCPTR @000B-#1 AUTO;
+DCL DD @000B-#2 CHAR(1) AUTO    ;
+DCL DD @000B-#3 BIN(4) AUTO     ;
+DCL INSPTR .@000B AUTO          ;
+ENTRY @000B INT                 ;
+DCL DD @000B-CH-TARGET CHAR(1) BAS(@000B-#1) ;
+LOOP:
+        CPYBLA @000B-CH-TARGET, @000B-#2    ;
+        ADDSPP @000B-#1, @000B-#1, 1        ;
+        SUBN(S) @000B-#3, 1                 ;
+        CMPNV(B) @000B-#3, 0 / HI(LOOP)     ;
+END-LOOP: BRK 'MEMSET-RTN'                  ;
+        B .@000B                            ;

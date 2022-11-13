@@ -1,0 +1,39 @@
+/**
+ * @file enq11.mi
+ *
+ * enqueue USRQ Q11(FIFO, entry lenght=64)
+ */
+
+dcl sysptr q auto                ; 
+dcl dd message-prefix char(4) auto;
+  dcl dd prefix-msglen bin(4) def(message-prefix) pos(1);
+
+dcl dd message char(64) auto init("is usrq more faster?") ;
+dcl spcptr .message auto init(message) ; 
+
+entry * ext;
+
+dcl dd index bin(4) auto init(0) ; 
+
+        cpybla rslv-option-obj-type, x"0A02";
+        cpyblap rslv-option-obj-name, "Q11", " ";
+        rslvsp q, rslv-option-short, *, x'0000';
+
+        /* enq */
+        cpynv prefix-msglen, 64;
+        cpynv index, 0          ; 
+enq-loop:
+        addn(s) index, 1        ;
+        cmpnv(b) index, 1000 / hi(end-loop) ; 
+        enq q, message-prefix, .message;
+
+        b enq-loop              ; 
+end-loop:       
+
+        rtx *;
+
+%include ptrres.mi              ; 
+
+pend;
+
+/* eof - enq11.mi */

@@ -1,0 +1,66 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2009  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file ts.rpgleinc
+      *
+      * ILE RPG header of Teraspace APIs.
+      *
+      * Dependent binding directory: QSYS/QC2LE
+      *
+      * http://i5toolkit.sourceforge.net/
+      */
+
+      /if not defined(i5toolkit_rpg_ts)
+      /define i5toolkit_rpg_ts
+
+     /*
+      * The _C_TS_calloc() function reserves teraspace storage space for an
+      * array of num elements, each of length size bytes. The _C_TS_calloc()
+      * function then gives all the bits of each element an initial value of
+      * 0.
+      */
+     d ts_calloc       pr              *   extproc('_C_TS_calloc')
+     d     num                       10i 0 value
+     d     size                      10i 0 value
+
+     /*
+      * The _C_TS_free() function frees a block of teraspace storage.
+      */
+     d ts_free         pr              *   extproc('_C_TS_free')
+     d     ptr                         *   value
+
+     /*
+      * The _C_TS_malloc() function reserves a block of teraspace storage of
+      * size bytes. Unlike the _C_TS_calloc() function, _C_TS_malloc() does
+      * not initialize all elements to 0.
+      */
+     d ts_malloc       pr              *   extproc('_C_TS_malloc')
+     d     size                      10i 0 value
+
+     /*
+      * The realloc() function changes the size of a previously
+      * reserved teraspace storage block.
+      */
+     d ts_realloc      pr              *   extproc('_C_TS_realloc')
+     d     ptr                         *   value
+     d     size                      10i 0 value
+
+      /endif
+     /* eof - ts.rpgleinc */

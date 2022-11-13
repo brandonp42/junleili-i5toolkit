@@ -1,0 +1,199 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-mchobs.rpgleinc
+      *
+      * Machine observation instructions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_mchobs)
+      /define i5toolkit_rpg_mih_mchobs
+
+     /* Materialization template for MATSOBJ. */
+     d matsobj_tmpl_t  ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+      *
+      * Object state attributes
+      *
+      * Bit 0. Suspended state
+      *   0 = Not suspended
+      *   1 = Suspended
+      * Bits 8-15. Reserved (binary 0)
+      *
+     d     obj_status                 2a
+     d     ctx_id                    32a
+     d     ctx_type                   2a   overlay(ctx_id)
+     d     ctx_name                  30a   overlay(ctx_id:3)
+     d     obj_id                    32a
+     d     obj_type                   2a   overlay(obj_id)
+     d     obj_name                  30a   overlay(obj_id:3)
+      * Timestamp of creation
+     d     crt_ts                     8a
+      * Size of associated space
+     d     spc_size                  10i 0
+     d     obj_size                  10i 0
+     d     owner                     32a
+     d     owner_type                 2a   overlay(owner)
+     d     owner_name                30a   overlay(owner:3)
+      * Timestamp of last modification
+     d     mod_ts                     8a
+      * Recovery options
+     d     rcv_opt                    4a
+      * Machine internal use
+     d     rcv_opt_internal_use...
+     d                                2a   overlay(rcv_opt)
+     d     asp_num                    5u 0 overlay(rcv_opt:3)
+     d     perf_cls                   4a
+     d     spc_init_val...
+     d                                1a
+      *
+      * Object audit attributes
+      *   Hex 00 = No audit for this object
+      *   Hex 02 = Audit change for this object
+      *   Hex 03 = Audit read and change for this object
+      *   Hex 04 = Audit read and change for this object if the user
+      *            profile is being audited
+      *   Hex FF = User not allowed to materialize object audit attribute
+      *
+      * @remark @todo
+      *
+     d     audit_attr                 1a
+      *
+      * Sign state
+      *   Hex 00 = Object not digitally signed
+      *   Hex 01 = Object digitally signed
+      *
+     d     sign_sts                   1a
+      *
+      * Signed by a system-trusted source
+      *   Hex 00 = Object not digitally signed by a system-trusted source
+      *   Hex 01 = Object digitally signed by a system-trusted source
+      *
+     d     signed_by_trusted_source...
+     d                                1a
+      *
+      * 0 = Object not in an authority list
+      * 1 = Object in an authority list
+      *
+     d     in_autl                    5u 0
+      *
+      * Authority list ID, 48a
+      *
+      * Authority list (AL) status
+      *   0 = Valid authority list
+      *   1 = Damaged authority list
+      *   2 = Destroyed authority list (no name below)
+      *
+     d     autl_sts                   5i 0
+     d                               14a
+     d     autl_type                  2a
+     d     autl_name                 30a
+     d     dump_for_previous_release_reason_code...
+     d                                8a
+     d     max_spc_size...
+     d                               10i 0
+      * Timestamp of last use of object
+     d     use_ts                     8a
+      * Count of number of days object was used
+     d     used_days                  5u 0
+      *
+      * @todo ...
+      *
+     d     pgm_attr                   2a
+      *
+      * Type of program
+      *   Hex 00 = Non-bound program
+      *   Hex 01 = Bound program
+      *   Hex 02 = Bound service program
+      *   Hex 04 = Java program
+      *
+     d     pgm_type                   1a   overlay(pgm_attr:2)
+      *
+      * Domain of object
+      *   @todo
+      *   Hex 8000 = System domain
+      *   Hex 0001 = User domain
+      *
+     d     domain                     2a
+      *
+      * State of program
+      *   @todo
+      *   Hex 0080 = System state
+      *   Hex 0001 = User state
+      *
+     d     pgm_state                  2a
+      * MI-supplied information
+     d     mi_info                    8a
+      *
+      * @todo
+      *
+      *
+     d     compatible_rls...
+     d                                2a
+      * Object size in basic storage units (512 bytes)
+     d     obj_size2                 10u 0
+      * Primary group identification
+     d     grp_id                    32a
+     d     grp_type                   2a   overlay(grp_id)
+     d     grp_name                  30a   overlay(grp_id:3)
+      * Hardware storage protection
+     d     hardware_storage_protection...
+     d                                1a
+     d                                1a
+      *
+      * @todo comments on file_id/gen_id
+      *
+      *
+     d     file_id                   10u 0
+     d     gen_id                    10u 0
+     d                               12a
+     d     parent_obj                  *
+     d     num_signer                10u 0
+     d                               36a
+
+     /**
+      * @BIF _MATSOBJ (Materialize System Object (MATSOBJ))
+      */
+     d matsobj         pr                  extproc('_MATSOBJ')
+     d     receiver                        likeds(matsobj_tmpl_t)
+     d     obj                         *
+
+     /**
+      * @BIF _TESTTOBJ (Test Temporary Object (TESTTOBJ))
+      *
+      * @return 1 if syp points to a temporary object, otherwise 0.
+      */
+     d testtobj        pr            10i 0 extproc('_TESTTOBJ')
+     d     syp                         *
+
+     /**
+      * @BIF _TESTPDC (Test Performance Data Collection (TESTPDC))
+      *
+      * A test is performed to determine whether or not the thread is
+      * in an active Performance Data Collector (PDC) trace
+      * collection.
+      *
+      * @return 1 if the thread is in an active Performance Data
+      * Collector (PDC) trace collection, otherwise 0.
+      */
+     d testpdc         pr            10i 0 extproc('_TESTPDC')
+
+      /endif

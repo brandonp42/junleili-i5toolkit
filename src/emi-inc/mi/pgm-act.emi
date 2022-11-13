@@ -1,0 +1,52 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/**
+ * @file pgm-act.emi
+ *
+ * header for program activation instructions,
+ */
+
+/ifndef __emi_pgm_act_h__       ;
+/define __emi_pgm_act_h__       ;
+
+/* Activation group attribute (used by MATAGPAT). */
+dcl con emi-ag-attr-len-basic bin(2) init(h'88') ;
+dcl spcptr emi-ag-attr-ptr auto             ;
+dcl spc emi-ag-attr-t bas(emi-ag-attr-ptr)  ;
+        dcl dd emi-ag-attr-bytes-in bin(4) dir ;
+        dcl dd emi-ag-attr-bytes-out bin(4) dir ;
+        dcl dd * char(8) dir                    ;
+        dcl sysptr emi-ag-attr-root-pgm dir ;
+        dcl dd * char(16) dir               ;
+        dcl sysptr emi-ag-attr-stg-rcc-key dir ; /* Storage address recycling key */
+        dcl dd emi-ag-attr-ag-name char(30) dir ;
+        dcl dd * char(2) dir                ;
+        dcl dd emi-ag-attr-ag-mark bin(4) unsgnd dir ;
+        dcl dd * char(4) dir                ;
+        dcl dd emi-ag-attr-heap-cnt bin(4) unsgnd dir ;
+        dcl dd emi-ag-attr-act-cnt bin(4) unsgnd dir  ;
+        dcl dd emi-ag-attr-ssf-size bin(4) unsgnd dir ;
+        dcl dd * char(4) dir                          ;
+        dcl dd emi-ag-attr-attrs char(1) dir          ;
+        dcl dd emi-ag-attr-pag-attrs char(1) dir      ;
+        dcl dd * char(6) dir                          ;
+        dcl dd emi-ag-attr-ag-mark-long char(8) dir   ;
+
+/endif                          ;
+/* eof - pgm-act.emi */

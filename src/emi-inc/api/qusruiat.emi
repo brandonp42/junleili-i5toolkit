@@ -1,0 +1,73 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+ * @file qusruiat.emi
+ *
+ * for API QUSRUIAT
+ *
+ * @attention remember to init SPCPTR .emi-qusruiat-ec and emi-qusruiat-idx before call QUSRUIAT
+ */
+
+/ifndef __emi_qusruiat_h__      ;
+/define __emi_qusruiat_h__      ;
+
+/* IDXA0100 */
+dcl dd emi-qusruiat-idxa0100 char(60) auto ;
+dcl spcptr .emi-qusruiat-rcv auto init(emi-qusruiat-idxa0100);
+dcl spc * bas(.emi-qusruiat-rcv) ;
+        dcl dd emi-qusruiat-idxa0100-bytes-rtn bin(4) dir ;
+        dcl dd emi-qusruiat-idxa0100-bytes-avail bin(4) dir ;
+        dcl dd emi-qusruiat-idxa0100-idx-name char(10) dir  ;
+        dcl dd emi-qusruiat-idxa0100-idx-lib char(10) dir   ;
+        dcl dd emi-qusruiat-idxa0100-len-attr char(1) dir   ;
+        dcl dd emi-qusruiat-idxa0100-immed-upd char(1) dir  ;
+        dcl dd emi-qusruiat-idxa0100-keyed char(1) dir      ;
+        dcl dd emi-qusruiat-idxa0100-opt   char(1) dir      ;
+        dcl dd * char(4) dir                                ;
+        dcl dd emi-qusruiat-idxa0100-ent-len bin(4) dir     ;
+        dcl dd emi-qusruiat-idxa0100-max-ent-len bin(4) dir ;
+        dcl dd emi-qusruiat-idxa0100-key-len bin(4) dir     ;
+        dcl dd emi-qusruiat-idxa0100-ent-added bin(4) dir   ;
+        dcl dd emi-qusruiat-idxa0100-ent-rmved bin(4) dir   ;
+        dcl dd emi-qusruiat-idxa0100-num-opt   bin(4) dir   ;
+
+dcl dd emi-qusruiat-rcv-len bin(4) auto init(60)            ;
+dcl spcptr .emi-qusruiat-rcv-len auto init(emi-qusruiat-rcv-len) ;
+dcl dd emi-qusruiat-fmt char(8) auto init("IDXA0100")       ;
+dcl spcptr .emi-qusruiat-fmt auto init(emi-qusruiat-fmt);
+dcl dd emi-qusruiat-idx char(20) auto                      ;
+dcl spcptr .emi-qusruiat-idx auto init(emi-qusruiat-idx) ;
+dcl spcptr .emi-qusruiat-ec auto;
+
+/* prototype of QUSRUIAT */
+dcl ol emi-qusruiat-al (
+        .emi-qusruiat-rcv,
+        .emi-qusruiat-rcv-len,
+        .emi-qusruiat-fmt,
+        .emi-qusruiat-idx,
+        .emi-qusruiat-ec
+) arg                           ;
+
+/* hex 1517 */
+dcl spcptr emi-qusruiat-sept-ptr baspco ;
+        dcl sysptr emi-qusruiat bas(emi-qusruiat-sept-ptr) pos(86385) ;
+
+/endif                          ;
+/* eof - qusruiat.emi */

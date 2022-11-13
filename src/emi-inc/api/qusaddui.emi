@@ -1,0 +1,70 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/* *
+ * @file qusaddui.emi
+ *
+ * for API QUSADDUI
+ *
+ * usage:
+ *  - set emi-qusaddui-idx, emi-qusaddui-ins-type,
+ *        .emi-qusaddui-ent-len, .emi-qusaddui-lens-offs, .emi-qusaddui-num-ent
+ *        
+ *  - set spcptr .emi-qusaddui-entries, .emi-qusaddui-ec
+ *  - callx emi-qusaddui
+ */
+
+/ifndef __emi_qusaddui_h__      ;
+/define __emi_qusaddui_h__      ;
+
+dcl dd emi-qusaddui-rtn-lib char(10) auto ;
+dcl spcptr .emi-qusaddui-rtn-lib auto init(emi-qusaddui-rtn-lib) ;
+dcl dd emi-qusaddui-num-added bin(4) auto                        ;
+dcl spcptr .emi-qusaddui-num-added auto init(emi-qusaddui-num-added) ;
+dcl dd emi-qusaddui-idx char(20) auto                                ;
+dcl spcptr .emi-qusaddui-idx auto init(emi-qusaddui-idx)             ;
+dcl dd emi-qusaddui-ins-type bin(4) auto                             ;
+dcl spcptr .emi-qusaddui-ins-type auto init(emi-qusaddui-ins-type)   ;
+dcl spcptr .emi-qusaddui-entries auto                                ; /* spcptr */
+dcl dd emi-qusaddui-ent-len bin(4) auto                              ;
+dcl spcptr .emi-qusaddui-ent-len auto init(emi-qusaddui-ent-len)     ;
+dcl spcptr .emi-qusaddui-lens-offs auto                              ;
+dcl dd emi-qusaddui-num-ent bin(4) auto                              ;
+dcl spcptr .emi-qusaddui-num-ent auto init(emi-qusaddui-num-ent)     ;
+dcl spcptr .emi-qusaddui-ec auto                                     ; /* spcptr */
+
+/* prototype of QUSADDUI */
+dcl ol emi-qusaddui-al (
+        .emi-qusaddui-rtn-lib,
+        .emi-qusaddui-num-added,
+        .emi-qusaddui-idx,
+        .emi-qusaddui-ins-type,
+        .emi-qusaddui-entries,
+        .emi-qusaddui-ent-len,
+        .emi-qusaddui-lens-offs,
+        .emi-qusaddui-num-ent,
+        .emi-qusaddui-ec
+) arg                           ;
+
+/* hex 150A */
+dcl spcptr emi-qusaddui-sept-ptr baspco ;
+        dcl sysptr emi-qusaddui bas(emi-qusaddui-sept-ptr) pos(86177) ;
+
+/endif                          ;
+/* eof - qusaddui.emi */

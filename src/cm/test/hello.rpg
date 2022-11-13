@@ -1,0 +1,5 @@
+      *
+     C                     MOVEL'HELLO'   A       8
+     C                     MOVE 'WORLD!'  B       8
+     C           A         DSPLY          B
+     C                     SETON                     LR

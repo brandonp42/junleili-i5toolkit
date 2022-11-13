@@ -1,0 +1,10 @@
+cd htdocs
+put *.*
+put rpg/* rpg
+put art/* art
+put cm/* cm
+put spc/* spc
+put q/* q
+put mip/* mip
+put mic/* mic
+put idx/* idx

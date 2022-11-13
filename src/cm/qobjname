@@ -1,0 +1,25 @@
+#! /bin/sh
+
+#
+# @param ifs-path-name of an i5/OS object
+#        e.g. /qsys.lib/some_lib.lib/some_pgm.pgm
+#
+# @post  qualified object name. e.g. some_lib/some_pgm
+#
+
+if [ $# -eq 0 ]
+    then
+    return 1
+fi
+
+IFSPATH=$1
+
+# object name
+OBJ=$(basename $IFSPATH)
+OBJ=${OBJ%.*}
+
+# library name
+LIB=$(basename $(dirname $IFSPATH))
+LIB=${LIB%.*}
+
+echo "$LIB/$OBJ"

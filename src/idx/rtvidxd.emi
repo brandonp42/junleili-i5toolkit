@@ -1,0 +1,129 @@
+/*
+This file is part of i5/OS Programmer's Toolkit.
+
+Copyright (C) 2010, 2011  Junlei Li (李君磊).
+
+i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/* *
+ * @file dspidxd.emi
+ *
+ * cpp pgm of command DSPIDXD
+ * @todo display index attributes with UIM panel
+ */
+
+dcl spcptr idx-object-ptr parm  ;
+dcl ol pl-main(
+        idx-object-ptr
+) ext parm       ;
+
+entry * ext                     ;
+
+dcl dd idx-object char(20) bas(idx-object-ptr) ;
+
+        /* get index attr */
+        cpynv emi-ec-bytes-in, emi-qusec-len ;
+        setsppfp .emi-qusruiat-ec, emi-qusec-ptr ;
+        cpybla emi-qusruiat-idx, idx-object      ;
+        callx emi-qusruiat, emi-qusruiat-al, *      ;
+
+brk 'CHK'                       ;
+        calli display, *, .display ;
+        rtx *                   ;
+
+dcl insptr .display auto        ;
+entry display int               ;
+
+dcl dd msg char(64) auto        ;
+dcl dd len bin(2) auto          ;
+dcl dd cvtnc-attr char(7) auto init(x'02000300000000') ;
+
+        cpyblap msg(1:25),
+          "Attributes of *USRIDX",
+          ' '                   ;
+        cpybla msg(31:10), emi-qusruiat-idxa0100-idx-lib ;
+        cpybla msg(41:10), emi-qusruiat-idxa0100-idx-name ;
+        triml len, msg, ' '     ;
+        %sendmsg(msg, len)      ;
+
+        cpybrep msg, " "        ;
+
+        cpyblap msg(9:30),
+          "Entry length attribute",
+          " "                   ;
+        cpybla msg(41:1), emi-qusruiat-idxa0100-len-attr ;
+        %sendmsg(msg, 64)                                ;
+
+        cpyblap msg(9:30),
+          "Immediate update",
+          " "                   ;
+        cpybla msg(41:1), emi-qusruiat-idxa0100-immed-upd ;
+        %sendmsg(msg, 64)                                ;
+
+        cpyblap msg(9:30),
+          "Key insertion",
+          " "                   ;
+        cpybla msg(41:1), emi-qusruiat-idxa0100-keyed ;
+        %sendmsg(msg, 64)                                ;
+
+        cpyblap msg(9:30),
+          "Optimized processing mode",
+          " "                   ;
+        cpybla msg(41:1), emi-qusruiat-idxa0100-opt ;
+        %sendmsg(msg, 64)                                ;
+
+        cpybrep msg(41:20), ' ' ;
+        cpyblap msg(9:30),
+          "Entry length",
+          " "                   ;
+        cvtnc msg(41:3), emi-qusruiat-idxa0100-ent-len, cvtnc-attr          ;
+        %sendmsg(msg, 64)                                ;
+
+        cpyblap msg(9:30),
+          "Maximum entry length",
+          " "                   ;
+        cvtnc msg(41:3), emi-qusruiat-idxa0100-max-ent-len, cvtnc-attr          ;
+        %sendmsg(msg, 64)                                ;
+
+        cpyblap msg(9:30),
+          "Key length",
+          " "                   ;
+        cvtnc msg(41:3), emi-qusruiat-idxa0100-key-len, cvtnc-attr          ;
+        %sendmsg(msg, 64)                                ;
+
+        cpyblap msg(9:30),
+          "Number of entries added",
+          " "                   ;
+        cvtnc msg(41:3), emi-qusruiat-idxa0100-ent-added, cvtnc-attr          ;
+        %sendmsg(msg, 64)                                ;
+
+        cpyblap msg(9:30),
+          "Number of entries removed",
+          " "                   ;
+        cvtnc msg(41:3), emi-qusruiat-idxa0100-ent-rmved, cvtnc-attr          ;
+        %sendmsg(msg, 64)                                ;
+
+        cpyblap msg(9:30),
+          "Number of retrieve operations",
+          " "                   ;
+        cvtnc msg(41:3), emi-qusruiat-idxa0100-num-opt, cvtnc-attr          ;
+        %sendmsg(msg, 64)                                ;
+brk 'END_DISP'                  ;
+	b .display              ;
+
+/include qusec.emi              ;
+/include qusruiat.emi           ;
+
+pend                            ;

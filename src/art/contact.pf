@@ -1,0 +1,5 @@
+      *
+     A          R REC
+     A            PERSON_ID     64O         COLHDG('Person identifier')
+     A            EMAIL        128A         COLHDG('Email address')
+     A            HAS_EMAIL      1A         COLHDG('Valid email-address')

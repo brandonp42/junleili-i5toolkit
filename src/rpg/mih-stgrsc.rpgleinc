@@ -1,0 +1,478 @@
+     /**
+      * This file is part of i5/OS Programmer's Toolkit.
+      *
+      * Copyright (C) 2010, 2011  Junlei Li.
+      *
+      * i5/OS Programmer's Toolkit is free software: you can redistribute it and/or modify
+      * it under the terms of the GNU General Public License as published by
+      * the Free Software Foundation, either version 3 of the License, or
+      * (at your option) any later version.
+      *
+      * i5/OS Programmer's Toolkit is distributed in the hope that it will be useful,
+      * but WITHOUT ANY WARRANTY; without even the implied warranty of
+      * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      * GNU General Public License for more details.
+      *
+      * You should have received a copy of the GNU General Public License
+      * along with i5/OS Programmer's Toolkit.  If not, see <http://www.gnu.org/licenses/>.
+      */
+
+     /**
+      * @file mih-stgrsc.rpgleinc
+      *
+      * Storage and resource management instructions.
+      */
+
+      /if not defined(i5toolkit_rpg_mih_stgrsc)
+      /define i5toolkit_rpg_mih_stgrsc
+
+     /**
+      * @BIF _ENSOBJ (Ensure Object (ENSOBJ))
+      */
+     d ensobj          pr                  extproc('_ENSOBJ')
+     d     obj                         *
+
+     /* Selection option for MATRMD */
+     d matrmd_option_t...
+     d                 ds                  qualified
+     d     val                        1a
+     d                                7a
+
+     /* Materialization template for MATRMD */
+     d matrmd_tmpl_t   ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     time_of_day...
+     d                               20u 0
+      * Resource management data
+
+     /**
+      * @BIF _MATRMD (Materialize Resource Management Data (MATRMD))
+      */
+     d matrmd          pr                  extproc('_MATRMD')
+     d     receiver                        likeds(matrmd_tmpl_t)
+     d     opt                             likeds(matrmd_option_t)
+
+     /**
+      * Materialization template for MATRMD with option hex 01 --
+      * Materialize original processor utilization data (option hex 26
+      * is preferred).
+      */
+     d matrmd_tmpl01_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     time_of_day...
+     d                               20u 0
+      * processor time since IPL
+     d     prc_time                  20u 0
+      * secondary workload processor time since IPL
+     d     sec_prc_time...
+     d                               20u 0
+      * Database processor time since IPL
+     d     db_prc_time...
+     d                               20u 0
+      * Database threshold
+     d     db_threshold...
+     d                                5u 0
+      * Database limit
+     d     db_limit                   5u 0
+     d                                4a
+      * Interactive processor time since IPL
+     d     int_prc_time...
+     d                               20u 0
+      * Interactive threshold
+     d     int_threshold...
+     d                                5u 0
+      * Interactive limit
+     d     int_limit                  5u 0
+     d                                4a
+
+     /**
+      * Materialization template for MATRMD with option hex 03 --
+      * storage management counters
+      */
+     d matrmd_tmpl03_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     time_of_day...
+     d                               20u 0
+     d     access_pending...
+     d                                5i 0
+     d     stg_pool_delays...
+     d                                5i 0
+     d     dir_loopup_ops...
+     d                               10i 0
+     d     dir_page_faults...
+     d                               10i 0
+      * access group member page faults
+     d     ag_mbr_page_faults...
+     d                               10i 0
+      * microcode page faults
+     d     mc_page_faults...
+     d                               10i 0
+      * microtask read operations
+     d     mt_read_ops...
+     d                               10i 0
+      * microtask write operations
+     d     mt_write_ops...
+     d                               10i 0
+     d                                4a
+
+     /**
+      * Materialization template for MATRMD with option hex 04 --
+      * Storage Transient Pool Information.
+      */
+     d matrmd_tmpl04_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     time_of_day...
+     d                               20u 0
+      *
+      * The pool number materialized is the number of the main storage
+      * pool, which is being used as the transient storage pool. A
+      * value of 0 indicates that the transient pool attribute is
+      * being ignored.
+      *
+     d     msp_num                    5i 0
+
+     /**
+      * Materialization template for MATRMD with option hex 08 --
+      * Machine Address Threshold Data.
+      */
+     d matrmd_tmpl08_t...
+     d                 ds                  qualified
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     time_of_day...
+     d                               20u 0
+     d total_permanent_addresses_possible...
+     d                               20u 0
+     d total_temporary_addresses_possible...
+     d                               20u 0
+     d permanent_addresses_remaining...
+     d                               20u 0
+     d temporary_addresses_remaining...
+     d                               20u 0
+     d permanent_addresses_remaining_threshold...
+     d                               20u 0
+     d temporary_addresses_remaining_threshold...
+     d                               20u 0
+     d total_permanent_4gb_addresses_possible...
+     d                               20u 0
+     d total_permanent_256mb_addresses_possible...
+     d                               20u 0
+     d total_temporary_4gb_addresses_possible...
+     d                               20u 0
+     d total_temporary_256mb_addresses_possible...
+     d                               20u 0
+     d permanent_4gb_addresses_remaining...
+     d                               20u 0
+     d permanent_256mb_addresses_remaining...
+     d                               20u 0
+     d temporary_4gb_addresses_remaining...
+     d                               20u 0
+     d temporary_256mb_addresses_remaining...
+     d                               20u 0
+     d permanent_4gb_addresses_remaining_threshold...
+     d                               20u 0
+     d permanent_256mb_addresses_remaining_threshold...
+     d                               20u 0
+     d temporary_4gb_addresses_remaining_threshold...
+     d                               20u 0
+     d temporary_256mb_addresses_remaining_threshold...
+     d                               20u 0
+
+     /**
+      * Materialization template for MATRMD with option hex 09 --
+      * Materialize main storage pool information (option hex 2D is
+      * preferred).
+      *
+      * @remark Option "Main Storage Pool Information (Hex 2D)" is the
+      * preferred method of materializing main storage pool
+      * information because some of the fields for this option may
+      * overflow without any indication of error.
+      */
+     d matrmd_tmpl09_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     time_of_day...
+     d                               20u 0
+      *
+      * Machine minimum transfer size is the smallest number of bytes
+      * that may be transferred as a block to or from main storage. A
+      * common value of this field is 4K.
+      *
+     d     machine_minimum_transfer_size...
+     d                                5i 0
+     d     maximum_number_of_pools...
+     d                                5i 0
+     d     current_number_of_pools...
+     d                                5i 0
+      *
+      * Main storage size is the amount of main storage, in units
+      * equal to the machine minimum transfer size, which may be
+      * apportioned among main storage pools. Note that on overflow,
+      * the machine returns 2,147,483,647 in the main storage size
+      * field without any indication of error. You can use option
+      * "Main Storage Pool Information (Hex 2D)" to materialize the
+      * correct value.
+      *
+     d     main_storage_size...
+     d                               10i 0
+     d                                2a
+     d     pool_1_minimum_size...
+     d                               10i 0
+      *
+      * Array of individual main storage pool information DS of type
+      * msp_info_t (repeated once for each pool, up to the current
+      * number of pools)
+      *
+
+     /* Main storage pool information. */
+     d msp_info_t      ds                  qualified
+     d     pool_size...
+     d                               10i 0
+     d     pool_maintenance...
+     d                               10i 0
+     d     thread_interruptions_database...
+     d                               10i 0
+     d     thread_interruptions_nondatabase...
+     d                               10i 0
+     d     data_transferred_to_pool_database...
+     d                               10i 0
+     d     data_transferred_to_pool_nondatabase...
+     d                               10i 0
+     d     amount_of_pool_not_assigned_to_virtual_addresses...
+     d                               10i 0
+     d                               10i 0
+
+     /**
+      * Materialization template for MATRMD with option hex 0A --
+      * MPL Control Data with 2-byte counts.
+      *
+      * @remark Option hex 16 is the preferred method of materializing
+      * MPL control information. If option 0A is used and the actual
+      * value of any returned template field, other than transition
+      * counts, exceeds 32,767 then a value of 32,767 is returned (the
+      * values will not wrap). The transition counts are an exception
+      * and, as documented, do wrap after reaching their maximum
+      * value.
+      */
+     d matrmd_tmpl0a_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     time_of_day...
+     d                               20u 0
+      *
+      * Maximum number of MPL classes is the largest number of MPL
+      * classes allowed in the machine. These are assumed to be
+      * numbered from 1 to the maximum.
+      *
+     d     machine_maximum_number_of_mpl_classes...
+     d                                5i 0
+      *
+      * Current number of MPL classes is a user-specified value for
+      * the number of MPL classes in use. They are assumed to be
+      * numbered from 1 to the current number.
+      *
+     d     machine_current_number_of_mpl_classes...
+     d                                5i 0
+      *
+      * MPL (max) is the maximum number of processes which may
+      * concurrently be in the active state in the machine.
+      *
+     d     mpl_max...
+     d                                5i 0
+      *
+      * Ineligible event threshold is a number which, if exceeded by
+      * the machine number of ineligible processes defined below, will
+      * cause an event to be signaled.
+      *
+     d     ineligible_event_threshold...
+     d                                5i 0
+      *
+      * MPL (current) is the current number of threads in the active
+      * state.
+      *
+     d     mpl_current...
+     d                                5i 0
+      *
+      * Number of threads in ineligible state is the number of threads
+      * not currently active because of enforcement of both the
+      * machine and class MPL rules.
+      *
+     d     number_of_threads_in_ineligible_state...
+     d                                5i 0
+     d                               10i 0
+      *
+      * array of MPL class information of type mpl_class_info_t.
+      * (repeated for each MPL class, from 1 to the current number of
+      * MPL classes)
+      *
+
+     /* 2-byte template of MPL class information */
+     d mpl_class_info_t...
+     d                 ds                  qualified
+     d     mpl_max...
+     d                                5i 0
+     d     ineligible_event_threshold...
+     d                                5i 0
+     d     current_mpl...
+     d                                5i 0
+     d     number_of_threads_in_ineligible_state...
+     d                                5i 0
+     d     number_of_threads_assigned_to_class...
+     d                                5i 0
+     d     number_of_active_to_ineligible_transitions...
+     d                                5i 0
+     d     number_of_active_to_mi_wait_transitions...
+     d                                5i 0
+     d     number_of_mi_wait_to_ineligible_transitions...
+     d                                5i 0
+
+     /**
+      * Materialization template for MATRMD with option hex 0C --
+      * Machine Reserved Storage Pool Information.
+      */
+     d matrmd_tmpl0c_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     time_of_day...
+     d                               20u 0
+      * Current number of pools
+     d     cur_pools                  5i 0
+     d                                6a
+      *
+      * Individual main storage pool information of type
+      * msp_mch_reserved_t (repeated once for each pool, up to the
+      * current number of pools)
+      *
+
+     d msp_mch_reserved_t...
+     d                 ds                  qualified
+      *
+      * Pool size is the amount of main storage assigned to the pool
+      * (including the machine reserved portion). The units of measure
+      * is the machine minimum transfer size. Note that on overflow,
+      * the machine returns 2,147,483,647 in the pool size field
+      * without any indication of error. The main storage pool size
+      * field will return the correct value.
+      *
+     d     pool_size...
+     d                               10u 0
+      *
+      * Machine portion of the pool specifies the amount of storage
+      * from the pool that is dedicated to machine functions. The
+      * units of measure is the machine minimum transfer size.
+      *
+     d     mch_reserved_size...
+     d                               10u 0
+      * 8-byte pool size
+     d     pool_size8...
+     d                               10u 0
+
+     /**
+      * Materialization template for MATRMD with option hex 17 --
+      * Allocation and De-allocation counts per task and thread.
+      *
+      * @example test/t128.rpgle
+      */
+     d matrmd_tmpl17_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     bytes_in                  10i 0
+     d     bytes_out                 10i 0
+     d     time_of_day...
+     d                               20u 0
+      *
+      * Requested function. Valid values:
+      *   1 = Sorted by storage allocation
+      *   2 = Sorted by storage de-allocation
+      *   3 = Sorted by delta storage (allocated minus de-allocated)
+      *
+     d     req_func                   5u 0
+     d     total_number_of_tasks_and_threads...
+     d                               10u 0
+     d     number_of_entries_returned...
+     d                               10u 0
+     d                                6a
+      *
+      * Task and thread information of type stg_alloc_info_t (Repeated
+      * once for each task or thread. Located immediately after the
+      * control information above.)
+      *
+
+     /* Allocation and De-allocation of auxiliary storage per task or thread */
+     d stg_alloc_info_t...
+     d                 ds                  qualified
+      *
+      * Task and thread control information
+      * Bits 0-1, task and thread indicator
+      *   00 = Secondary thread
+      *   01 = Initial thread
+      *   10 = Task
+      *   11 = Reserved
+      * Bits 2-15, reserved (binary 0)
+      *
+     d     flag                       2a
+     d                                2a
+     d     task_name                 32a
+     d     task_id                    4a
+     d     thd_id                     8a
+     d     allocated_pages...
+     d                               10u 0
+     d     deallocated_pages...
+     d                               10u 0
+     d     delta_pages...
+     d                               10u 0
+     d                               20a
+
+     /**
+      * Access state template for SETACST
+      */
+     d access_state_tmpl_t...
+     d                 ds                  qualified
+     d                                     based(dummy_ptr)
+     d     num_objs                  10i 0
+     d                               12a
+      * access state specifications of type access_state_spec_t
+     d     spec                            likeds(access_state_spec_t)
+     d                                     dim(128)
+
+     /**
+      * Access state specification
+      */
+     d access_state_spec_t...
+     d                 ds                  qualified
+     d     obj                         *
+     d     state_code                 1a
+     d                                3a
+      * access state parameters (output fields)
+     d     access_pool_id...
+     d                                4a
+     d     spc_length                10i 0
+      * in units of minimum machine transfer size
+     d     operational_object_size...
+     d                               10i 0
+
+     /**
+      * @BIF _SETACST (Set Access State (SETACST))
+      */
+     d setacst         pr                  extproc('_SETACST')
+     d     tmpl                            likeds(access_state_tmpl_t)
+
+     /**
+      * @BIF _YIELD (Yield (YIELD))
+      */
+     d yield           pr                  extproc('_YIELD')
+
+      /endif
